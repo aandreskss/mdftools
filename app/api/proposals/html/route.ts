@@ -1,21 +1,28 @@
-import { anthropic, MODEL } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
+import { getAnthropicForUser, noApiKeyResponse } from "@/lib/get-anthropic";
+import { MODEL } from "@/lib/anthropic";
 
 export async function POST(request: Request) {
   const { markdown, clientName, clientCompany, price } = await request.json();
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return noApiKeyResponse();
+
+  let anthropic;
+  try {
+    anthropic = await getAnthropicForUser(supabase, user.id);
+  } catch {
+    return noApiKeyResponse();
+  }
 
   let agencyName = "Nuestra Agencia";
-  if (user) {
-    const { data } = await supabase
-      .from("brand_profiles")
-      .select("brand_name")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (data?.brand_name) agencyName = data.brand_name;
-  }
+  const { data: profile } = await supabase
+    .from("brand_profiles")
+    .select("brand_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (profile?.brand_name) agencyName = profile.brand_name;
 
   const prompt = `Convierte esta propuesta comercial en un documento HTML completo, autónomo y visualmente impresionante para presentar al cliente.
 

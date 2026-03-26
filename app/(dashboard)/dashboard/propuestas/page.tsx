@@ -289,6 +289,12 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
         }),
       });
 
+      if (res.status === 402) {
+        setHtmlContent("");
+        setResultTab("propuesta");
+        alert("⚠️ Debes configurar tu API key de Anthropic en Perfil de Marca para usar esta función.");
+        return;
+      }
       if (!res.ok || !res.body) throw new Error();
 
       const reader = res.body.getReader();
@@ -392,6 +398,12 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
         }),
       });
 
+      if (res.status === 402) {
+        setSlidesContent("");
+        setResultTab("propuesta");
+        alert("⚠️ Debes configurar tu API key de Anthropic en Perfil de Marca para usar esta función.");
+        return;
+      }
       if (!res.ok || !res.body) throw new Error();
 
       const reader = res.body.getReader();

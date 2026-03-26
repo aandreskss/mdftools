@@ -24,6 +24,8 @@ export async function GET() {
     webUrl: data.web_url,
     redesSociales: data.social_media,
     updatedAt: data.updated_at,
+    // Never return the actual key — only a boolean so the UI knows it's set
+    hasApiKey: !!(data.anthropic_api_key?.trim()),
   });
 }
 
@@ -34,19 +36,26 @@ export async function POST(request: Request) {
 
   const body = await request.json();
 
+  const upsertData: Record<string, unknown> = {
+    user_id: user.id,
+    brand_name: body.nombre ?? "",
+    products_services: body.descripcion ?? "",
+    industry: body.industria ?? "",
+    tone_of_voice: body.tono ?? "",
+    target_audience: body.publicoObjetivo ?? "",
+    differentiators: body.diferenciadores ?? "",
+    web_url: body.webUrl ?? "",
+    social_media: body.redesSociales ?? "",
+    updated_at: new Date().toISOString(),
+  };
+
+  // Only update the API key if the user explicitly provided one
+  if (body.anthropicApiKey?.trim()) {
+    upsertData.anthropic_api_key = body.anthropicApiKey.trim();
+  }
+
   const { error } = await supabase.from("brand_profiles").upsert(
-    {
-      user_id: user.id,
-      brand_name: body.nombre ?? "",
-      products_services: body.descripcion ?? "",
-      industry: body.industria ?? "",
-      tone_of_voice: body.tono ?? "",
-      target_audience: body.publicoObjetivo ?? "",
-      differentiators: body.diferenciadores ?? "",
-      web_url: body.webUrl ?? "",
-      social_media: body.redesSociales ?? "",
-      updated_at: new Date().toISOString(),
-    },
+    upsertData,
     { onConflict: "user_id" }
   );
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, CheckCircle, Loader2 } from "lucide-react";
+import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink } from "lucide-react";
 import type { BrandProfile } from "@/types";
 
 const STORAGE_KEY = "mdf_brand_profile";
@@ -33,9 +33,14 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
 
+  // API key state
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [keySaved, setKeySaved] = useState(false);
+
   useEffect(() => {
     async function loadProfile() {
-      // Intenta cargar desde Supabase primero
       try {
         const res = await fetch("/api/brand-profile");
         if (res.ok) {
@@ -43,6 +48,7 @@ export default function PerfilPage() {
           if (data) {
             setProfile(data);
             setHasProfile(true);
+            setHasApiKey(!!data.hasApiKey);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             setLoading(false);
             return;
@@ -71,16 +77,25 @@ export default function PerfilPage() {
     setSaving(true);
     const toSave = { ...profile, updatedAt: new Date().toISOString() };
 
-    // Guardar en Supabase
+    const body: Record<string, unknown> = { ...toSave };
+    if (apiKeyInput.trim()) {
+      body.anthropicApiKey = apiKeyInput.trim();
+    }
+
     try {
       await fetch("/api/brand-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toSave),
+        body: JSON.stringify(body),
       });
+      if (apiKeyInput.trim()) {
+        setHasApiKey(true);
+        setApiKeyInput("");
+        setKeySaved(true);
+        setTimeout(() => setKeySaved(false), 3000);
+      }
     } catch {}
 
-    // Guardar en localStorage como caché
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     setHasProfile(true);
     setSaving(false);
@@ -240,6 +255,64 @@ export default function PerfilPage() {
             placeholder="Ej: @marca en Instagram y TikTok, LinkedIn como empresa"
             className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition"
           />
+        </div>
+
+        {/* ── API Key de Anthropic ─────────────────────────────────── */}
+        <div className="pt-2 border-t border-gray-800">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Key size={14} className="text-indigo-400" />
+            <label className="block text-sm font-medium text-gray-300">
+              API Key de Anthropic
+            </label>
+            {hasApiKey && !keySaved && (
+              <span className="ml-auto flex items-center gap-1 text-xs text-green-400">
+                <CheckCircle size={11} /> Configurada
+              </span>
+            )}
+            {keySaved && (
+              <span className="ml-auto flex items-center gap-1 text-xs text-green-400">
+                <CheckCircle size={11} /> ¡Key guardada!
+              </span>
+            )}
+          </div>
+
+          {!hasApiKey && (
+            <p className="text-xs text-amber-400 mb-2 flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400" />
+              Requerida para usar los agentes de IA.{" "}
+              <a
+                href="https://console.anthropic.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-amber-200 flex items-center gap-0.5"
+              >
+                Obtener key <ExternalLink size={10} />
+              </a>
+            </p>
+          )}
+
+          {hasApiKey && (
+            <p className="text-xs text-gray-500 mb-2">
+              Ya tienes una key configurada. Ingresa una nueva para reemplazarla.
+            </p>
+          )}
+
+          <div className="relative">
+            <input
+              type={showApiKey ? "text" : "password"}
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              placeholder={hasApiKey ? "sk-ant-... (dejar vacío para mantener la actual)" : "sk-ant-api03-..."}
+              className="w-full px-4 py-2.5 pr-10 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition font-mono"
+            />
+            <button
+              type="button"
+              onClick={() => setShowApiKey((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+            >
+              {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
         </div>
 
         {/* Save button */}

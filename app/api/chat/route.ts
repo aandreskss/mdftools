@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { anthropic, MODEL, MAX_TOKENS } from "@/lib/anthropic";
+import { MODEL, MAX_TOKENS } from "@/lib/anthropic";
+import { getAnthropicForUser, noApiKeyResponse } from "@/lib/get-anthropic";
 import { getSystemPrompt } from "@/lib/prompts";
 import { createClient } from "@/lib/supabase/server";
 import type { Message } from "@/types";
@@ -19,6 +20,16 @@ export async function POST(request: Request) {
   let filesContext = "";
   let adLibraryContext = "";
   let adImageUrls: string[] = [];
+
+  if (!user) return noApiKeyResponse();
+
+  // Get Anthropic client using the user's own API key
+  let anthropic: Anthropic;
+  try {
+    anthropic = await getAnthropicForUser(supabase, user.id);
+  } catch {
+    return noApiKeyResponse();
+  }
 
   if (user) {
     const baseQueries = Promise.all([
