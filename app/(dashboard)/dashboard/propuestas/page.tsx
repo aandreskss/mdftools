@@ -101,10 +101,10 @@ export default function PropuestasPage() {
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
-  const [htmlContent, setHtmlContent]           = useState("");
-  const [slidesContent, setSlidesContent]       = useState("");
-  const [htmlBlobUrl, setHtmlBlobUrl]           = useState("");
-  const [slidesBlobUrl, setSlidesBlobUrl]       = useState("");
+  const [htmlContent, setHtmlContent]     = useState("");
+  const [slidesContent, setSlidesContent] = useState("");
+  const [previewId, setPreviewId]         = useState<string | null>(null);
+  const [previewTs, setPreviewTs]         = useState(0); // fuerza recarga del iframe
   const [resultTab, setResultTab] = useState<"propuesta" | "html" | "slides">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
@@ -117,28 +117,15 @@ export default function PropuestasPage() {
     if (generating) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [generatedContent, generating]);
 
-  // Cargar html/slides de propuesta guardada al abrirla
+  // Al abrir propuesta guardada: inicializar IDs y contenido
   useEffect(() => {
     if (!viewingProposal) return;
     setSavedProposalId(viewingProposal.id);
+    setPreviewId(viewingProposal.id);
     setHtmlContent(viewingProposal.html_content ?? "");
     setSlidesContent(viewingProposal.slides_content ?? "");
+    setPreviewTs(Date.now());
   }, [viewingProposal]);
-
-  // Blob URLs para iframes ‚Äî evita restricci√≥n de origen null de srcDoc
-  useEffect(() => {
-    if (!htmlContent) return;
-    const url = URL.createObjectURL(new Blob([htmlContent], { type: "text/html" }));
-    setHtmlBlobUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [htmlContent]);
-
-  useEffect(() => {
-    if (!slidesContent) return;
-    const url = URL.createObjectURL(new Blob([slidesContent], { type: "text/html" }));
-    setSlidesBlobUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [slidesContent]);
 
   async function fetchProposals() {
     setLoadingList(true);
@@ -283,7 +270,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         setHtmlContent(stripFences(accumulated));
       }
 
-      // Auto-guardar en Supabase si la propuesta ya est√° guardada
+      // Auto-guardar en Supabase
       const id = savedProposalId ?? viewingProposal?.id;
       if (id && accumulated) {
         await fetch("/api/proposals", {
@@ -291,6 +278,8 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, html_content: stripFences(accumulated) }),
         });
+        setPreviewId(id);
+        setPreviewTs(Date.now());
         await fetchProposals();
       }
     } catch {
@@ -328,7 +317,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
     });
     if (res.ok) {
       const data = await res.json();
-      if (data.id) setSavedProposalId(data.id);
+      if (data.id) { setSavedProposalId(data.id); setPreviewId(data.id); setPreviewTs(Date.now()); }
     }
     await fetchProposals();
     setSaving(false);
@@ -383,7 +372,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         setSlidesContent(stripFences(accumulated));
       }
 
-      // Auto-guardar en Supabase si la propuesta ya est√° guardada
+      // Auto-guardar en Supabase
       const id = savedProposalId ?? viewingProposal?.id;
       if (id && accumulated) {
         await fetch("/api/proposals", {
@@ -391,6 +380,8 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, slides_content: stripFences(accumulated) }),
         });
+        setPreviewId(id);
+        setPreviewTs(Date.now());
         await fetchProposals();
       }
     } catch {
@@ -416,9 +407,8 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
     setGeneratedContent("");
     setHtmlContent("");
     setSlidesContent("");
-    setHtmlBlobUrl("");
-    setSlidesBlobUrl("");
     setSavedProposalId(null);
+    setPreviewId(null);
     setSaved(false);
     setViewingProposal(null);
     setResultTab("propuesta");
@@ -814,18 +804,24 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         {/* HTML tab */}
         {resultTab === "html" && (
           <div className="rounded-xl overflow-hidden border border-gray-800">
-            {generatingHtml && !htmlBlobUrl && (
+            {generatingHtml && (
               <div className="flex items-center gap-2 p-6 text-gray-500 text-sm bg-gray-900">
                 <Loader2 size={14} className="animate-spin" /> Generando versi√≥n HTML...
               </div>
             )}
-            {htmlBlobUrl && (
+            {!generatingHtml && previewId && htmlContent && (
               <iframe
-                src={htmlBlobUrl}
+                key={`html-${previewId}-${previewTs}`}
+                src={`/api/proposals/${previewId}/html?t=${previewTs}`}
                 className="w-full bg-white"
                 style={{ height: "700px", border: "none" }}
                 title="Propuesta HTML"
               />
+            )}
+            {!generatingHtml && !previewId && htmlContent && (
+              <div className="p-6 text-gray-500 text-sm bg-gray-900">
+                Guarda la propuesta para ver el preview.
+              </div>
             )}
           </div>
         )}
@@ -833,15 +829,16 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         {/* Slides tab */}
         {resultTab === "slides" && (
           <div className="rounded-xl overflow-hidden border border-gray-800 bg-gray-950">
-            {generatingSlides && !slidesBlobUrl && (
+            {generatingSlides && (
               <div className="flex items-center gap-2 p-6 text-gray-500 text-sm">
                 <Loader2 size={14} className="animate-spin" /> Generando presentaci√≥n...
               </div>
             )}
-            {slidesBlobUrl && (
+            {!generatingSlides && previewId && slidesContent && (
               <>
                 <iframe
-                  src={slidesBlobUrl}
+                  key={`slides-${previewId}-${previewTs}`}
+                  src={`/api/proposals/${previewId}/slides?t=${previewTs}`}
                   className="w-full"
                   style={{ height: "520px", border: "none" }}
                   title="Presentaci√≥n Slides"
@@ -856,6 +853,11 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
                   </button>
                 </div>
               </>
+            )}
+            {!generatingSlides && !previewId && slidesContent && (
+              <div className="p-6 text-gray-500 text-sm">
+                Guarda la propuesta para ver el preview.
+              </div>
             )}
           </div>
         )}
