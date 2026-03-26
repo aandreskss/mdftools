@@ -4,18 +4,20 @@ import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
-  Code, Download, Layers, RefreshCw, Pencil,
+  Code, Download, Layers, RefreshCw, Pencil, Upload, Mail,
+  MessageCircle, LayoutKanban, List, Building2, X,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface FormData {
+interface ProposalForm {
   // Tipo de propuesta (multi-select)
   serviceScope: string[];
   // Cliente
   clientName: string; clientCompany: string; clientIndustry: string; clientEmail: string;
+  clientWhatsapp: string; clientLogo: string;
   // Servicio
   serviceType: string; serviceDescription: string;
   // Objetivos + KPIs
@@ -39,12 +41,13 @@ interface Proposal {
   id: string; client_name: string; industry: string;
   status: string; created_at: string; generated_content: string;
   html_content?: string; slides_content?: string;
-  form_data?: FormData;
+  form_data?: ProposalForm;
 }
 
-const defaultForm: FormData = {
+const defaultForm: ProposalForm = {
   serviceScope: [],
   clientName: "", clientCompany: "", clientIndustry: "", clientEmail: "",
+  clientWhatsapp: "", clientLogo: "",
   serviceType: "", serviceDescription: "",
   clientGoals: "", currentSituation: "",
   kpi1Name: "", kpi1Start: "", kpi1Goal: "",
@@ -113,10 +116,20 @@ const textareaCls = `${inputCls} resize-none`;
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
+const CRM_COLUMNS = [
+  { key: "draft",        label: "Borrador",        color: "border-gray-700" },
+  { key: "generada",     label: "Generada",         color: "border-emerald-700" },
+  { key: "sent",         label: "Enviada",          color: "border-blue-700" },
+  { key: "negotiating",  label: "Negociando",       color: "border-yellow-700" },
+  { key: "closed_won",   label: "Cerrada ✓",        color: "border-green-700" },
+  { key: "closed_lost",  label: "Perdida",          color: "border-red-700" },
+];
+
 export default function PropuestasPage() {
   const [view, setView]           = useState<"list" | "form" | "result">("list");
+  const [crmMode, setCrmMode]     = useState(false);
   const [step, setStep]           = useState(0);
-  const [form, setForm]           = useState<FormData>(defaultForm);
+  const [form, setForm]           = useState<ProposalForm>(defaultForm);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loadingList, setLoadingList]       = useState(true);
   const [generating, setGenerating]         = useState(false);
@@ -135,6 +148,8 @@ export default function PropuestasPage() {
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const htmlIframeRef    = useRef<HTMLIFrameElement>(null);
   const slidesIframeRef  = useRef<HTMLIFrameElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -191,7 +206,48 @@ export default function PropuestasPage() {
     setLoadingList(false);
   }
 
-  function set(field: keyof FormData, value: string) {
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/proposals/upload-logo", { method: "POST", body: fd });
+    if (res.ok) {
+      const { url } = await res.json();
+      setForm(p => ({ ...p, clientLogo: url }));
+    }
+    setUploadingLogo(false);
+  }
+
+  async function updateProposalStatus(id: string, status: string) {
+    await fetch("/api/proposals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    setProposals(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+  }
+
+  function sendViaWhatsApp(proposal: Proposal | null) {
+    const phone = (proposal?.form_data?.clientWhatsapp ?? form.clientWhatsapp).replace(/\D/g, "");
+    const name = proposal?.client_name ?? form.clientName;
+    const company = proposal?.form_data?.clientCompany ?? form.clientCompany;
+    const msg = encodeURIComponent(
+      `Hola ${name}! 👋\n\nTe comparto la propuesta comercial que preparamos especialmente para ${company || name}.\n\nQuedo disponible para cualquier consulta o para agendar una llamada. ¡Espero tu respuesta!`
+    );
+    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+  }
+
+  function sendViaEmail(proposal: Proposal | null) {
+    const email = proposal?.form_data?.clientEmail ?? form.clientEmail;
+    const name = proposal?.client_name ?? form.clientName;
+    const subject = encodeURIComponent(`Propuesta comercial para ${name}`);
+    const body = encodeURIComponent(
+      `Hola ${name},\n\nAdjunto la propuesta comercial que preparamos para ti.\nEstamos a tu disposición para resolver cualquier duda.\n\n¡Saludos!`
+    );
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, "_blank");
+  }
+
+  function set(field: keyof ProposalForm, value: string) {
     setForm((p) => ({ ...p, [field]: value }));
   }
 
@@ -559,9 +615,23 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
 
   function renderList() {
     return (
-      <div className="p-6 max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Propuestas guardadas</h2>
+      <div className="p-6 max-w-5xl">
+        <div className="flex items-center justify-between mb-6 gap-4">
+          {/* Vista toggle */}
+          <div className="flex items-center bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
+            <button
+              onClick={() => setCrmMode(false)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${!crmMode ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+            >
+              <List size={12} /> Lista
+            </button>
+            <button
+              onClick={() => setCrmMode(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${crmMode ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+            >
+              <LayoutKanban size={12} /> CRM
+            </button>
+          </div>
           <button
             onClick={() => { resetForm(); setView("form"); }}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition"
@@ -570,44 +640,132 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
           </button>
         </div>
 
-        {loadingList ? (
-          <div className="flex items-center gap-2 text-gray-500 text-sm py-8">
-            <Loader2 size={14} className="animate-spin" /> Cargando...
-          </div>
-        ) : proposals.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <FileText size={32} className="mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No hay propuestas todavía.</p>
-            <p className="text-xs mt-1">Crea tu primera propuesta con el botón de arriba.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {proposals.map((p) => {
-              const status = STATUS_LABELS[p.status] ?? STATUS_LABELS.draft;
-              return (
-                <div key={p.id} className="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white font-medium text-sm truncate">{p.client_name}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>{status.label}</span>
+        {/* CRM Kanban */}
+        {crmMode && !loadingList && (
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-4" style={{ minWidth: `${CRM_COLUMNS.length * 220}px` }}>
+              {CRM_COLUMNS.map(col => {
+                const cards = proposals.filter(p => p.status === col.key);
+                const st = STATUS_LABELS[col.key] ?? STATUS_LABELS.draft;
+                return (
+                  <div key={col.key} className="w-52 flex-shrink-0">
+                    <div className={`flex items-center justify-between mb-3 pb-2 border-b ${col.color}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${st.color}`}>{col.label}</span>
+                      <span className="text-xs text-gray-600">{cards.length}</span>
                     </div>
-                    <p className="text-gray-500 text-xs">{p.industry} · {new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                    <div className="space-y-2">
+                      {cards.map(p => {
+                        const logo = p.form_data?.clientLogo;
+                        const value = p.form_data?.price ? `${p.form_data.currency ?? "USD"} ${p.form_data.price}` : null;
+                        const nextStatuses = CRM_COLUMNS.filter(c => c.key !== p.status);
+                        return (
+                          <div key={p.id} className="p-3 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition group">
+                            {/* Logo + nombre */}
+                            <div className="flex items-center gap-2 mb-2">
+                              {logo ? (
+                                <img src={logo} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0 bg-gray-800" />
+                              ) : (
+                                <div className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                  <Building2 size={12} className="text-gray-600" />
+                                </div>
+                              )}
+                              <span className="text-white text-xs font-medium truncate">{p.client_name}</span>
+                            </div>
+                            {p.industry && <p className="text-gray-500 text-xs mb-1 truncate">{p.industry}</p>}
+                            {value && <p className="text-emerald-400 text-xs font-semibold mb-2">{value}</p>}
+                            <p className="text-gray-600 text-xs mb-3">{new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</p>
+                            {/* Acciones */}
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <button
+                                onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
+                                className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition"
+                              >Ver</button>
+                              {/* Mover a estado */}
+                              <select
+                                value={p.status}
+                                onChange={e => updateProposalStatus(p.id, e.target.value)}
+                                className="px-1 py-1 text-xs bg-gray-800 text-gray-400 rounded-lg border-0 outline-none cursor-pointer"
+                              >
+                                {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {cards.length === 0 && (
+                        <div className="py-6 text-center text-gray-700 text-xs border border-dashed border-gray-800 rounded-xl">vacío</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <button
-                      onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
-                    >
-                      Ver <ChevronRight size={12} />
-                    </button>
-                    <button onClick={() => deleteProposal(p.id)} className="p-1.5 text-gray-600 hover:text-red-400 transition">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
+        )}
+
+        {/* Lista normal */}
+        {!crmMode && (
+          loadingList ? (
+            <div className="flex items-center gap-2 text-gray-500 text-sm py-8">
+              <Loader2 size={14} className="animate-spin" /> Cargando...
+            </div>
+          ) : proposals.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <FileText size={32} className="mx-auto mb-3 opacity-30" />
+              <p className="text-sm">No hay propuestas todavía.</p>
+              <p className="text-xs mt-1">Crea tu primera propuesta con el botón de arriba.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-w-3xl">
+              {proposals.map((p) => {
+                const status = STATUS_LABELS[p.status] ?? STATUS_LABELS.draft;
+                const logo = p.form_data?.clientLogo;
+                const value = p.form_data?.price ? `${p.form_data.currency ?? "USD"} ${p.form_data.price}` : null;
+                return (
+                  <div key={p.id} className="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {logo ? (
+                        <img src={logo} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0 bg-gray-800" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0">
+                          <Building2 size={14} className="text-gray-600" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-white font-medium text-sm truncate">{p.client_name}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>{status.label}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-gray-500 text-xs truncate">{p.industry}</p>
+                          {value && <span className="text-emerald-400 text-xs font-medium flex-shrink-0">{value}</span>}
+                          <span className="text-gray-700 text-xs flex-shrink-0">{new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <select
+                        value={p.status}
+                        onChange={e => updateProposalStatus(p.id, e.target.value)}
+                        className="px-2 py-1.5 text-xs bg-gray-800 text-gray-400 rounded-lg border border-gray-700 outline-none cursor-pointer"
+                      >
+                        {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                      </select>
+                      <button
+                        onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+                      >
+                        Ver <ChevronRight size={12} />
+                      </button>
+                      <button onClick={() => deleteProposal(p.id)} className="p-1.5 text-gray-600 hover:text-red-400 transition">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
     );
@@ -670,6 +828,48 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
           {step === 1 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Datos del cliente</h2>
+
+              {/* Logo upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Logo / Imagen del cliente</label>
+                <div className="flex items-center gap-4">
+                  {form.clientLogo ? (
+                    <div className="relative flex-shrink-0">
+                      <img src={form.clientLogo} alt="Logo" className="w-16 h-16 rounded-xl object-cover bg-gray-800" />
+                      <button
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, clientLogo: "" }))}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center"
+                      >
+                        <X size={10} className="text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-gray-800 border-2 border-dashed border-gray-700 flex items-center justify-center flex-shrink-0">
+                      <Building2 size={20} className="text-gray-600" />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => { if (e.target.files?.[0]) uploadLogo(e.target.files[0]); }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-60 text-gray-300 text-xs rounded-xl transition"
+                    >
+                      {uploadingLogo ? <><Loader2 size={12} className="animate-spin" /> Subiendo...</> : <><Upload size={12} /> {form.clientLogo ? "Cambiar logo" : "Subir logo"}</>}
+                    </button>
+                    <p className="text-xs text-gray-600 mt-1">PNG, JPG o SVG. Se mostrará en el CRM y en la propuesta.</p>
+                  </div>
+                </div>
+              </div>
+
               <Field label="Nombre del cliente" required>
                 <input className={inputCls} value={form.clientName} onChange={e => set("clientName", e.target.value)} placeholder="Ej: Juan Martínez" />
               </Field>
@@ -679,9 +879,14 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
               <Field label="Industria" required>
                 <input className={inputCls} value={form.clientIndustry} onChange={e => set("clientIndustry", e.target.value)} placeholder="Ej: Salud, E-commerce, Educación..." />
               </Field>
-              <Field label="Email / Contacto">
-                <input className={inputCls} value={form.clientEmail} onChange={e => set("clientEmail", e.target.value)} placeholder="Ej: juan@empresa.com" />
-              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Email del cliente">
+                  <input className={inputCls} type="email" value={form.clientEmail} onChange={e => set("clientEmail", e.target.value)} placeholder="Ej: juan@empresa.com" />
+                </Field>
+                <Field label="WhatsApp del cliente">
+                  <input className={inputCls} type="tel" value={form.clientWhatsapp} onChange={e => set("clientWhatsapp", e.target.value)} placeholder="Ej: +521234567890" />
+                </Field>
+              </div>
             </>
           )}
 
@@ -718,15 +923,15 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
                 {[1, 2, 3].map(n => (
                   <div key={n} className="grid grid-cols-3 gap-3 mb-3">
                     <Field label={`KPI ${n} — Métrica`}>
-                      <input className={inputCls} value={(form as any)[`kpi${n}Name`]} onChange={e => set(`kpi${n}Name` as keyof FormData, e.target.value)}
+                      <input className={inputCls} value={(form as any)[`kpi${n}Name`]} onChange={e => set(`kpi${n}Name` as keyof ProposalForm, e.target.value)}
                         placeholder={n === 1 ? "Seguidores IG" : n === 2 ? "Leads/mes" : "ROAS"} />
                     </Field>
                     <Field label="Valor actual">
-                      <input className={inputCls} value={(form as any)[`kpi${n}Start`]} onChange={e => set(`kpi${n}Start` as keyof FormData, e.target.value)}
+                      <input className={inputCls} value={(form as any)[`kpi${n}Start`]} onChange={e => set(`kpi${n}Start` as keyof ProposalForm, e.target.value)}
                         placeholder={n === 1 ? "1,200" : n === 2 ? "5" : "—"} />
                     </Field>
                     <Field label="Objetivo">
-                      <input className={inputCls} value={(form as any)[`kpi${n}Goal`]} onChange={e => set(`kpi${n}Goal` as keyof FormData, e.target.value)}
+                      <input className={inputCls} value={(form as any)[`kpi${n}Goal`]} onChange={e => set(`kpi${n}Goal` as keyof ProposalForm, e.target.value)}
                         placeholder={n === 1 ? "5,000" : n === 2 ? "40" : "3x"} />
                     </Field>
                   </div>
@@ -912,12 +1117,15 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
   function renderResult() {
     const markdownContent = viewingProposal ? viewingProposal.generated_content : generatedContent;
     const title = viewingProposal ? viewingProposal.client_name : form.clientName;
+    const clientLogo = viewingProposal?.form_data?.clientLogo ?? form.clientLogo;
+    const clientEmail = viewingProposal?.form_data?.clientEmail ?? form.clientEmail;
+    const clientWhatsapp = viewingProposal?.form_data?.clientWhatsapp ?? form.clientWhatsapp;
 
     return (
       <div className="p-6 max-w-4xl">
         {/* Header — dos filas para evitar que los botones se expandan con títulos largos */}
         <div className="mb-5 space-y-3">
-          {/* Fila 1: navegación + título */}
+          {/* Fila 1: navegación + título + logo */}
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => { setView("list"); setViewingProposal(null); }}
@@ -926,6 +1134,9 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
               <ArrowLeft size={14} /> Volver
             </button>
             <span className="text-gray-600 flex-shrink-0">·</span>
+            {clientLogo && (
+              <img src={clientLogo} alt="" className="w-7 h-7 rounded-lg object-cover bg-gray-800 flex-shrink-0" />
+            )}
             <span className="text-white font-medium text-sm truncate">Propuesta — {title}</span>
           </div>
 
@@ -988,6 +1199,24 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
                 : <><RefreshCw size={12} /> Regenerar</>}
             </button>
 
+            {/* Enviar por WhatsApp */}
+            {clientWhatsapp && (
+              <button
+                onClick={() => sendViaWhatsApp(viewingProposal)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition whitespace-nowrap"
+              >
+                <MessageCircle size={11} /> WhatsApp
+              </button>
+            )}
+            {/* Enviar por Email */}
+            {clientEmail && (
+              <button
+                onClick={() => sendViaEmail(viewingProposal)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition whitespace-nowrap"
+              >
+                <Mail size={11} /> Email
+              </button>
+            )}
             {/* Guardar — solo cuando aún no tiene ID (propuesta nueva sin guardar) */}
             {!savedProposalId && !viewingProposal && (
               <button
