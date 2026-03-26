@@ -1,6 +1,35 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAnthropicForUser, noApiKeyResponse } from "@/lib/get-anthropic";
-import { MODEL } from "@/lib/anthropic";
+import { renderProposalHtml, type ProposalContent } from "@/lib/proposal-template";
+
+// Haiku is 10× cheaper than Sonnet for this task since we only generate JSON content
+const HAIKU = "claude-haiku-4-5-20251001";
+
+const JSON_SCHEMA = `{
+  "tipoServicio": "string — tipo de servicio (ej: Gestión de redes sociales)",
+  "resumenEjecutivo": "string — 2-3 oraciones que resumen la propuesta",
+  "problemasDetectados": [
+    { "titulo": "string", "descripcion": "string — 1-2 oraciones" }
+  ],
+  "solucion": {
+    "descripcion": "string — párrafo explicando la solución",
+    "puntosClave": ["string", "..."]
+  },
+  "entregables": ["string", "..."],
+  "proceso": [
+    { "numero": 1, "titulo": "string", "descripcion": "string" }
+  ],
+  "resultadosEsperados": ["string", "..."],
+  "inversion": {
+    "total": "string — ej: USD 2,500 / mes",
+    "incluye": ["string", "..."],
+    "terminos": "string — condiciones de pago"
+  },
+  "porQueNosotros": [
+    { "titulo": "string", "descripcion": "string" }
+  ],
+  "proximosPasos": ["string", "..."]
+}`;
 
 export async function POST(request: Request) {
   const { markdown, clientName, clientCompany, price } = await request.json();
@@ -24,49 +53,49 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (profile?.brand_name) agencyName = profile.brand_name;
 
-  const prompt = `Convierte esta propuesta comercial en un documento HTML completo, autónomo y visualmente impresionante para presentar al cliente.
+  const prompt = `Extrae el contenido de esta propuesta comercial y devuélvelo SOLO como JSON válido, sin markdown, sin explicaciones.
 
-PROPUESTA A CONVERTIR:
+PROPUESTA:
 ${markdown}
 
-REQUISITOS DEL HTML:
-- Documento completo con <!DOCTYPE html>, <head> y <body>
-- CSS completamente embebido (sin dependencias externas excepto Google Fonts)
-- Usa Google Fonts: @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap')
-- Diseño premium y moderno con fondo blanco y acentos en #4F46E5 (indigo)
-- Header con el nombre de la agencia "${agencyName}" a la izquierda y "Propuesta para ${clientName}${clientCompany ? ` · ${clientCompany}` : ""}" a la derecha
-- Cada sección con su propio card/bloque visual bien separado
-- La sección de inversión (precio ${price}) destacada visualmente con un box grande y llamativo
-- Lista de entregables con íconos de check (✓) en verde
-- Tipografía limpia y legible, espaciado generoso
-- Footer con nombre de la agencia y fecha de generación
-- Responsive (funciona bien en móvil)
-- Colores: fondo #FFFFFF, texto principal #111827, secundario #6B7280, acento #4F46E5, éxito #10B981
-- Sombras suaves (box-shadow) en los cards
-- IMPORTANTE: Devuelve SOLO el código HTML completo, sin explicaciones, sin markdown, sin bloques de código. Empieza directamente con <!DOCTYPE html>`;
+DATOS ADICIONALES:
+- Agencia: ${agencyName}
+- Cliente: ${clientName}${clientCompany ? ` (${clientCompany})` : ""}
+- Precio acordado: ${price}
 
-  const stream = anthropic.messages.stream({
-    model: MODEL,
-    max_tokens: 8192,
-    messages: [{ role: "user", content: prompt }],
-  });
+Devuelve exactamente este schema JSON con los datos de la propuesta. El campo "inversion.total" debe usar el precio indicado (${price}).
 
-  const readableStream = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-            controller.enqueue(new TextEncoder().encode(chunk.delta.text));
-          }
-        }
-        controller.close();
-      } catch (err) {
-        controller.error(err);
-      }
-    },
-  });
+${JSON_SCHEMA}
 
-  return new Response(readableStream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  });
+IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin bloques de código.`;
+
+  let rawJson = "";
+  try {
+    const msg = await anthropic.messages.create({
+      model: HAIKU,
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    rawJson = (msg.content[0] as { type: string; text: string }).text.trim();
+
+    // Strip possible code fences
+    rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+    const content: ProposalContent = JSON.parse(rawJson);
+    const html = renderProposalHtml(content, agencyName, clientName, clientCompany);
+
+    return new Response(html, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  } catch (err) {
+    console.error("proposal/html error:", err, "raw:", rawJson);
+    return new Response(
+      `<p style="font-family:sans-serif;padding:2rem;color:#dc2626;">
+        Error al generar la propuesta. Por favor intenta de nuevo.<br>
+        <small>${String(err)}</small>
+      </p>`,
+      { headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    );
+  }
 }
