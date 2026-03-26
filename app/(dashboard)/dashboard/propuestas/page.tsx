@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
-  Code, Download,
+  Code, Download, Layers,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -93,14 +93,16 @@ export default function PropuestasPage() {
   const [step, setStep]           = useState(0);
   const [form, setForm]           = useState<FormData>(defaultForm);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [loadingList, setLoadingList]   = useState(true);
-  const [generating, setGenerating]     = useState(false);
+  const [loadingList, setLoadingList]       = useState(true);
+  const [generating, setGenerating]         = useState(false);
   const [generatingHtml, setGeneratingHtml] = useState(false);
+  const [generatingSlides, setGeneratingSlides] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [htmlContent, setHtmlContent]           = useState("");
-  const [resultTab, setResultTab] = useState<"propuesta" | "html">("propuesta");
+  const [slidesContent, setSlidesContent]       = useState("");
+  const [resultTab, setResultTab] = useState<"propuesta" | "html" | "slides">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [copied, setCopied]       = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -297,11 +299,60 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // ─── Generate Slides (Reveal.js) ────────────────────────────────────────────
+
+  async function generateSlides(markdownContent: string) {
+    setGeneratingSlides(true);
+    setSlidesContent("");
+    setResultTab("slides");
+
+    try {
+      const res = await fetch("/api/proposals/slides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markdown: markdownContent,
+          clientName: viewingProposal?.client_name ?? form.clientName,
+          clientCompany: form.clientCompany,
+          price: `${form.currency} ${form.price}`,
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error();
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+        setSlidesContent(accumulated);
+      }
+    } catch {
+      setSlidesContent("<p>Error al generar la presentación.</p>");
+    } finally {
+      setGeneratingSlides(false);
+    }
+  }
+
+  function downloadSlides() {
+    const blob = new Blob([slidesContent], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `slides-${(viewingProposal?.client_name ?? form.clientName).toLowerCase().replace(/\s+/g, "-")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function resetForm() {
     setForm(defaultForm);
     setStep(0);
     setGeneratedContent("");
     setHtmlContent("");
+    setSlidesContent("");
     setSaved(false);
     setViewingProposal(null);
     setResultTab("propuesta");
@@ -629,12 +680,27 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
                 <Download size={12} /> Descargar HTML
               </button>
             )}
+            {resultTab === "slides" && slidesContent && (
+              <button
+                onClick={downloadSlides}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+              >
+                <Download size={12} /> Descargar Slides
+              </button>
+            )}
             <button
               onClick={() => generateHtml(markdownContent)}
               disabled={generatingHtml}
               className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
             >
               {generatingHtml ? <><Loader2 size={12} className="animate-spin" /> Generando HTML...</> : <><Code size={12} /> {htmlContent ? "Regenerar HTML" : "Generar HTML"}</>}
+            </button>
+            <button
+              onClick={() => generateSlides(markdownContent)}
+              disabled={generatingSlides}
+              className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
+            >
+              {generatingSlides ? <><Loader2 size={12} className="animate-spin" /> Generando...</> : <><Layers size={12} /> {slidesContent ? "Regenerar Slides" : "Generar Slides"}</>}
             </button>
             {!viewingProposal && (
               <button
@@ -663,6 +729,13 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
             <Code size={11} /> HTML
             {htmlContent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
           </button>
+          <button
+            onClick={() => { setResultTab("slides"); if (!slidesContent) generateSlides(markdownContent); }}
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${resultTab === "slides" ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+          >
+            <Layers size={11} /> Slides
+            {slidesContent && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+          </button>
         </div>
 
         {/* Propuesta tab */}
@@ -687,6 +760,36 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
                 style={{ height: "700px", border: "none" }}
                 title="Propuesta HTML"
               />
+            )}
+          </div>
+        )}
+
+        {/* Slides tab */}
+        {resultTab === "slides" && (
+          <div className="rounded-xl overflow-hidden border border-gray-800 bg-gray-950">
+            {generatingSlides && !slidesContent && (
+              <div className="flex items-center gap-2 p-6 text-gray-500 text-sm">
+                <Loader2 size={14} className="animate-spin" /> Generando presentación...
+              </div>
+            )}
+            {slidesContent && (
+              <>
+                <iframe
+                  srcDoc={slidesContent}
+                  className="w-full"
+                  style={{ height: "520px", border: "none" }}
+                  title="Presentación Slides"
+                />
+                <div className="px-4 py-3 border-t border-gray-800 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">← → para navegar · F para pantalla completa · ESC para salir</p>
+                  <button
+                    onClick={downloadSlides}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium rounded-lg transition"
+                  >
+                    <Download size={12} /> Descargar y abrir en pantalla completa
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}
