@@ -5,7 +5,7 @@ import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
   Code, Download, Layers, RefreshCw, Pencil, Upload, Mail,
-  MessageCircle, LayoutKanban, List, Building2, X,
+  MessageCircle, LayoutGrid, List, Building2, X,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -629,7 +629,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
               onClick={() => setCrmMode(true)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${crmMode ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
             >
-              <LayoutKanban size={12} /> CRM
+              <LayoutGrid size={12} /> CRM
             </button>
           </div>
           <button
