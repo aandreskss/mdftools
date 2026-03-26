@@ -40,7 +40,7 @@ REQUISITOS DEL HTML:
 
   const stream = anthropic.messages.stream({
     model: MODEL,
-    max_tokens: 4096,
+    max_tokens: 8192,
     messages: [{ role: "user", content: prompt }],
   });
 
