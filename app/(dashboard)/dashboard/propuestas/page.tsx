@@ -102,6 +102,8 @@ export default function PropuestasPage() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [htmlContent, setHtmlContent]           = useState("");
   const [slidesContent, setSlidesContent]       = useState("");
+  const [htmlBlobUrl, setHtmlBlobUrl]           = useState("");
+  const [slidesBlobUrl, setSlidesBlobUrl]       = useState("");
   const [resultTab, setResultTab] = useState<"propuesta" | "html" | "slides">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [copied, setCopied]       = useState(false);
@@ -112,6 +114,21 @@ export default function PropuestasPage() {
   useEffect(() => {
     if (generating) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [generatedContent, generating]);
+
+  // Blob URLs para iframes ‚Äî evita restricci√≥n de origen null de srcDoc
+  useEffect(() => {
+    if (!htmlContent) return;
+    const url = URL.createObjectURL(new Blob([htmlContent], { type: "text/html" }));
+    setHtmlBlobUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [htmlContent]);
+
+  useEffect(() => {
+    if (!slidesContent) return;
+    const url = URL.createObjectURL(new Blob([slidesContent], { type: "text/html" }));
+    setSlidesBlobUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [slidesContent]);
 
   async function fetchProposals() {
     setLoadingList(true);
@@ -361,6 +378,8 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
     setGeneratedContent("");
     setHtmlContent("");
     setSlidesContent("");
+    setHtmlBlobUrl("");
+    setSlidesBlobUrl("");
     setSaved(false);
     setViewingProposal(null);
     setResultTab("propuesta");
@@ -756,14 +775,14 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         {/* HTML tab */}
         {resultTab === "html" && (
           <div className="rounded-xl overflow-hidden border border-gray-800">
-            {generatingHtml && !htmlContent && (
+            {generatingHtml && !htmlBlobUrl && (
               <div className="flex items-center gap-2 p-6 text-gray-500 text-sm bg-gray-900">
                 <Loader2 size={14} className="animate-spin" /> Generando versi√≥n HTML...
               </div>
             )}
-            {htmlContent && (
+            {htmlBlobUrl && (
               <iframe
-                srcDoc={htmlContent}
+                src={htmlBlobUrl}
                 className="w-full bg-white"
                 style={{ height: "700px", border: "none" }}
                 title="Propuesta HTML"
@@ -775,15 +794,15 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         {/* Slides tab */}
         {resultTab === "slides" && (
           <div className="rounded-xl overflow-hidden border border-gray-800 bg-gray-950">
-            {generatingSlides && !slidesContent && (
+            {generatingSlides && !slidesBlobUrl && (
               <div className="flex items-center gap-2 p-6 text-gray-500 text-sm">
                 <Loader2 size={14} className="animate-spin" /> Generando presentaci√≥n...
               </div>
             )}
-            {slidesContent && (
+            {slidesBlobUrl && (
               <>
                 <iframe
-                  srcDoc={slidesContent}
+                  src={slidesBlobUrl}
                   className="w-full"
                   style={{ height: "520px", border: "none" }}
                   title="Presentaci√≥n Slides"
