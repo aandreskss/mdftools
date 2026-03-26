@@ -104,11 +104,15 @@ export default function PropuestasPage() {
   const [htmlContent, setHtmlContent]     = useState("");
   const [slidesContent, setSlidesContent] = useState("");
   const [previewId, setPreviewId]         = useState<string | null>(null);
-  const [previewTs, setPreviewTs]         = useState(0); // fuerza recarga del iframe
+  const [previewTs, setPreviewTs]         = useState(0);
+  const [htmlIframeKey, setHtmlIframeKey]     = useState(0);
+  const [slidesIframeKey, setSlidesIframeKey] = useState(0);
   const [resultTab, setResultTab] = useState<"propuesta" | "html" | "slides">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
+  const htmlIframeRef    = useRef<HTMLIFrameElement>(null);
+  const slidesIframeRef  = useRef<HTMLIFrameElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchProposals(); }, []);
@@ -125,7 +129,34 @@ export default function PropuestasPage() {
     setHtmlContent(viewingProposal.html_content ?? "");
     setSlidesContent(viewingProposal.slides_content ?? "");
     setPreviewTs(Date.now());
+    if (viewingProposal.html_content) setHtmlIframeKey(k => k + 1);
+    if (viewingProposal.slides_content) setSlidesIframeKey(k => k + 1);
   }, [viewingProposal]);
+
+  // Escribir HTML directamente al DOM del iframe (hereda origen del padre ‚Üí CDN funciona)
+  useEffect(() => {
+    if (!htmlContent) return;
+    const write = () => {
+      const iframe = htmlIframeRef.current;
+      if (!iframe) return;
+      const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+      if (doc) { doc.open(); doc.write(htmlContent); doc.close(); }
+    };
+    const t = setTimeout(write, 80);
+    return () => clearTimeout(t);
+  }, [htmlContent, htmlIframeKey]);
+
+  useEffect(() => {
+    if (!slidesContent) return;
+    const write = () => {
+      const iframe = slidesIframeRef.current;
+      if (!iframe) return;
+      const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+      if (doc) { doc.open(); doc.write(slidesContent); doc.close(); }
+    };
+    const t = setTimeout(write, 80);
+    return () => clearTimeout(t);
+  }, [slidesContent, slidesIframeKey]);
 
   async function fetchProposals() {
     setLoadingList(true);
@@ -280,6 +311,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         });
         setPreviewId(id);
         setPreviewTs(Date.now());
+        setHtmlIframeKey(k => k + 1);
         await fetchProposals();
       }
     } catch {
@@ -382,6 +414,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         });
         setPreviewId(id);
         setPreviewTs(Date.now());
+        setSlidesIframeKey(k => k + 1);
         await fetchProposals();
       }
     } catch {
@@ -809,18 +842,18 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
                 <Loader2 size={14} className="animate-spin" /> Generando versi√≥n HTML...
               </div>
             )}
-            {!generatingHtml && previewId && htmlContent && (
+            {!generatingHtml && htmlContent && (
               <iframe
-                key={`html-${previewId}-${previewTs}`}
-                src={`/api/proposals/${previewId}/html?t=${previewTs}`}
+                key={htmlIframeKey}
+                ref={htmlIframeRef}
                 className="w-full bg-white"
                 style={{ height: "700px", border: "none" }}
                 title="Propuesta HTML"
               />
             )}
-            {!generatingHtml && !previewId && htmlContent && (
-              <div className="p-6 text-gray-500 text-sm bg-gray-900">
-                Guarda la propuesta para ver el preview.
+            {!generatingHtml && !htmlContent && (
+              <div className="p-8 text-gray-500 text-sm bg-gray-900 text-center">
+                Haz click en "Generar HTML" para crear la versi√≥n visual.
               </div>
             )}
           </div>
@@ -834,11 +867,11 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
                 <Loader2 size={14} className="animate-spin" /> Generando presentaci√≥n...
               </div>
             )}
-            {!generatingSlides && previewId && slidesContent && (
+            {!generatingSlides && slidesContent && (
               <>
                 <iframe
-                  key={`slides-${previewId}-${previewTs}`}
-                  src={`/api/proposals/${previewId}/slides?t=${previewTs}`}
+                  key={slidesIframeKey}
+                  ref={slidesIframeRef}
                   className="w-full"
                   style={{ height: "520px", border: "none" }}
                   title="Presentaci√≥n Slides"
@@ -854,9 +887,9 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
                 </div>
               </>
             )}
-            {!generatingSlides && !previewId && slidesContent && (
-              <div className="p-6 text-gray-500 text-sm">
-                Guarda la propuesta para ver el preview.
+            {!generatingSlides && !slidesContent && (
+              <div className="p-8 text-gray-500 text-sm text-center">
+                Haz click en "Generar Slides" para crear la presentaci√≥n.
               </div>
             )}
           </div>
