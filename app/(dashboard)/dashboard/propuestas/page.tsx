@@ -615,7 +615,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
 
   function renderList() {
     return (
-      <div className="p-6 max-w-5xl">
+      <div className="p-6">
         <div className="flex items-center justify-between mb-6 gap-4">
           {/* Vista toggle */}
           <div className="flex items-center bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
@@ -642,7 +642,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
 
         {/* CRM Kanban */}
         {crmMode && !loadingList && (
-          <div className="overflow-x-auto pb-4">
+          <div className="overflow-x-auto pb-4 -mx-6 px-6">
             <div className="flex gap-4" style={{ minWidth: `${CRM_COLUMNS.length * 220}px` }}>
               {CRM_COLUMNS.map(col => {
                 const cards = proposals.filter(p => p.status === col.key);
