@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       generated_content: body.generatedContent ?? "",
       html_content: body.htmlContent ?? "",
       slides_content: body.slidesContent ?? "",
-      status: "draft",
+      status: body.status ?? "draft",
     })
     .select("id")
     .single();
@@ -51,8 +51,10 @@ export async function PATCH(request: Request) {
   const { id, ...fields } = body;
 
   const allowed: Record<string, string> = {};
-  if ("html_content"   in fields) allowed.html_content   = fields.html_content;
-  if ("slides_content" in fields) allowed.slides_content = fields.slides_content;
+  if ("html_content"      in fields) allowed.html_content      = fields.html_content;
+  if ("slides_content"    in fields) allowed.slides_content    = fields.slides_content;
+  if ("generated_content" in fields) allowed.generated_content = fields.generated_content;
+  if ("status"            in fields) allowed.status            = fields.status;
 
   if (Object.keys(allowed).length === 0)
     return NextResponse.json({ error: "Nada que actualizar" }, { status: 400 });

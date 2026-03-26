@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
-  Code, Download, Layers,
+  Code, Download, Layers, RefreshCw,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -47,7 +47,8 @@ const SERVICE_TYPES = [
 const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "PEN", "CLP"];
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  draft:        { label: "Borrador",        color: "bg-gray-500/20 text-gray-400" },
+  generada:     { label: "Generada",         color: "bg-emerald-500/20 text-emerald-400" },
+  draft:        { label: "Borrador",         color: "bg-gray-500/20 text-gray-400" },
   sent:         { label: "Enviada",         color: "bg-blue-500/20 text-blue-400" },
   negotiating:  { label: "En negociaci√≥n",  color: "bg-yellow-500/20 text-yellow-400" },
   closed_won:   { label: "Cerrada ‚úì",       color: "bg-green-500/20 text-green-400" },
@@ -254,6 +255,20 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
 
       setView("result");
       setResultTab("propuesta");
+
+      // Si la propuesta ya estaba guardada, actualiza el contenido y elimina el borrador
+      if (savedProposalId && accumulated) {
+        await fetch("/api/proposals", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: savedProposalId,
+            generated_content: accumulated,
+            status: "generada",
+          }),
+        });
+        await fetchProposals();
+      }
     } catch {
       setGeneratedContent("Error al generar la propuesta. Intenta de nuevo.");
       setView("result");
@@ -352,6 +367,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         generatedContent,
         htmlContent,
         slidesContent,
+        status: "generada",
       }),
     });
     if (res.ok) {
@@ -805,13 +821,28 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
               {generatingSlides ? <><Loader2 size={12} className="animate-spin" /> Generando...</> : <><Layers size={12} /> {slidesContent ? "Regenerar Slides" : "Generar Slides"}</>}
             </button>
             {!viewingProposal && (
-              <button
-                onClick={saveProposal}
-                disabled={saving || saved}
-                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
-              >
-                {saved ? <><Check size={12} /> Guardada</> : saving ? <><Loader2 size={12} className="animate-spin" /> Guardando...</> : <><Save size={12} /> Guardar</>}
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setHtmlContent("");
+                    setSlidesContent("");
+                    generate();
+                  }}
+                  disabled={generating}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-60 text-gray-300 hover:text-white text-xs font-medium rounded-lg transition"
+                >
+                  {generating
+                    ? <><Loader2 size={12} className="animate-spin" /> Regenerando...</>
+                    : <><RefreshCw size={12} /> Regenerar</>}
+                </button>
+                <button
+                  onClick={saveProposal}
+                  disabled={saving || saved}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
+                >
+                  {saved ? <><Check size={12} /> Guardada</> : saving ? <><Loader2 size={12} className="animate-spin" /> Guardando...</> : <><Save size={12} /> Guardar</>}
+                </button>
+              </>
             )}
           </div>
         </div>
