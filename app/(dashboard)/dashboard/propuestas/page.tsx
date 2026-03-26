@@ -218,6 +218,14 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
 
   // ─── Generate HTML ───────────────────────────────────────────────────────────
 
+  function stripFences(content: string): string {
+    return content
+      .replace(/^```html\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```\s*$/, "")
+      .trim();
+  }
+
   async function generateHtml(markdownContent: string) {
     setGeneratingHtml(true);
     setHtmlContent("");
@@ -245,7 +253,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
-        setHtmlContent(accumulated);
+        setHtmlContent(stripFences(accumulated));
       }
     } catch {
       setHtmlContent("<p>Error al generar el HTML.</p>");
@@ -328,7 +336,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
-        setSlidesContent(accumulated);
+        setSlidesContent(stripFences(accumulated));
       }
     } catch {
       setSlidesContent("<p>Error al generar la presentación.</p>");
