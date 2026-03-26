@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
+  Code, Download,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -11,35 +12,18 @@ import ReactMarkdown from "react-markdown";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FormData {
-  // Step 1
-  clientName: string;
-  clientCompany: string;
-  clientIndustry: string;
-  clientEmail: string;
-  // Step 2
-  serviceType: string;
-  serviceDescription: string;
-  // Step 3
-  clientGoals: string;
-  currentSituation: string;
-  // Step 4
-  deliverables: string;
-  duration: string;
-  frequency: string;
-  notIncluded: string;
-  // Step 5
-  price: string;
-  currency: string;
-  paymentTerms: string;
+  clientName: string; clientCompany: string; clientIndustry: string; clientEmail: string;
+  serviceType: string; serviceDescription: string;
+  clientGoals: string; currentSituation: string;
+  deliverables: string; duration: string; frequency: string; notIncluded: string;
+  problemasDetectados: string; problemaRedesSociales: string;
+  problemaWebLanding: string; debilidadesDetectadas: string; fortalezasDetectadas: string;
+  price: string; currency: string; paymentTerms: string;
 }
 
 interface Proposal {
-  id: string;
-  client_name: string;
-  industry: string;
-  status: string;
-  created_at: string;
-  generated_content: string;
+  id: string; client_name: string; industry: string;
+  status: string; created_at: string; generated_content: string;
 }
 
 const defaultForm: FormData = {
@@ -47,31 +31,29 @@ const defaultForm: FormData = {
   serviceType: "", serviceDescription: "",
   clientGoals: "", currentSituation: "",
   deliverables: "", duration: "", frequency: "", notIncluded: "",
+  problemasDetectados: "", problemaRedesSociales: "",
+  problemaWebLanding: "", debilidadesDetectadas: "", fortalezasDetectadas: "",
   price: "", currency: "USD", paymentTerms: "",
 };
 
 const SERVICE_TYPES = [
-  "Gestión de redes sociales",
-  "Creación de contenido",
-  "SEO y posicionamiento",
-  "Publicidad pagada (Meta/Google Ads)",
-  "Diseño web / Landing page",
-  "Email marketing",
-  "Consultoría de marketing",
-  "Otro",
+  "Gestión de redes sociales", "Creación de contenido",
+  "SEO y posicionamiento", "Publicidad pagada (Meta/Google Ads)",
+  "Diseño web / Landing page", "Email marketing",
+  "Consultoría de marketing", "Otro",
 ];
 
 const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "PEN", "CLP"];
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  draft: { label: "Borrador", color: "bg-gray-500/20 text-gray-400" },
-  sent: { label: "Enviada", color: "bg-blue-500/20 text-blue-400" },
-  negotiating: { label: "En negociación", color: "bg-yellow-500/20 text-yellow-400" },
-  closed_won: { label: "Cerrada ✓", color: "bg-green-500/20 text-green-400" },
-  closed_lost: { label: "Cerrada ✗", color: "bg-red-500/20 text-red-400" },
+  draft:        { label: "Borrador",        color: "bg-gray-500/20 text-gray-400" },
+  sent:         { label: "Enviada",         color: "bg-blue-500/20 text-blue-400" },
+  negotiating:  { label: "En negociación",  color: "bg-yellow-500/20 text-yellow-400" },
+  closed_won:   { label: "Cerrada ✓",       color: "bg-green-500/20 text-green-400" },
+  closed_lost:  { label: "Cerrada ✗",       color: "bg-red-500/20 text-red-400" },
 };
 
-const STEPS = ["Cliente", "Servicio", "Objetivos", "Alcance", "Inversión", "Generar"];
+const STEPS = ["Cliente", "Servicio", "Objetivos", "Alcance", "Diagnóstico", "Inversión", "Generar"];
 
 // ─── Markdown components ───────────────────────────────────────────────────────
 
@@ -89,11 +71,12 @@ const mdComponents = {
 
 // ─── Input helpers ─────────────────────────────────────────────────────────────
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-300 mb-1.5">
         {label} {required && <span className="text-red-400">*</span>}
+        {hint && <span className="text-gray-500 font-normal ml-1 text-xs">({hint})</span>}
       </label>
       {children}
     </div>
@@ -106,22 +89,23 @@ const textareaCls = `${inputCls} resize-none`;
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function PropuestasPage() {
-  const [view, setView] = useState<"list" | "form" | "result">("list");
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormData>(defaultForm);
+  const [view, setView]           = useState<"list" | "form" | "result">("list");
+  const [step, setStep]           = useState(0);
+  const [form, setForm]           = useState<FormData>(defaultForm);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [loadingList, setLoadingList]   = useState(true);
+  const [generating, setGenerating]     = useState(false);
+  const [generatingHtml, setGeneratingHtml] = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [saved, setSaved]         = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
+  const [htmlContent, setHtmlContent]           = useState("");
+  const [resultTab, setResultTab] = useState<"propuesta" | "html">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied]       = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchProposals();
-  }, []);
+  useEffect(() => { fetchProposals(); }, []);
 
   useEffect(() => {
     if (generating) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -143,13 +127,25 @@ export default function PropuestasPage() {
     if (step === 1) return !!form.serviceType && !!form.serviceDescription;
     if (step === 2) return !!form.clientGoals;
     if (step === 3) return !!form.deliverables && !!form.duration;
-    if (step === 4) return !!form.price && !!form.paymentTerms;
+    if (step === 4) return true; // Diagnóstico: todos opcionales
+    if (step === 5) return !!form.price && !!form.paymentTerms;
     return true;
   }
+
+  // ─── Generate proposal (markdown) ───────────────────────────────────────────
 
   async function generate() {
     setGenerating(true);
     setGeneratedContent("");
+    setHtmlContent("");
+
+    const diagnostico = [
+      form.problemasDetectados    && `**Problemas generales detectados:**\n${form.problemasDetectados}`,
+      form.problemaRedesSociales  && `**Problemas en redes sociales:**\n${form.problemaRedesSociales}`,
+      form.problemaWebLanding     && `**Problemas en web / landing page:**\n${form.problemaWebLanding}`,
+      form.debilidadesDetectadas  && `**Debilidades detectadas:**\n${form.debilidadesDetectadas}`,
+      form.fortalezasDetectadas   && `**Fortalezas detectadas:**\n${form.fortalezasDetectadas}`,
+    ].filter(Boolean).join("\n\n");
 
     const prompt = `Genera una propuesta comercial completa, profesional y persuasiva con los siguientes datos:
 
@@ -161,27 +157,28 @@ ${form.serviceDescription}
 
 **OBJETIVOS DEL CLIENTE:**
 ${form.clientGoals}
+${form.currentSituation ? `\n**SITUACIÓN ACTUAL:**\n${form.currentSituation}` : ""}
 
-${form.currentSituation ? `**SITUACIÓN ACTUAL DEL CLIENTE:**\n${form.currentSituation}\n` : ""}
 **ALCANCE Y ENTREGABLES:**
 ${form.deliverables}
 - Duración: ${form.duration}
 ${form.frequency ? `- Frecuencia: ${form.frequency}` : ""}
 ${form.notIncluded ? `- NO incluye: ${form.notIncluded}` : ""}
+${diagnostico ? `\n**DIAGNÓSTICO PREVIO:**\n${diagnostico}` : ""}
 
 **INVERSIÓN:** ${form.currency} ${form.price}
 **TÉRMINOS DE PAGO:** ${form.paymentTerms}
 
-La propuesta debe tener estas secciones:
+La propuesta debe incluir:
 1. Carta de presentación personalizada al cliente
-2. Entendimiento del negocio y sus objetivos
+2. Diagnóstico: problemas detectados y por qué son urgentes de resolver
 3. Nuestra propuesta y metodología de trabajo
 4. Entregables y alcance detallado
 5. Inversión y condiciones de pago
-6. Por qué elegirnos (diferenciadores clave)
+6. Por qué elegirnos (fortalezas y diferenciadores)
 7. Próximos pasos y llamada a la acción
 
-Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del cliente en varios puntos.`;
+Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagnóstico previo, úsalo para reforzar la urgencia y el valor de la propuesta.`;
 
     try {
       const res = await fetch("/api/chat", {
@@ -208,6 +205,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
       }
 
       setView("result");
+      setResultTab("propuesta");
     } catch {
       setGeneratedContent("Error al generar la propuesta. Intenta de nuevo.");
       setView("result");
@@ -215,6 +213,56 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
       setGenerating(false);
     }
   }
+
+  // ─── Generate HTML ───────────────────────────────────────────────────────────
+
+  async function generateHtml(markdownContent: string) {
+    setGeneratingHtml(true);
+    setHtmlContent("");
+    setResultTab("html");
+
+    try {
+      const res = await fetch("/api/proposals/html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markdown: markdownContent,
+          clientName: viewingProposal?.client_name ?? form.clientName,
+          clientCompany: form.clientCompany,
+          price: `${form.currency} ${form.price}`,
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error();
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+        setHtmlContent(accumulated);
+      }
+    } catch {
+      setHtmlContent("<p>Error al generar el HTML.</p>");
+    } finally {
+      setGeneratingHtml(false);
+    }
+  }
+
+  function downloadHtml() {
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `propuesta-${(viewingProposal?.client_name ?? form.clientName).toLowerCase().replace(/\s+/g, "-")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ─── Save / Delete ───────────────────────────────────────────────────────────
 
   async function saveProposal() {
     setSaving(true);
@@ -253,8 +301,10 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
     setForm(defaultForm);
     setStep(0);
     setGeneratedContent("");
+    setHtmlContent("");
     setSaved(false);
     setViewingProposal(null);
+    setResultTab("propuesta");
   }
 
   // ─── Views ──────────────────────────────────────────────────────────────────
@@ -297,15 +347,12 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     <button
-                      onClick={() => { setViewingProposal(p); setView("result"); }}
+                      onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
                       className="flex items-center gap-1 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
                     >
                       Ver <ChevronRight size={12} />
                     </button>
-                    <button
-                      onClick={() => deleteProposal(p.id)}
-                      className="p-1.5 text-gray-600 hover:text-red-400 transition"
-                    >
+                    <button onClick={() => deleteProposal(p.id)} className="p-1.5 text-gray-600 hover:text-red-400 transition">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -322,24 +369,25 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
     return (
       <div className="p-6 max-w-2xl">
         {/* Step indicators */}
-        <div className="flex items-center gap-1 mb-8">
+        <div className="flex items-center gap-1 mb-8 flex-wrap">
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-1">
-              <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition ${
+              <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition flex-shrink-0 ${
                 i < step ? "bg-emerald-600 text-white" :
-                i === step ? "bg-indigo-600 text-white" :
-                "bg-gray-800 text-gray-500"
+                i === step ? "bg-indigo-600 text-white" : "bg-gray-800 text-gray-500"
               }`}>
                 {i < step ? "✓" : i + 1}
               </div>
               <span className={`text-xs hidden sm:block ${i === step ? "text-white font-medium" : "text-gray-500"}`}>{s}</span>
-              {i < STEPS.length - 1 && <div className={`w-6 h-px ${i < step ? "bg-emerald-600" : "bg-gray-800"}`} />}
+              {i < STEPS.length - 1 && <div className={`w-4 h-px ${i < step ? "bg-emerald-600" : "bg-gray-800"}`} />}
             </div>
           ))}
         </div>
 
         {/* Step content */}
         <div className="space-y-5 mb-8">
+
+          {/* PASO 1 — Cliente */}
           {step === 0 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Datos del cliente</h2>
@@ -358,6 +406,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             </>
           )}
 
+          {/* PASO 2 — Servicio */}
           {step === 1 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Servicio a cotizar</h2>
@@ -381,6 +430,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             </>
           )}
 
+          {/* PASO 3 — Objetivos */}
           {step === 2 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Objetivos del cliente</h2>
@@ -395,6 +445,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             </>
           )}
 
+          {/* PASO 4 — Alcance */}
           {step === 3 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Alcance del proyecto</h2>
@@ -417,7 +468,42 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             </>
           )}
 
+          {/* PASO 5 — Diagnóstico */}
           {step === 4 && (
+            <>
+              <h2 className="text-base font-semibold text-white mb-1">Diagnóstico del cliente</h2>
+              <p className="text-xs text-gray-500 mb-5">Todos los campos son opcionales. Cuanto más detailles, más personalizada será la propuesta.</p>
+
+              <Field label="Problemas generales detectados" hint="opcional">
+                <textarea className={textareaCls} rows={3} value={form.problemasDetectados} onChange={e => set("problemasDetectados", e.target.value)}
+                  placeholder="Ej: No tienen estrategia de contenido definida, sin identidad visual consistente..." />
+              </Field>
+
+              <Field label="Problemas en redes sociales" hint="opcional">
+                <textarea className={textareaCls} rows={3} value={form.problemaRedesSociales} onChange={e => set("problemaRedesSociales", e.target.value)}
+                  placeholder="Ej: Publicaciones irregulares, bajo engagement, sin uso de reels ni stories, sin bio optimizada..." />
+              </Field>
+
+              <Field label="Problemas en web / landing page" hint="opcional">
+                <textarea className={textareaCls} rows={3} value={form.problemaWebLanding} onChange={e => set("problemaWebLanding", e.target.value)}
+                  placeholder="Ej: Carga lenta, sin SEO, sin CTA claros, diseño desactualizado, sin versión móvil..." />
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Debilidades detectadas" hint="opcional">
+                  <textarea className={textareaCls} rows={3} value={form.debilidadesDetectadas} onChange={e => set("debilidadesDetectadas", e.target.value)}
+                    placeholder="Ej: Sin presupuesto para ads, equipo pequeño, competencia muy activa..." />
+                </Field>
+                <Field label="Fortalezas detectadas" hint="opcional">
+                  <textarea className={textareaCls} rows={3} value={form.fortalezasDetectadas} onChange={e => set("fortalezasDetectadas", e.target.value)}
+                    placeholder="Ej: Producto de calidad, buenas reseñas, base de clientes fieles, ubicación estratégica..." />
+                </Field>
+              </div>
+            </>
+          )}
+
+          {/* PASO 6 — Inversión */}
+          {step === 5 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Inversión</h2>
               <div className="flex gap-3">
@@ -437,7 +523,8 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             </>
           )}
 
-          {step === 5 && (
+          {/* PASO 7 — Revisar y generar */}
+          {step === 6 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Revisar y generar</h2>
               <div className="space-y-3 text-sm">
@@ -447,6 +534,8 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
                   ["Duración", form.duration],
                   ["Inversión", `${form.currency} ${form.price}`],
                   ["Pago", form.paymentTerms],
+                  ...(form.problemasDetectados || form.problemaRedesSociales || form.problemaWebLanding
+                    ? [["Diagnóstico", "Incluido ✓"]] : []),
                 ].map(([k, v]) => (
                   <div key={k} className="flex gap-3">
                     <span className="text-gray-500 w-24 flex-shrink-0">{k}</span>
@@ -455,7 +544,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
                 ))}
               </div>
               <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente.</p>
+                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente. También podrás exportarla como HTML.</p>
               </div>
             </>
           )}
@@ -470,7 +559,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             <ArrowLeft size={14} /> {step === 0 ? "Cancelar" : "Anterior"}
           </button>
 
-          {step < 5 ? (
+          {step < 6 ? (
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={!canNext()}
@@ -495,7 +584,7 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             <div className="flex items-center gap-2 mb-3 text-emerald-400 text-xs font-medium">
               <Sparkles size={12} /> Generando propuesta...
             </div>
-            <div className="text-sm prose prose-invert max-w-none">
+            <div className="text-sm">
               <ReactMarkdown components={mdComponents}>{generatedContent}</ReactMarkdown>
             </div>
             <div ref={bottomRef} />
@@ -506,12 +595,13 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
   }
 
   function renderResult() {
-    const content = viewingProposal ? viewingProposal.generated_content : generatedContent;
+    const markdownContent = viewingProposal ? viewingProposal.generated_content : generatedContent;
     const title = viewingProposal ? viewingProposal.client_name : form.clientName;
 
     return (
-      <div className="p-6 max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-6 max-w-4xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setView("list"); setViewingProposal(null); }}
@@ -523,11 +613,28 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
             <span className="text-white font-medium text-sm">Propuesta — {title}</span>
           </div>
           <div className="flex items-center gap-2">
+            {resultTab === "propuesta" && (
+              <button
+                onClick={() => copyContent(markdownContent)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+              >
+                {copied ? <><Check size={12} className="text-green-400" /> Copiado</> : <><Copy size={12} /> Copiar</>}
+              </button>
+            )}
+            {resultTab === "html" && htmlContent && (
+              <button
+                onClick={downloadHtml}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+              >
+                <Download size={12} /> Descargar HTML
+              </button>
+            )}
             <button
-              onClick={() => copyContent(content)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+              onClick={() => generateHtml(markdownContent)}
+              disabled={generatingHtml}
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
             >
-              {copied ? <><Check size={12} className="text-green-400" /> Copiado</> : <><Copy size={12} /> Copiar</>}
+              {generatingHtml ? <><Loader2 size={12} className="animate-spin" /> Generando HTML...</> : <><Code size={12} /> {htmlContent ? "Regenerar HTML" : "Generar HTML"}</>}
             </button>
             {!viewingProposal && (
               <button
@@ -541,14 +648,53 @@ Usa formato profesional, tono cercano pero serio. Personaliza con el nombre del 
           </div>
         </div>
 
-        <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl text-sm">
-          <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>
+        {/* Tabs */}
+        <div className="flex gap-1 mb-5 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setResultTab("propuesta")}
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${resultTab === "propuesta" ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+          >
+            Propuesta (Markdown)
+          </button>
+          <button
+            onClick={() => { setResultTab("html"); if (!htmlContent) generateHtml(markdownContent); }}
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${resultTab === "html" ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+          >
+            <Code size={11} /> HTML
+            {htmlContent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+          </button>
         </div>
+
+        {/* Propuesta tab */}
+        {resultTab === "propuesta" && (
+          <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl text-sm">
+            <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+          </div>
+        )}
+
+        {/* HTML tab */}
+        {resultTab === "html" && (
+          <div className="rounded-xl overflow-hidden border border-gray-800">
+            {generatingHtml && !htmlContent && (
+              <div className="flex items-center gap-2 p-6 text-gray-500 text-sm bg-gray-900">
+                <Loader2 size={14} className="animate-spin" /> Generando versión HTML...
+              </div>
+            )}
+            {htmlContent && (
+              <iframe
+                srcDoc={htmlContent}
+                className="w-full bg-white"
+                style={{ height: "700px", border: "none" }}
+                title="Propuesta HTML"
+              />
+            )}
+          </div>
+        )}
       </div>
     );
   }
 
-  // ─── Page ────────────────────────────────────────────────────────────────────
+  // ─── Page shell ──────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col h-screen">
