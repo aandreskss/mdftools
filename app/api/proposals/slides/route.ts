@@ -1,6 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropicForUser, noApiKeyResponse } from "@/lib/get-anthropic";
-import { MODEL } from "@/lib/anthropic";
+import { getUserSettings, noApiKeyResponse } from "@/lib/user-settings";
+import { renderSlidesHtml } from "@/lib/slides-template";
+import type { ProposalContent } from "@/lib/proposal-template";
+
+const JSON_SCHEMA = `{
+  "tipoServicio": "string",
+  "resumenEjecutivo": "string",
+  "problemasDetectados": [{ "titulo": "string", "descripcion": "string" }],
+  "solucion": { "descripcion": "string", "puntosClave": ["string"] },
+  "entregables": ["string"],
+  "proceso": [{ "numero": 1, "titulo": "string", "descripcion": "string" }],
+  "resultadosEsperados": ["string"],
+  "inversion": { "total": "string", "incluye": ["string"], "terminos": "string" },
+  "porQueNosotros": [{ "titulo": "string", "descripcion": "string" }],
+  "proximosPasos": ["string"]
+}`;
 
 export async function POST(request: Request) {
   const { markdown, clientName, clientCompany, price } = await request.json();
@@ -9,9 +23,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
 
-  let anthropic;
+  let settings;
   try {
-    anthropic = await getAnthropicForUser(supabase, user.id);
+    settings = await getUserSettings(supabase, user.id);
   } catch {
     return noApiKeyResponse();
   }
@@ -24,80 +38,48 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (profile?.brand_name) agencyName = profile.brand_name;
 
-  const prompt = `Genera una presentación completa en Reveal.js basada en esta propuesta comercial.
+  const prompt = `Extrae el contenido de esta propuesta comercial y devuélvelo SOLO como JSON válido.
 
 PROPUESTA:
 ${markdown}
 
 DATOS:
 - Agencia: ${agencyName}
-- Cliente: ${clientName}${clientCompany ? ` · ${clientCompany}` : ""}
-- Inversión: ${price}
+- Cliente: ${clientName}${clientCompany ? ` (${clientCompany})` : ""}
+- Precio: ${price}
 
-REQUISITOS TÉCNICOS:
-- Documento HTML completo y autónomo (<!DOCTYPE html>)
-- Usa Reveal.js 4.6.0 desde CDN: https://cdn.jsdelivr.net/npm/reveal.js@4.6.0/dist/
-- Google Fonts: Inter (weights 300, 400, 600, 700, 800)
-- SOLO devuelve el HTML, sin explicaciones, sin markdown wrappers
+El campo "inversion.total" debe usar el precio indicado (${price}).
+Mantén los textos breves y directos (para slides de presentación).
 
-DISEÑO:
-- Fondo oscuro: #0A0F1E (casi negro azulado)
-- Acento principal: #6366F1 (indigo)
-- Acento secundario: #10B981 (verde esmeralda)
-- Texto: #F1F5F9
-- Texto secundario: #94A3B8
-- Fuente: Inter
-- Estilo: premium, moderno, minimalista
+${JSON_SCHEMA}
 
-SLIDES A GENERAR (8-10 slides):
-1. PORTADA — Título grande con nombre del cliente, subtítulo con tipo de servicio, logo/nombre de la agencia abajo, fecha
-2. EL PROBLEMA — Diagnóstico visual: problemas detectados presentados como pain points con íconos o bullets impactantes
-3. NUESTRA SOLUCIÓN — Qué ofrecemos, enfoque y metodología en puntos clave
-4. ENTREGABLES — Lista visual de qué recibirá el cliente, con checkmarks verdes
-5. PROCESO / CÓMO TRABAJAMOS — Pasos del proceso (si hay metodología en la propuesta)
-6. RESULTADOS ESPERADOS — Qué logrará el cliente, métricas o beneficios
-7. INVERSIÓN — Slide de precio: número grande y destacado, términos de pago, qué incluye
-8. POR QUÉ NOSOTROS — Diferenciadores y fortalezas en formato visual
-9. PRÓXIMOS PASOS — Call to action claro con pasos concretos para cerrar
+IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin bloques de código.`;
 
-CSS REQUERIDO (embed en <style>):
-- .reveal .slides section { padding: 40px 60px; }
-- Slide de portada con gradiente de fondo especial
-- Slide de inversión con el precio en fuente grande (4-5rem) color acento
-- Bullets con animación fragment (appear)
-- Números/stats grandes y llamativos
-- Cards con border-radius y sutil border
-- Transición: fade entre slides
-- Progress bar visible
+  let rawJson = "";
+  try {
+    const msg = await settings.anthropic.messages.create({
+      model: settings.modelProposals,
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    });
 
-IMPORTANTE:
-- Usa <section data-background-color> para variar el fondo sutilmente en slides clave
-- La slide de inversión debe tener data-background-color="#0D1117" con el precio muy grande
-- Agrega speaker notes con <aside class="notes"> donde aplique
-- Devuelve SOLO el HTML completo empezando con <!DOCTYPE html>`;
+    rawJson = (msg.content[0] as { type: string; text: string }).text.trim();
+    rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
-  const stream = anthropic.messages.stream({
-    model: MODEL,
-    max_tokens: 8192,
-    messages: [{ role: "user", content: prompt }],
-  });
+    const content: ProposalContent = JSON.parse(rawJson);
+    const html = renderSlidesHtml(content, agencyName, clientName, clientCompany);
 
-  const readableStream = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
-            controller.enqueue(new TextEncoder().encode(chunk.delta.text));
-          }
-        }
-        controller.close();
-      } catch (err) {
-        controller.error(err);
-      }
-    },
-  });
-
-  return new Response(readableStream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  });
+    return new Response(html, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  } catch (err) {
+    console.error("proposals/slides error:", err, "raw:", rawJson);
+    return new Response(
+      `<p style="font-family:sans-serif;padding:2rem;color:#dc2626;">
+        Error al generar la presentación. Por favor intenta de nuevo.<br>
+        <small>${String(err)}</small>
+      </p>`,
+      { headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    );
+  }
 }

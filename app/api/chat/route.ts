@@ -1,9 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { MODEL, MAX_TOKENS } from "@/lib/anthropic";
-import { getAnthropicForUser, noApiKeyResponse } from "@/lib/get-anthropic";
+import { getUserSettings, noApiKeyResponse } from "@/lib/user-settings";
 import { getSystemPrompt } from "@/lib/prompts";
 import { createClient } from "@/lib/supabase/server";
 import type { Message } from "@/types";
+
+const MAX_TOKENS_DEFAULT  = 2048;
+const MAX_TOKENS_PROPOSALS = 14000;
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -23,13 +25,14 @@ export async function POST(request: Request) {
 
   if (!user) return noApiKeyResponse();
 
-  // Get Anthropic client using the user's own API key
-  let anthropic: Anthropic;
+  // Get user settings (Anthropic client + preferred models)
+  let settings: Awaited<ReturnType<typeof getUserSettings>>;
   try {
-    anthropic = await getAnthropicForUser(supabase, user.id);
+    settings = await getUserSettings(supabase, user.id);
   } catch {
     return noApiKeyResponse();
   }
+  const anthropic: Anthropic = settings.anthropic;
 
   if (user) {
     const baseQueries = Promise.all([
@@ -148,9 +151,16 @@ export async function POST(request: Request) {
     ];
   }
 
+  const model     = agentId === "seo" || agentId === "seo-suite"
+    ? settings.modelSeo
+    : settings.modelAgents;
+  const maxTokens = agentId === "propuestas"
+    ? MAX_TOKENS_PROPOSALS
+    : MAX_TOKENS_DEFAULT;
+
   const stream = anthropic.messages.stream({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
+    model,
+    max_tokens: maxTokens,
     system: systemPrompt,
     messages: apiMessages,
   });

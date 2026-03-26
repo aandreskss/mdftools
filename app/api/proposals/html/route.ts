@@ -1,9 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropicForUser, noApiKeyResponse } from "@/lib/get-anthropic";
+import { getUserSettings, noApiKeyResponse } from "@/lib/user-settings";
 import { renderProposalHtml, type ProposalContent } from "@/lib/proposal-template";
-
-// Haiku is 10× cheaper than Sonnet for this task since we only generate JSON content
-const HAIKU = "claude-haiku-4-5-20251001";
 
 const JSON_SCHEMA = `{
   "tipoServicio": "string — tipo de servicio (ej: Gestión de redes sociales)",
@@ -38,9 +35,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
 
-  let anthropic;
+  let settings;
   try {
-    anthropic = await getAnthropicForUser(supabase, user.id);
+    settings = await getUserSettings(supabase, user.id);
   } catch {
     return noApiKeyResponse();
   }
@@ -71,15 +68,13 @@ IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin b
 
   let rawJson = "";
   try {
-    const msg = await anthropic.messages.create({
-      model: HAIKU,
+    const msg = await settings.anthropic.messages.create({
+      model: settings.modelProposals,
       max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     });
 
     rawJson = (msg.content[0] as { type: string; text: string }).text.trim();
-
-    // Strip possible code fences
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const content: ProposalContent = JSON.parse(rawJson);
