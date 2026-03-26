@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
-  Code, Download, Layers, RefreshCw,
+  Code, Download, Layers, RefreshCw, Pencil,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -25,6 +25,7 @@ interface Proposal {
   id: string; client_name: string; industry: string;
   status: string; created_at: string; generated_content: string;
   html_content?: string; slides_content?: string;
+  form_data?: FormData;
 }
 
 const defaultForm: FormData = {
@@ -122,7 +123,7 @@ export default function PropuestasPage() {
     if (generating) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [generatedContent, generating]);
 
-  // Al abrir propuesta guardada: inicializar IDs y contenido
+  // Al abrir propuesta guardada: inicializar IDs, contenido y form para poder regenerar/editar
   useEffect(() => {
     if (!viewingProposal) return;
     setSavedProposalId(viewingProposal.id);
@@ -130,6 +131,7 @@ export default function PropuestasPage() {
     setHtmlContent(viewingProposal.html_content ?? "");
     setSlidesContent(viewingProposal.slides_content ?? "");
     setPreviewTs(Date.now());
+    if (viewingProposal.form_data) setForm(viewingProposal.form_data);
     if (viewingProposal.html_content) setHtmlIframeKey(k => k + 1);
     if (viewingProposal.slides_content) setSlidesIframeKey(k => k + 1);
   }, [viewingProposal]);
@@ -253,10 +255,15 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagnÃ
         setGeneratedContent(accumulated);
       }
 
+      // Actualiza viewingProposal en estado para que renderResult muestre el nuevo contenido
+      setViewingProposal(prev =>
+        prev ? { ...prev, generated_content: accumulated, status: "generada", form_data: form } : null
+      );
+
       setView("result");
       setResultTab("propuesta");
 
-      // Si la propuesta ya estaba guardada, actualiza el contenido y elimina el borrador
+      // Si la propuesta ya estaba guardada, sincroniza todo en Supabase
       if (savedProposalId && accumulated) {
         await fetch("/api/proposals", {
           method: "PATCH",
@@ -265,6 +272,9 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagnÃ
             id: savedProposalId,
             generated_content: accumulated,
             status: "generada",
+            client_name: form.clientName,
+            industry: form.clientIndustry,
+            form_data: form,
           }),
         });
         await fetchProposals();
@@ -820,29 +830,34 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagnÃ
             >
               {generatingSlides ? <><Loader2 size={12} className="animate-spin" /> Generando...</> : <><Layers size={12} /> {slidesContent ? "Regenerar Slides" : "Generar Slides"}</>}
             </button>
-            {!viewingProposal && (
-              <>
-                <button
-                  onClick={() => {
-                    setHtmlContent("");
-                    setSlidesContent("");
-                    generate();
-                  }}
-                  disabled={generating}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-60 text-gray-300 hover:text-white text-xs font-medium rounded-lg transition"
-                >
-                  {generating
-                    ? <><Loader2 size={12} className="animate-spin" /> Regenerando...</>
-                    : <><RefreshCw size={12} /> Regenerar</>}
-                </button>
-                <button
-                  onClick={saveProposal}
-                  disabled={saving || saved}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
-                >
-                  {saved ? <><Check size={12} /> Guardada</> : saving ? <><Loader2 size={12} className="animate-spin" /> Guardando...</> : <><Save size={12} /> Guardar</>}
-                </button>
-              </>
+            {/* Editar datos â€” siempre disponible */}
+            <button
+              onClick={() => { setStep(0); setView("form"); }}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs font-medium rounded-lg transition"
+            >
+              <Pencil size={12} /> Editar datos
+            </button>
+
+            {/* Regenerar â€” siempre disponible (form ya estÃ¡ poblado desde form_data) */}
+            <button
+              onClick={() => { setHtmlContent(""); setSlidesContent(""); generate(); }}
+              disabled={generating}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-60 text-gray-300 hover:text-white text-xs font-medium rounded-lg transition"
+            >
+              {generating
+                ? <><Loader2 size={12} className="animate-spin" /> Regenerando...</>
+                : <><RefreshCw size={12} /> Regenerar</>}
+            </button>
+
+            {/* Guardar â€” solo cuando aÃºn no tiene ID (propuesta nueva sin guardar) */}
+            {!savedProposalId && !viewingProposal && (
+              <button
+                onClick={saveProposal}
+                disabled={saving || saved}
+                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
+              >
+                {saved ? <><Check size={12} /> Guardada</> : saving ? <><Loader2 size={12} className="animate-spin" /> Guardando...</> : <><Save size={12} /> Guardar</>}
+              </button>
             )}
           </div>
         </div>
