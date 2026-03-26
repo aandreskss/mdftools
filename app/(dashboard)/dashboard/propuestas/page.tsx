@@ -134,29 +134,30 @@ export default function PropuestasPage() {
   }, [viewingProposal]);
 
   // Escribir HTML directamente al DOM del iframe (hereda origen del padre → CDN funciona)
+  // IMPORTANTE: resultTab en dependencias para que dispare cuando el iframe monta al cambiar de tab
   useEffect(() => {
-    if (!htmlContent) return;
+    if (!htmlContent || resultTab !== "html") return;
     const write = () => {
       const iframe = htmlIframeRef.current;
       if (!iframe) return;
       const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
       if (doc) { doc.open(); doc.write(htmlContent); doc.close(); }
     };
-    const t = setTimeout(write, 80);
+    const t = setTimeout(write, 100);
     return () => clearTimeout(t);
-  }, [htmlContent, htmlIframeKey]);
+  }, [htmlContent, htmlIframeKey, resultTab]);
 
   useEffect(() => {
-    if (!slidesContent) return;
+    if (!slidesContent || resultTab !== "slides") return;
     const write = () => {
       const iframe = slidesIframeRef.current;
       if (!iframe) return;
       const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
       if (doc) { doc.open(); doc.write(slidesContent); doc.close(); }
     };
-    const t = setTimeout(write, 80);
+    const t = setTimeout(write, 100);
     return () => clearTimeout(t);
-  }, [slidesContent, slidesIframeKey]);
+  }, [slidesContent, slidesIframeKey, resultTab]);
 
   async function fetchProposals() {
     setLoadingList(true);
