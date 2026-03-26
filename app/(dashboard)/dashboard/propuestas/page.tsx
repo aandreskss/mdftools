@@ -12,12 +12,26 @@ import ReactMarkdown from "react-markdown";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FormData {
+  // Tipo de propuesta (multi-select)
+  serviceScope: string[];
+  // Cliente
   clientName: string; clientCompany: string; clientIndustry: string; clientEmail: string;
+  // Servicio
   serviceType: string; serviceDescription: string;
+  // Objetivos + KPIs
   clientGoals: string; currentSituation: string;
+  kpi1Name: string; kpi1Start: string; kpi1Goal: string;
+  kpi2Name: string; kpi2Start: string; kpi2Goal: string;
+  kpi3Name: string; kpi3Start: string; kpi3Goal: string;
+  // Alcance
   deliverables: string; duration: string; frequency: string; notIncluded: string;
+  // Diagnóstico
   problemasDetectados: string; problemaRedesSociales: string;
   problemaWebLanding: string; debilidadesDetectadas: string; fortalezasDetectadas: string;
+  // Buyer persona y dolores del cliente final
+  buyerPersona: string; doloresFuncionales: string;
+  doloresEmocionales: string; objecionesCliente: string;
+  // Inversión
   price: string; currency: string; paymentTerms: string;
 }
 
@@ -29,20 +43,28 @@ interface Proposal {
 }
 
 const defaultForm: FormData = {
+  serviceScope: [],
   clientName: "", clientCompany: "", clientIndustry: "", clientEmail: "",
   serviceType: "", serviceDescription: "",
   clientGoals: "", currentSituation: "",
+  kpi1Name: "", kpi1Start: "", kpi1Goal: "",
+  kpi2Name: "", kpi2Start: "", kpi2Goal: "",
+  kpi3Name: "", kpi3Start: "", kpi3Goal: "",
   deliverables: "", duration: "", frequency: "", notIncluded: "",
   problemasDetectados: "", problemaRedesSociales: "",
   problemaWebLanding: "", debilidadesDetectadas: "", fortalezasDetectadas: "",
+  buyerPersona: "", doloresFuncionales: "", doloresEmocionales: "", objecionesCliente: "",
   price: "", currency: "USD", paymentTerms: "",
 };
 
-const SERVICE_TYPES = [
-  "Gestión de redes sociales", "Creación de contenido",
-  "SEO y posicionamiento", "Publicidad pagada (Meta/Google Ads)",
-  "Diseño web / Landing page", "Email marketing",
-  "Consultoría de marketing", "Otro",
+const SERVICE_SCOPE_OPTIONS = [
+  { id: "contenido",   label: "Contenido & Redes Sociales", desc: "Posts, Reels, Stories, calendario editorial" },
+  { id: "meta_ads",    label: "Meta Ads",                   desc: "Publicidad en Instagram, Facebook y WhatsApp" },
+  { id: "google_ads",  label: "Google Ads",                 desc: "Search, Display, Shopping y YouTube" },
+  { id: "seo",         label: "SEO Orgánico",               desc: "Posicionamiento, keywords y link building" },
+  { id: "sem",         label: "SEM",                        desc: "Búsqueda pagada, CPC y conversiones" },
+  { id: "email",       label: "Email Marketing",            desc: "Campañas, automatizaciones y flows" },
+  { id: "estrategia",  label: "Estrategia Integral",        desc: "Consultoría y plan de marketing completo" },
 ];
 
 const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "PEN", "CLP"];
@@ -56,7 +78,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   closed_lost:  { label: "Cerrada ✗",       color: "bg-red-500/20 text-red-400" },
 };
 
-const STEPS = ["Cliente", "Servicio", "Objetivos", "Alcance", "Diagnóstico", "Inversión", "Generar"];
+const STEPS = ["Tipo", "Cliente", "Servicio", "Objetivos", "Alcance", "Diagnóstico", "Inversión", "Generar"];
 
 // ─── Markdown components ───────────────────────────────────────────────────────
 
@@ -173,13 +195,23 @@ export default function PropuestasPage() {
     setForm((p) => ({ ...p, [field]: value }));
   }
 
+  function toggleScope(id: string) {
+    setForm(prev => ({
+      ...prev,
+      serviceScope: prev.serviceScope.includes(id)
+        ? prev.serviceScope.filter(s => s !== id)
+        : [...prev.serviceScope, id],
+    }));
+  }
+
   function canNext(): boolean {
-    if (step === 0) return !!form.clientName && !!form.clientIndustry;
-    if (step === 1) return !!form.serviceType && !!form.serviceDescription;
-    if (step === 2) return !!form.clientGoals;
-    if (step === 3) return !!form.deliverables && !!form.duration;
-    if (step === 4) return true; // Diagnóstico: todos opcionales
-    if (step === 5) return !!form.price && !!form.paymentTerms;
+    if (step === 0) return form.serviceScope.length > 0;
+    if (step === 1) return !!form.clientName && !!form.clientIndustry;
+    if (step === 2) return !!form.serviceDescription;
+    if (step === 3) return !!form.clientGoals;
+    if (step === 4) return !!form.deliverables && !!form.duration;
+    if (step === 5) return true; // Diagnóstico: todos opcionales
+    if (step === 6) return !!form.price && !!form.paymentTerms;
     return true;
   }
 
@@ -190,6 +222,10 @@ export default function PropuestasPage() {
     setGeneratedContent("");
     setHtmlContent("");
 
+    const scopeLabels = form.serviceScope
+      .map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label ?? id)
+      .join(", ");
+
     const diagnostico = [
       form.problemasDetectados    && `**Problemas generales detectados:**\n${form.problemasDetectados}`,
       form.problemaRedesSociales  && `**Problemas en redes sociales:**\n${form.problemaRedesSociales}`,
@@ -198,17 +234,48 @@ export default function PropuestasPage() {
       form.fortalezasDetectadas   && `**Fortalezas detectadas:**\n${form.fortalezasDetectadas}`,
     ].filter(Boolean).join("\n\n");
 
+    const kpis = [
+      form.kpi1Name && `- ${form.kpi1Name}: ${form.kpi1Start || "—"} → meta: ${form.kpi1Goal}`,
+      form.kpi2Name && `- ${form.kpi2Name}: ${form.kpi2Start || "—"} → meta: ${form.kpi2Goal}`,
+      form.kpi3Name && `- ${form.kpi3Name}: ${form.kpi3Start || "—"} → meta: ${form.kpi3Goal}`,
+    ].filter(Boolean).join("\n");
+
+    const buyerPersonaSection = [
+      form.buyerPersona        && `**Perfil del cliente final:**\n${form.buyerPersona}`,
+      form.doloresFuncionales  && `**Dolores funcionales:**\n${form.doloresFuncionales}`,
+      form.doloresEmocionales  && `**Dolores emocionales:**\n${form.doloresEmocionales}`,
+      form.objecionesCliente   && `**Objeciones frecuentes:**\n${form.objecionesCliente}`,
+    ].filter(Boolean).join("\n\n");
+
+    // Secciones específicas según el alcance seleccionado
+    const scopeSections: Record<string, string> = {
+      contenido:   "- Estrategia editorial y calendario de contenidos\n- Formatos, frecuencia y distribución de publicaciones\n- Métricas de crecimiento orgánico y engagement",
+      meta_ads:    "- Estructura de campañas en Meta Ads (objetivos, audiencias, creatividades)\n- Presupuesto recomendado y ROI esperado\n- KPIs: CPM, CPC, ROAS y leads generados",
+      google_ads:  "- Estructura de campañas (Search, Display, Shopping según aplique)\n- Estrategia de keywords y pujas\n- KPIs: CTR, CPC, conversiones y ROAS",
+      seo:         "- Auditoría SEO y análisis de keywords objetivo\n- Plan de optimización on-page y link building\n- Proyección de tráfico orgánico a 3-6 meses",
+      sem:         "- Estrategia de búsqueda pagada y segmentación\n- Estimación de impresiones, clics y conversiones\n- KPIs: CPC promedio, tasa de conversión y costo por lead",
+      email:       "- Flujos de automatización y campañas de nurturing\n- Segmentación de listas y frecuencia de envío\n- KPIs: open rate, CTR y conversiones",
+      estrategia:  "- Análisis de situación actual y posicionamiento competitivo\n- Plan de marketing integral 90-180 días\n- Roadmap de implementación con prioridades claras",
+    };
+    const scopeDetails = form.serviceScope
+      .map(id => scopeSections[id] ? `**${SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label}:**\n${scopeSections[id]}` : "")
+      .filter(Boolean)
+      .join("\n\n");
+
     const prompt = `Genera una propuesta comercial completa, profesional y persuasiva con los siguientes datos:
+
+**ALCANCE DE LA PROPUESTA:** ${scopeLabels}
 
 **CLIENTE:** ${form.clientName}${form.clientCompany ? ` — ${form.clientCompany}` : ""}
 **INDUSTRIA:** ${form.clientIndustry}${form.clientEmail ? ` | Contacto: ${form.clientEmail}` : ""}
 
-**SERVICIO OFRECIDO:** ${form.serviceType}
+**DESCRIPCIÓN DEL SERVICIO:**
 ${form.serviceDescription}
 
 **OBJETIVOS DEL CLIENTE:**
 ${form.clientGoals}
 ${form.currentSituation ? `\n**SITUACIÓN ACTUAL:**\n${form.currentSituation}` : ""}
+${kpis ? `\n**KPIs CON OBJETIVOS NUMÉRICOS:**\n${kpis}` : ""}
 
 **ALCANCE Y ENTREGABLES:**
 ${form.deliverables}
@@ -216,20 +283,22 @@ ${form.deliverables}
 ${form.frequency ? `- Frecuencia: ${form.frequency}` : ""}
 ${form.notIncluded ? `- NO incluye: ${form.notIncluded}` : ""}
 ${diagnostico ? `\n**DIAGNÓSTICO PREVIO:**\n${diagnostico}` : ""}
+${buyerPersonaSection ? `\n**BUYER PERSONA Y DOLORES DEL CLIENTE FINAL:**\n${buyerPersonaSection}` : ""}
 
 **INVERSIÓN:** ${form.currency} ${form.price}
 **TÉRMINOS DE PAGO:** ${form.paymentTerms}
 
-La propuesta debe incluir:
-1. Carta de presentación personalizada al cliente
-2. Diagnóstico: problemas detectados y por qué son urgentes de resolver
-3. Nuestra propuesta y metodología de trabajo
-4. Entregables y alcance detallado
-5. Inversión y condiciones de pago
-6. Por qué elegirnos (fortalezas y diferenciadores)
-7. Próximos pasos y llamada a la acción
+La propuesta debe incluir EXACTAMENTE estas secciones:
+1. Carta de presentación personalizada al cliente (usa su nombre, menciona su industria)
+2. Diagnóstico: problemas detectados y por qué son urgentes de resolver${buyerPersonaSection ? " (incluye cómo los dolores del cliente final afectan el negocio)" : ""}
+3. Nuestra propuesta y metodología — adaptada específicamente al alcance: ${scopeLabels}
+${scopeDetails ? `\n   Incluye estos puntos para cada servicio:\n${scopeDetails}\n` : ""}4. Entregables y alcance detallado
+${kpis ? "5. Tabla de KPIs: columnas Métrica | Valor Actual | Objetivo (usa los datos proporcionados)" : "5. Resultados esperados"}
+6. Inversión y condiciones de pago (con tabla si hay opciones de pago)
+7. Por qué elegirnos (fortalezas y diferenciadores)
+8. Próximos pasos y llamada a la acción clara
 
-Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagnóstico previo, úsalo para reforzar la urgencia y el valor de la propuesta.`;
+Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples secciones. Si hay diagnóstico previo o buyer persona, úsalos para reforzar la urgencia y el valor.${kpis ? " Los KPIs deben aparecer en una tabla Markdown con los valores actuales vs objetivos." : ""}`;
 
     try {
       const res = await fetch("/api/chat", {
@@ -566,8 +635,39 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
         {/* Step content */}
         <div className="space-y-5 mb-8">
 
-          {/* PASO 1 — Cliente */}
+          {/* PASO 0 — Tipo de propuesta (scope multi-select) */}
           {step === 0 && (
+            <>
+              <h2 className="text-base font-semibold text-white mb-1">¿Qué servicios incluye esta propuesta?</h2>
+              <p className="text-xs text-gray-500 mb-5">Selecciona uno o varios. El prompt se adaptará automáticamente al alcance elegido.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {SERVICE_SCOPE_OPTIONS.map(opt => {
+                  const active = form.serviceScope.includes(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => toggleScope(opt.id)}
+                      className={`p-4 rounded-xl border text-left transition ${
+                        active
+                          ? "bg-indigo-600/20 border-indigo-500 text-white"
+                          : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-600 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium">{opt.label}</span>
+                        {active && <span className="text-xs text-indigo-400 font-bold">✓</span>}
+                      </div>
+                      <p className="text-xs text-gray-500">{opt.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* PASO 1 — Cliente */}
+          {step === 1 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Datos del cliente</h2>
               <Field label="Nombre del cliente" required>
@@ -586,31 +686,21 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
           )}
 
           {/* PASO 2 — Servicio */}
-          {step === 1 && (
+          {step === 2 && (
             <>
-              <h2 className="text-base font-semibold text-white mb-4">Servicio a cotizar</h2>
-              <Field label="Tipo de servicio" required>
-                <div className="grid grid-cols-2 gap-2">
-                  {SERVICE_TYPES.map(s => (
-                    <button key={s} type="button" onClick={() => set("serviceType", s)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium border text-left transition ${
-                        form.serviceType === s
-                          ? "bg-indigo-600 border-indigo-500 text-white"
-                          : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white"
-                      }`}
-                    >{s}</button>
-                  ))}
-                </div>
-              </Field>
-              <Field label="Descripción del servicio" required>
-                <textarea className={textareaCls} rows={4} value={form.serviceDescription} onChange={e => set("serviceDescription", e.target.value)}
-                  placeholder="Describe en detalle qué vas a ofrecer, cómo trabajarás, tu metodología..." />
+              <h2 className="text-base font-semibold text-white mb-1">Descripción del servicio</h2>
+              <p className="text-xs text-gray-500 mb-5">
+                Servicios seleccionados: <span className="text-indigo-400 font-medium">{form.serviceScope.map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label).join(", ")}</span>
+              </p>
+              <Field label="Describe el servicio en detalle" required>
+                <textarea className={textareaCls} rows={5} value={form.serviceDescription} onChange={e => set("serviceDescription", e.target.value)}
+                  placeholder="Describe qué vas a ofrecer, cómo trabajarás, tu metodología, qué hace especial tu propuesta..." />
               </Field>
             </>
           )}
 
-          {/* PASO 3 — Objetivos */}
-          {step === 2 && (
+          {/* PASO 3 — Objetivos + KPIs */}
+          {step === 3 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Objetivos del cliente</h2>
               <Field label="¿Qué quiere lograr el cliente?" required>
@@ -621,11 +711,32 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
                 <textarea className={textareaCls} rows={3} value={form.currentSituation} onChange={e => set("currentSituation", e.target.value)}
                   placeholder="Ej: No tiene presencia digital, tiene web pero sin tráfico, competencia muy activa..." />
               </Field>
+
+              <div className="pt-2">
+                <p className="text-sm font-medium text-gray-300 mb-1">KPIs con objetivos numéricos <span className="text-gray-500 font-normal text-xs">(opcional pero muy recomendado)</span></p>
+                <p className="text-xs text-gray-500 mb-4">Define métricas concretas que harán la propuesta más persuasiva.</p>
+                {[1, 2, 3].map(n => (
+                  <div key={n} className="grid grid-cols-3 gap-3 mb-3">
+                    <Field label={`KPI ${n} — Métrica`}>
+                      <input className={inputCls} value={(form as any)[`kpi${n}Name`]} onChange={e => set(`kpi${n}Name` as keyof FormData, e.target.value)}
+                        placeholder={n === 1 ? "Seguidores IG" : n === 2 ? "Leads/mes" : "ROAS"} />
+                    </Field>
+                    <Field label="Valor actual">
+                      <input className={inputCls} value={(form as any)[`kpi${n}Start`]} onChange={e => set(`kpi${n}Start` as keyof FormData, e.target.value)}
+                        placeholder={n === 1 ? "1,200" : n === 2 ? "5" : "—"} />
+                    </Field>
+                    <Field label="Objetivo">
+                      <input className={inputCls} value={(form as any)[`kpi${n}Goal`]} onChange={e => set(`kpi${n}Goal` as keyof FormData, e.target.value)}
+                        placeholder={n === 1 ? "5,000" : n === 2 ? "40" : "3x"} />
+                    </Field>
+                  </div>
+                ))}
+              </div>
             </>
           )}
 
           {/* PASO 4 — Alcance */}
-          {step === 3 && (
+          {step === 4 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Alcance del proyecto</h2>
               <Field label="Entregables concretos" required>
@@ -647,8 +758,8 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
             </>
           )}
 
-          {/* PASO 5 — Diagnóstico */}
-          {step === 4 && (
+          {/* PASO 5 — Diagnóstico + Buyer Persona */}
+          {step === 5 && (
             <>
               <h2 className="text-base font-semibold text-white mb-1">Diagnóstico del cliente</h2>
               <p className="text-xs text-gray-500 mb-5">Todos los campos son opcionales. Cuanto más detailles, más personalizada será la propuesta.</p>
@@ -678,11 +789,34 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
                     placeholder="Ej: Producto de calidad, buenas reseñas, base de clientes fieles, ubicación estratégica..." />
                 </Field>
               </div>
+
+              <div className="border-t border-gray-800 pt-5 mt-2">
+                <p className="text-sm font-medium text-gray-300 mb-1">Buyer persona y dolores del cliente final <span className="text-gray-500 font-normal text-xs">(opcional)</span></p>
+                <p className="text-xs text-gray-500 mb-4">Información sobre el cliente final del negocio (no el cliente que te contrata). Esto hará la propuesta mucho más empática.</p>
+                <Field label="¿Quién es el cliente final del negocio?" hint="opcional">
+                  <textarea className={textareaCls} rows={2} value={form.buyerPersona} onChange={e => set("buyerPersona", e.target.value)}
+                    placeholder="Ej: Mujeres 30-50 años con dolor crónico, profesionistas de oficina que buscan alivio sin medicación..." />
+                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                  <Field label="Dolores funcionales" hint="opcional">
+                    <textarea className={textareaCls} rows={3} value={form.doloresFuncionales} onChange={e => set("doloresFuncionales", e.target.value)}
+                      placeholder="Ej: No saben dónde encontrar un fisioterapeuta confiable, citas difíciles de conseguir..." />
+                  </Field>
+                  <Field label="Dolores emocionales" hint="opcional">
+                    <textarea className={textareaCls} rows={3} value={form.doloresEmocionales} onChange={e => set("doloresEmocionales", e.target.value)}
+                      placeholder="Ej: Frustración por no ver resultados, miedo a que el dolor sea crónico, vergüenza..." />
+                  </Field>
+                </div>
+                <Field label="Objeciones frecuentes del cliente final" hint="opcional">
+                  <textarea className={textareaCls} rows={2} value={form.objecionesCliente} onChange={e => set("objecionesCliente", e.target.value)}
+                    placeholder="Ej: 'Es muy caro', 'No tengo tiempo', 'Ya lo intenté antes y no funcionó'..." />
+                </Field>
+              </div>
             </>
           )}
 
           {/* PASO 6 — Inversión */}
-          {step === 5 && (
+          {step === 6 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Inversión</h2>
               <div className="flex gap-3">
@@ -703,27 +837,29 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
           )}
 
           {/* PASO 7 — Revisar y generar */}
-          {step === 6 && (
+          {step === 7 && (
             <>
               <h2 className="text-base font-semibold text-white mb-4">Revisar y generar</h2>
               <div className="space-y-3 text-sm">
                 {[
+                  ["Servicios", form.serviceScope.map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label).join(", ")],
                   ["Cliente", `${form.clientName}${form.clientCompany ? ` · ${form.clientCompany}` : ""} · ${form.clientIndustry}`],
-                  ["Servicio", form.serviceType],
                   ["Duración", form.duration],
                   ["Inversión", `${form.currency} ${form.price}`],
                   ["Pago", form.paymentTerms],
+                  ...(form.kpi1Name ? [["KPIs", `${form.kpi1Name}${form.kpi2Name ? `, ${form.kpi2Name}` : ""}${form.kpi3Name ? `, ${form.kpi3Name}` : ""}`]] : []),
                   ...(form.problemasDetectados || form.problemaRedesSociales || form.problemaWebLanding
                     ? [["Diagnóstico", "Incluido ✓"]] : []),
+                  ...(form.buyerPersona ? [["Buyer persona", "Incluido ✓"]] : []),
                 ].map(([k, v]) => (
                   <div key={k} className="flex gap-3">
-                    <span className="text-gray-500 w-24 flex-shrink-0">{k}</span>
+                    <span className="text-gray-500 w-28 flex-shrink-0">{k}</span>
                     <span className="text-gray-200">{v}</span>
                   </div>
                 ))}
               </div>
               <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente. También podrás exportarla como HTML.</p>
+                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente. También podrás exportarla como HTML o Slides.</p>
               </div>
             </>
           )}
@@ -738,7 +874,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
             <ArrowLeft size={14} /> {step === 0 ? "Cancelar" : "Anterior"}
           </button>
 
-          {step < 6 ? (
+          {step < 7 ? (
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={!canNext()}
