@@ -779,56 +779,59 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn�
 
     return (
       <div className="p-6 max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
+        {/* Header — dos filas para evitar que los botones se expandan con títulos largos */}
+        <div className="mb-5 space-y-3">
+          {/* Fila 1: navegación + título */}
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => { setView("list"); setViewingProposal(null); }}
-              className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition"
+              className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition flex-shrink-0"
             >
               <ArrowLeft size={14} /> Volver
             </button>
-            <span className="text-gray-600">·</span>
-            <span className="text-white font-medium text-sm">Propuesta — {title}</span>
+            <span className="text-gray-600 flex-shrink-0">·</span>
+            <span className="text-white font-medium text-sm truncate">Propuesta — {title}</span>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Fila 2: botones de acción — tamaño fijo, flex-wrap si no caben */}
+          <div className="flex items-center gap-2 flex-wrap">
             {resultTab === "propuesta" && (
               <button
                 onClick={() => copyContent(markdownContent)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition whitespace-nowrap"
               >
-                {copied ? <><Check size={12} className="text-green-400" /> Copiado</> : <><Copy size={12} /> Copiar</>}
+                {copied ? <><Check size={11} className="text-green-400" /> Copiado</> : <><Copy size={11} /> Copiar</>}
               </button>
             )}
             {resultTab === "html" && htmlContent && (
               <button
                 onClick={downloadHtml}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition whitespace-nowrap"
               >
-                <Download size={12} /> Descargar HTML
+                <Download size={11} /> Descargar HTML
               </button>
             )}
             {resultTab === "slides" && slidesContent && (
               <button
                 onClick={downloadSlides}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition whitespace-nowrap"
               >
-                <Download size={12} /> Descargar Slides
+                <Download size={11} /> Descargar Slides
               </button>
             )}
             <button
               onClick={() => generateHtml(markdownContent)}
               disabled={generatingHtml}
-              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition whitespace-nowrap"
             >
-              {generatingHtml ? <><Loader2 size={12} className="animate-spin" /> Generando HTML...</> : <><Code size={12} /> {htmlContent ? "Regenerar HTML" : "Generar HTML"}</>}
+              {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Code size={11} /> {htmlContent ? "Regenerar HTML" : "Generar HTML"}</>}
             </button>
             <button
               onClick={() => generateSlides(markdownContent)}
               disabled={generatingSlides}
-              className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 text-white text-xs font-medium rounded-lg transition whitespace-nowrap"
             >
-              {generatingSlides ? <><Loader2 size={12} className="animate-spin" /> Generando...</> : <><Layers size={12} /> {slidesContent ? "Regenerar Slides" : "Generar Slides"}</>}
+              {generatingSlides ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Layers size={11} /> {slidesContent ? "Regenerar Slides" : "Generar Slides"}</>}
             </button>
             {/* Editar datos — siempre disponible */}
             <button
