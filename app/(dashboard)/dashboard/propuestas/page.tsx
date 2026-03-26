@@ -24,6 +24,7 @@ interface FormData {
 interface Proposal {
   id: string; client_name: string; industry: string;
   status: string; created_at: string; generated_content: string;
+  html_content?: string; slides_content?: string;
 }
 
 const defaultForm: FormData = {
@@ -106,6 +107,7 @@ export default function PropuestasPage() {
   const [slidesBlobUrl, setSlidesBlobUrl]       = useState("");
   const [resultTab, setResultTab] = useState<"propuesta" | "html" | "slides">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
+  const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +116,14 @@ export default function PropuestasPage() {
   useEffect(() => {
     if (generating) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [generatedContent, generating]);
+
+  // Cargar html/slides de propuesta guardada al abrirla
+  useEffect(() => {
+    if (!viewingProposal) return;
+    setSavedProposalId(viewingProposal.id);
+    setHtmlContent(viewingProposal.html_content ?? "");
+    setSlidesContent(viewingProposal.slides_content ?? "");
+  }, [viewingProposal]);
 
   // Blob URLs para iframes ‚Äî evita restricci√≥n de origen null de srcDoc
   useEffect(() => {
@@ -272,6 +282,17 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         accumulated += decoder.decode(value, { stream: true });
         setHtmlContent(stripFences(accumulated));
       }
+
+      // Auto-guardar en Supabase si la propuesta ya est√° guardada
+      const id = savedProposalId ?? viewingProposal?.id;
+      if (id && accumulated) {
+        await fetch("/api/proposals", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, html_content: stripFences(accumulated) }),
+        });
+        await fetchProposals();
+      }
     } catch {
       setHtmlContent("<p>Error al generar el HTML.</p>");
     } finally {
@@ -293,7 +314,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
 
   async function saveProposal() {
     setSaving(true);
-    await fetch("/api/proposals", {
+    const res = await fetch("/api/proposals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -301,8 +322,14 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         clientIndustry: form.clientIndustry,
         formData: form,
         generatedContent,
+        htmlContent,
+        slidesContent,
       }),
     });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.id) setSavedProposalId(data.id);
+    }
     await fetchProposals();
     setSaving(false);
     setSaved(true);
@@ -355,6 +382,17 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
         accumulated += decoder.decode(value, { stream: true });
         setSlidesContent(stripFences(accumulated));
       }
+
+      // Auto-guardar en Supabase si la propuesta ya est√° guardada
+      const id = savedProposalId ?? viewingProposal?.id;
+      if (id && accumulated) {
+        await fetch("/api/proposals", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, slides_content: stripFences(accumulated) }),
+        });
+        await fetchProposals();
+      }
     } catch {
       setSlidesContent("<p>Error al generar la presentaci√≥n.</p>");
     } finally {
@@ -380,6 +418,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente. Si hay diagn√
     setSlidesContent("");
     setHtmlBlobUrl("");
     setSlidesBlobUrl("");
+    setSavedProposalId(null);
     setSaved(false);
     setViewingProposal(null);
     setResultTab("propuesta");
