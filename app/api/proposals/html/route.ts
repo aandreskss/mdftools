@@ -70,7 +70,7 @@ IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin b
   try {
     const msg = await settings.anthropic.messages.create({
       model: settings.modelProposals,
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });
 
