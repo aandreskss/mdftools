@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md p-8 bg-gray-900 rounded-2xl border border-gray-800">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-white">MDF<span className="text-indigo-400">Tools</span></h1>
-          <p className="text-gray-400 mt-1 text-sm">Accede a tu workspace de IA</p>
+          <p className="text-gray-400 mt-1 text-sm">Bienvenido a tu entorno de marketing IA</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
