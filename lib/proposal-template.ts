@@ -47,7 +47,7 @@ function steps(items: { numero: number; titulo: string; descripcion: string }[])
         <div class="step-number">${s.numero}</div>
         <div class="step-title">${esc(s.titulo)}</div>
       </div>
-      <div class="step-description">${esc(s.description || (s as any).descripcion)}</div>
+      <div class="step-description">${esc(s.descripcion)}</div>
     </div>`).join("");
 }
 
