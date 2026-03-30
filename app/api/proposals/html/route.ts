@@ -29,18 +29,11 @@ const JSON_SCHEMA = `{
 }`;
 
 export async function POST(request: Request) {
-  const { markdown, clientName, clientCompany, price } = await request.json();
+  const { markdown, clientName, clientCompany, price, structuredContent } = await request.json();
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
-
-  let settings;
-  try {
-    settings = await getUserSettings(supabase, user.id);
-  } catch {
-    return noApiKeyResponse();
-  }
 
   let agencyName = "Nuestra Agencia";
   const { data: profile } = await supabase
@@ -49,6 +42,22 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
   if (profile?.brand_name) agencyName = profile.brand_name;
+
+  // Si ya recibimos el contenido estructurado, renderizamos directamente
+  if (structuredContent) {
+    const html = renderProposalHtml(structuredContent, agencyName, clientName, clientCompany);
+    return new Response(html, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  // Si no, procedemos con la extracción vía IA (retrocompatibilidad)
+  let settings;
+  try {
+    settings = await getUserSettings(supabase, user.id);
+  } catch {
+    return noApiKeyResponse();
+  }
 
   const prompt = `Extrae el contenido de esta propuesta comercial y devuélvelo SOLO como JSON válido, sin markdown, sin explicaciones.
 

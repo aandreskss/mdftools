@@ -16,6 +16,7 @@ export interface ProposalContent {
 // ─── Helper renderers ────────────────────────────────────────────────────────
 
 function esc(str: string): string {
+  if (!str) return "";
   return str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -30,51 +31,39 @@ function badge(text: string): string {
 function checkList(items: string[]): string {
   return items.map(i => `
     <div class="check-item">
-      <span class="check-icon">✓</span>
+      <div class="check-icon-wrapper">
+        <svg class="check-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+      </div>
       <span>${esc(i)}</span>
     </div>`).join("");
 }
 
 function steps(items: { numero: number; titulo: string; descripcion: string }[]): string {
   return items.map(s => `
-    <div class="step">
-      <div class="step-num">${s.numero}</div>
-      <div class="step-content">
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-number">${s.numero}</div>
         <div class="step-title">${esc(s.titulo)}</div>
-        <div class="step-desc">${esc(s.descripcion)}</div>
       </div>
+      <div class="step-description">${esc(s.description || (s as any).descripcion)}</div>
     </div>`).join("");
 }
 
-function cards(items: { titulo: string; descripcion: string }[]): string {
+function whyUsCards(items: { titulo: string; descripcion: string }[]): string {
   return items.map(c => `
-    <div class="card">
-      <div class="card-title">${esc(c.titulo)}</div>
-      <div class="card-desc">${esc(c.descripcion)}</div>
-    </div>`).join("");
-}
-
-function bullets(items: string[]): string {
-  return items.map(i => `
-    <div class="bullet">
-      <span class="bullet-dot"></span>
-      <span>${esc(i)}</span>
-    </div>`).join("");
-}
-
-function keyPoints(items: string[]): string {
-  return items.map(i => `
-    <div class="key-point">
-      <span class="kp-dot">→</span>
-      <span>${esc(i)}</span>
+    <div class="why-card">
+      <div class="why-card-title">${esc(c.titulo)}</div>
+      <div class="why-card-desc">${esc(c.descripcion)}</div>
     </div>`).join("");
 }
 
 function problemCards(items: { titulo: string; descripcion: string }[]): string {
   return items.map(c => `
-    <div class="problem-card">
-      <div class="problem-icon">⚠</div>
-      <div>
+    <div class="problem-item">
+      <div class="problem-dot"></div>
+      <div class="problem-content">
         <div class="problem-title">${esc(c.titulo)}</div>
         <div class="problem-desc">${esc(c.descripcion)}</div>
       </div>
@@ -100,443 +89,503 @@ export function renderProposalHtml(
 <title>Propuesta — ${esc(clientName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --primary: #6366F1;
+    --primary-light: #EEF2FF;
+    --primary-dark: #4F46E5;
+    --accent: #F43F5E;
+    --text-main: #1E293B;
+    --text-muted: #64748B;
+    --bg-main: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --border: #E2E8F0;
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html { scroll-behavior: smooth; }
+
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #F8FAFC;
-    color: #111827;
-    line-height: 1.65;
-    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Header ── */
-  .header {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-    padding: 48px 56px 40px;
-    color: white;
-  }
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 32px;
-  }
-  .agency-name {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.85;
-  }
-  .proposal-for {
-    font-size: 13px;
-    font-weight: 500;
-    opacity: 0.75;
-    text-align: right;
-  }
-  .header-title {
-    font-size: 38px;
-    font-weight: 800;
-    line-height: 1.15;
-    margin-bottom: 10px;
-  }
-  .header-subtitle {
-    font-size: 16px;
-    font-weight: 400;
-    opacity: 0.80;
-    margin-bottom: 24px;
-  }
-  .header-meta {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 600;
-    background: rgba(255,255,255,0.18);
-    color: white;
+  h1, h2, h3, h4 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #0F172A;
+    line-height: 1.2;
   }
 
   /* ── Layout ── */
-  .body {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 48px 40px 80px;
+  .main-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    max-width: 1240px;
+    margin: 40px auto;
+    gap: 40px;
+    padding: 0 20px;
   }
 
-  /* ── Section ── */
-  .section { margin-bottom: 40px; }
-  .section-label {
+  @media (max-width: 1024px) {
+    .main-container { grid-template-columns: 1fr; margin: 0; padding: 0; gap: 0; }
+    .sidebar { display: none; }
+  }
+
+  /* ── Sidebar Navigation ── */
+  .sidebar {
+    position: sticky;
+    top: 40px;
+    height: fit-content;
+    padding: 32px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .nav-logo {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--primary);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-menu { list-style: none; }
+  .nav-item { margin-bottom: 8px; }
+  .nav-link {
+    display: block;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav-link:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+
+  /* ── Content Area ── */
+  .content-area {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  /* ── Hero Header ── */
+  .hero {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    padding: 80px 60px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: var(--primary);
+    filter: blur(120px);
+    opacity: 0.15;
+    border-radius: 50%;
+  }
+
+  .hero-agency {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--primary);
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 24px;
+    max-width: 600px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label { font-size: 11px; text-transform: uppercase; opacity: 0.5; font-weight: 600; }
+  .meta-value { font-size: 14px; font-weight: 600; color: white; }
+
+  /* ── Sections ── */
+  .section {
+    padding: 60px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 100px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #4F46E5;
-    margin-bottom: 8px;
-  }
-  .section-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #111827;
     margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #E5E7EB;
-  }
-  .section-text {
-    color: #374151;
-    font-size: 15px;
-    line-height: 1.7;
   }
 
-  /* ── Box ── */
-  .box {
-    background: white;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 24px 28px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  }
+  .section-header { margin-bottom: 32px; }
+  .section-title { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+  .section-desc { font-size: 16px; color: var(--text-muted); max-width: 700px; }
 
-  /* ── Problem cards ── */
-  .problem-grid {
+  /* ── Component: Problem List ── */
+  .problem-list { display: grid; gap: 24px; }
+  .problem-item {
+    display: flex;
+    gap: 20px;
+    padding: 24px;
+    background: #FFF7F7;
+    border: 1px solid #FEE2E2;
+    border-radius: var(--radius-md);
+  }
+  .problem-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-top: 8px;
+    flex-shrink: 0;
+  }
+  .problem-title { font-weight: 700; font-size: 16px; color: #991B1B; margin-bottom: 4px; }
+  .problem-desc { font-size: 14px; color: #B91C1C; opacity: 0.8; }
+
+  /* ── Component: Check List ── */
+  .check-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 16px;
-    margin-top: 16px;
   }
-  .problem-card {
-    background: #FFF7ED;
-    border: 1px solid #FED7AA;
-    border-radius: 10px;
-    padding: 18px 20px;
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-  .problem-icon {
-    font-size: 18px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  .problem-title {
-    font-weight: 600;
-    font-size: 14px;
-    color: #92400E;
-    margin-bottom: 4px;
-  }
-  .problem-desc {
-    font-size: 13px;
-    color: #78350F;
-    line-height: 1.55;
-  }
-
-  /* ── Key points (solución) ── */
-  .key-points { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
-  .key-point {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    font-size: 14px;
-    color: #374151;
-  }
-  .kp-dot {
-    color: #4F46E5;
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  /* ── Check list (entregables) ── */
-  .check-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
   .check-item {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    padding: 16px;
+    background: var(--bg-main);
+    border-radius: var(--radius-md);
     font-size: 14px;
-    color: #374151;
+    font-weight: 500;
   }
-  .check-icon {
-    color: #10B981;
-    font-weight: 700;
-    font-size: 16px;
-    flex-shrink: 0;
-    margin-top: 0px;
-  }
-
-  /* ── Process steps ── */
-  .steps { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
-  .step {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    padding: 16px 0;
-    border-bottom: 1px solid #F3F4F6;
-  }
-  .step:last-child { border-bottom: none; }
-  .step-num {
-    width: 32px;
-    height: 32px;
+  .check-icon-wrapper {
+    width: 20px;
+    height: 20px;
+    background: #D1FAE5;
+    color: #059669;
     border-radius: 50%;
-    background: #EEF2FF;
-    color: #4F46E5;
-    font-weight: 700;
-    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
   }
-  .step-title {
-    font-weight: 600;
-    font-size: 14px;
-    color: #111827;
-    margin-bottom: 4px;
-  }
-  .step-desc { font-size: 13px; color: #6B7280; line-height: 1.55; }
+  .check-icon { width: 12px; height: 12px; }
 
-  /* ── Bullets (resultados, próximos pasos) ── */
-  .bullets { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-  .bullet {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    font-size: 14px;
-    color: #374151;
+  /* ── Component: Process Steps ── */
+  .steps-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 24px;
   }
-  .bullet-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #4F46E5;
-    flex-shrink: 0;
-    margin-top: 7px;
+  .step-card {
+    padding: 24px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: transform 0.2s;
   }
-
-  /* ── Investment block ── */
-  .investment-block {
-    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);
-    border-radius: 16px;
-    padding: 40px 48px;
+  .step-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .step-number {
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
     color: white;
-    text-align: center;
-    margin-bottom: 28px;
-  }
-  .investment-label {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    opacity: 0.65;
-    margin-bottom: 12px;
-  }
-  .investment-amount {
-    font-size: 56px;
+    border-radius: 8px;
     font-weight: 800;
-    color: #A5B4FC;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .investment-terms {
     font-size: 14px;
-    opacity: 0.70;
-    margin-bottom: 24px;
-  }
-  .investment-includes {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
     justify-content: center;
   }
-  .inv-item {
-    background: rgba(255,255,255,0.10);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
-    padding: 6px 14px;
+  .step-title { font-weight: 700; font-size: 15px; }
+  .step-description { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── Component: Investment ── */
+  .investment-card {
+    background: #0F172A;
+    border-radius: var(--radius-lg);
+    padding: 60px;
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .investment-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(45deg, transparent 0%, rgba(99,102,241,0.05) 100%);
+  }
+  .inv-label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 16px; }
+  .inv-amount { font-size: 64px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.02em; }
+  .inv-terms { font-size: 15px; opacity: 0.6; margin-bottom: 40px; max-width: 400px; margin-left: auto; margin-right: auto; }
+  .inv-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  .inv-badge {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 16px;
+    border-radius: 100px;
     font-size: 13px;
     font-weight: 500;
   }
 
-  /* ── Cards (por qué nosotros) ── */
-  .cards-grid {
+  /* ── Component: Why Us ── */
+  .why-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
-    margin-top: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
-  .card {
-    background: white;
-    border: 1px solid #E5E7EB;
-    border-radius: 10px;
-    padding: 18px 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  .why-card {
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
   }
-  .card-title {
-    font-weight: 600;
-    font-size: 14px;
-    color: #4F46E5;
-    margin-bottom: 6px;
-  }
-  .card-desc { font-size: 13px; color: #6B7280; line-height: 1.55; }
+  .why-card-title { font-weight: 800; font-size: 18px; margin-bottom: 12px; color: var(--primary); }
+  .why-card-desc { font-size: 14px; color: var(--text-muted); }
 
-  /* ── CTA / próximos pasos ── */
-  .cta-box {
-    background: #F0FDF4;
-    border: 1px solid #BBF7D0;
-    border-radius: 12px;
-    padding: 28px 32px;
-    margin-top: 8px;
+  /* ── Floating Contact ── */
+  .floating-cta {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--primary);
+    color: white;
+    padding: 16px 28px;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+    z-index: 100;
+    transition: transform 0.2s;
   }
+  .floating-cta:hover { transform: scale(1.05); }
 
   /* ── Footer ── */
   .footer {
-    background: #111827;
-    color: #9CA3AF;
+    padding: 60px;
     text-align: center;
-    padding: 28px 40px;
-    font-size: 13px;
-    line-height: 1.8;
+    background: #F1F5F9;
+    font-size: 14px;
+    color: var(--text-muted);
   }
-  .footer strong { color: white; }
+  .footer b { color: var(--text-main); }
 
   @media print {
-    body { background: white; }
-    .body { padding: 24px 24px 40px; }
-    .header { padding: 32px 40px 28px; }
+    .main-container { display: block; margin: 0; padding: 0; }
+    .sidebar, .floating-cta { display: none; }
+    .content-area { border: none; box-shadow: none; }
+    .hero { padding: 40px; }
+    .section { padding: 40px; page-break-inside: avoid; }
   }
 </style>
 </head>
 <body>
 
-<!-- ── HEADER ── -->
-<div class="header">
-  <div class="header-top">
-    <div class="agency-name">${esc(agencyName)}</div>
-    <div class="proposal-for">Propuesta para<br><strong>${clientLabel}</strong></div>
-  </div>
-  <div class="header-title">Propuesta Comercial</div>
-  <div class="header-subtitle">${esc(content.tipoServicio)}</div>
-  <div class="header-meta">
-    ${badge(fecha)}
-    ${badge("Propuesta Personalizada")}
-  </div>
-</div>
-
-<!-- ── BODY ── -->
-<div class="body">
-
-  <!-- Resumen ejecutivo -->
-  <div class="section">
-    <div class="section-label">Resumen</div>
-    <div class="section-title">Resumen Ejecutivo</div>
-    <div class="box">
-      <p class="section-text">${esc(content.resumenEjecutivo)}</p>
-    </div>
-  </div>
-
-  <!-- Problemas detectados -->
-  <div class="section">
-    <div class="section-label">Diagnóstico</div>
-    <div class="section-title">Problemas Detectados</div>
-    <div class="problem-grid">
-      ${problemCards(content.problemasDetectados)}
-    </div>
-  </div>
-
-  <!-- Nuestra solución -->
-  <div class="section">
-    <div class="section-label">Propuesta</div>
-    <div class="section-title">Nuestra Solución</div>
-    <div class="box">
-      <p class="section-text">${esc(content.solucion.descripcion)}</p>
-      <div class="key-points">
-        ${keyPoints(content.solucion.puntosClave)}
+  <div class="main-container">
+    <!-- Navegación lateral -->
+    <aside class="sidebar">
+      <div class="nav-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        ${esc(agencyName)}
       </div>
-    </div>
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="#resumen" class="nav-link">Resumen Ejecutivo</a></li>
+          <li class="nav-item"><a href="#diagnostico" class="nav-link">Diagnóstico</a></li>
+          <li class="nav-item"><a href="#propuesta" class="nav-link">Nuestra Solución</a></li>
+          <li class="nav-item"><a href="#alcance" class="nav-link">Alcance y Entregables</a></li>
+          <li class="nav-item"><a href="#proceso" class="nav-link">Metodología</a></li>
+          <li class="nav-item"><a href="#inversion" class="nav-link">Inversión</a></li>
+          <li class="nav-item"><a href="#nosotros" class="nav-link">¿Por qué nosotros?</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="content-area">
+      
+      <header class="hero">
+        <div class="hero-agency">${esc(agencyName)}</div>
+        <h1 class="hero-title">Propuesta Comercial Personalizada</h1>
+        <div class="hero-meta">
+          <div class="meta-item">
+            <span class="meta-label">Preparada para</span>
+            <span class="meta-value">${clientLabel}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Servicio</span>
+            <span class="meta-value">${esc(content.tipoServicio)}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Fecha</span>
+            <span class="meta-value">${fecha}</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Resumen -->
+      <section id="resumen" class="section">
+        <span class="section-tag">Introducción</span>
+        <div class="section-header">
+          <h2 class="section-title">Resumen Ejecutivo</h2>
+          <p class="section-desc">Entendemos tus objetivos y hemos diseñado una estrategia enfocada en resultados medibles.</p>
+        </div>
+        <p style="font-size: 16px; color: var(--text-main); line-height: 1.8;">${esc(content.resumenEjecutivo)}</p>
+      </section>
+
+      <!-- Diagnóstico -->
+      <section id="diagnostico" class="section">
+        <span class="section-tag">Análisis</span>
+        <div class="section-header">
+          <h2 class="section-title">Problemas Detectados</h2>
+          <p class="section-desc">Puntos críticos que están limitando tu crecimiento actual y requieren atención inmediata.</p>
+        </div>
+        <div class="problem-list">
+          ${problemCards(content.problemasDetectados)}
+        </div>
+      </section>
+
+      <!-- Propuesta -->
+      <section id="propuesta" class="section">
+        <span class="section-tag">Estrategia</span>
+        <div class="section-header">
+          <h2 class="section-title">Nuestra Solución</h2>
+          <p class="section-desc">Un enfoque integral diseñado para transformar tus desafíos en ventajas competitivas.</p>
+        </div>
+        <div style="background: var(--bg-main); padding: 32px; border-radius: var(--radius-md); margin-bottom: 24px;">
+          <p style="font-weight: 500; font-size: 16px; margin-bottom: 20px;">${esc(content.solucion.descripcion)}</p>
+          <div class="check-grid">
+            ${content.solucion.puntosClave.map(k => `
+              <div style="display: flex; gap: 10px; font-size: 14px; font-weight: 500;">
+                <span style="color: var(--primary);">→</span> ${esc(k)}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </section>
+
+      <!-- Entregables -->
+      <section id="alcance" class="section">
+        <span class="section-tag">Alcance</span>
+        <div class="section-header">
+          <h2 class="section-title">Entregables y Compromisos</h2>
+          <p class="section-desc">Lo que recibirás de nuestra parte de manera tangible durante la ejecución del proyecto.</p>
+        </div>
+        <div class="check-grid">
+          ${checkList(content.entregables)}
+        </div>
+      </section>
+
+      <!-- Proceso -->
+      <section id="proceso" class="section">
+        <span class="section-tag">Metodología</span>
+        <div class="section-header">
+          <h2 class="section-title">Cómo Vamos a Trabajar</h2>
+          <p class="section-desc">Nuestras fases de implementación para asegurar una ejecución impecable.</p>
+        </div>
+        <div class="steps-container">
+          ${steps(content.proceso)}
+        </div>
+      </section>
+
+      <!-- Inversión -->
+      <section id="inversion" class="section">
+        <span class="section-tag">Inversión</span>
+        <div class="section-header">
+          <h2 class="section-title">Presupuesto y Condiciones</h2>
+        </div>
+        <div class="investment-card">
+          <div class="inv-label">Inversión del Proyecto</div>
+          <div class="inv-amount">${esc(content.inversion.total)}</div>
+          <div class="inv-terms">${esc(content.inversion.terminos)}</div>
+          <div class="inv-grid">
+            ${content.inversion.incluye.map(i => `<div class="inv-badge">✓ ${esc(i)}</div>`).join("")}
+          </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 24px; border: 1px dashed var(--border); border-radius: var(--radius-md);">
+          <h4 style="font-size: 16px; margin-bottom: 8px;">Próximos Pasos</h4>
+          <ul style="list-style: none; font-size: 14px; color: var(--text-muted);">
+            ${content.proximosPasos.map(s => `<li style="margin-bottom: 6px;">→ ${esc(s)}</li>`).join("")}
+          </ul>
+        </div>
+      </section>
+
+      <!-- Nosotros -->
+      <section id="nosotros" class="section">
+        <span class="section-tag">Confianza</span>
+        <div class="section-header">
+          <h2 class="section-title">¿Por Qué Elegir a ${esc(agencyName)}?</h2>
+          <p class="section-desc">Nuestros diferenciadores y el valor único que aportamos a tu negocio.</p>
+        </div>
+        <div class="why-grid">
+          ${whyUsCards(content.porQueNosotros)}
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>Propuesta preparada por <b>${esc(agencyName)}</b> para <b>${clientLabel}</b></p>
+        <p style="margin-top: 8px; font-size: 12px; opacity: 0.6;">Válida por 30 días naturales. Reservados todos los derechos.</p>
+      </footer>
+
+    </main>
   </div>
 
-  <!-- Entregables -->
-  <div class="section">
-    <div class="section-label">Alcance</div>
-    <div class="section-title">Entregables</div>
-    <div class="box">
-      <div class="check-list">
-        ${checkList(content.entregables)}
-      </div>
-    </div>
-  </div>
-
-  <!-- Proceso -->
-  <div class="section">
-    <div class="section-label">Metodología</div>
-    <div class="section-title">Cómo Trabajamos</div>
-    <div class="box">
-      <div class="steps">
-        ${steps(content.proceso)}
-      </div>
-    </div>
-  </div>
-
-  <!-- Resultados esperados -->
-  <div class="section">
-    <div class="section-label">Impacto</div>
-    <div class="section-title">Resultados Esperados</div>
-    <div class="box">
-      <div class="bullets">
-        ${bullets(content.resultadosEsperados)}
-      </div>
-    </div>
-  </div>
-
-  <!-- Inversión -->
-  <div class="section">
-    <div class="section-label">Inversión</div>
-    <div class="section-title">Tu Inversión</div>
-    <div class="investment-block">
-      <div class="investment-label">Inversión Total</div>
-      <div class="investment-amount">${esc(content.inversion.total)}</div>
-      <div class="investment-terms">${esc(content.inversion.terminos)}</div>
-      <div class="investment-includes">
-        ${content.inversion.incluye.map(i => `<div class="inv-item">✓ ${esc(i)}</div>`).join("")}
-      </div>
-    </div>
-  </div>
-
-  <!-- Por qué nosotros -->
-  <div class="section">
-    <div class="section-label">Diferenciación</div>
-    <div class="section-title">¿Por Qué ${esc(agencyName)}?</div>
-    <div class="cards-grid">
-      ${cards(content.porQueNosotros)}
-    </div>
-  </div>
-
-  <!-- Próximos pasos -->
-  <div class="section">
-    <div class="section-label">Acción</div>
-    <div class="section-title">Próximos Pasos</div>
-    <div class="cta-box">
-      <div class="bullets">
-        ${bullets(content.proximosPasos)}
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ── FOOTER ── -->
-<div class="footer">
-  <strong>${esc(agencyName)}</strong><br>
-  Propuesta preparada exclusivamente para ${clientLabel} · ${fecha}<br>
-  Válida por 30 días a partir de la fecha de emisión
-</div>
+  <a href="#" class="floating-cta">Aceptar Propuesta</a>
 
 </body>
 </html>`;

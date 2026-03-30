@@ -138,7 +138,47 @@ export default function PropuestasPage() {
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
+  const [structuredContent, setStructuredContent] = useState<any>(null);
   const [htmlContent, setHtmlContent]     = useState("");
+
+  // Helper para convertir JSON a Markdown (para la pestaña "Propuesta")
+  function jsonToMarkdown(data: any): string {
+    if (!data) return "";
+    return `
+# ${data.tipoServicio}
+
+## Resumen Ejecutivo
+${data.resumenEjecutivo}
+
+## Problemas Detectados
+${data.problemasDetectados?.map((p: any) => `### ${p.titulo}\n${p.descripcion}`).join("\n\n")}
+
+## Nuestra Solución
+${data.solucion?.descripcion}
+${data.solucion?.puntosClave?.map((k: any) => `- ${k}`).join("\n")}
+
+## Entregables
+${data.entregables?.map((e: any) => `- ${e}`).join("\n")}
+
+## Metodología: Cómo Trabajamos
+${data.proceso?.map((s: any) => `${s.numero}. **${s.titulo}**: ${s.descripcion}`).join("\n")}
+
+## Resultados Esperados
+${data.resultadosEsperados?.map((r: any) => `- ${r}`).join("\n")}
+
+## Inversión
+**Total:** ${data.inversion?.total}
+**Incluye:**
+${data.inversion?.incluye?.map((i: any) => `- ${i}`).join("\n")}
+**Términos:** ${data.inversion?.terminos}
+
+## ¿Por Qué Nosotros?
+${data.porQueNosotros?.map((d: any) => `### ${d.titulo}\n${d.descripcion}`).join("\n\n")}
+
+## Próximos Pasos
+${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
+    `.trim();
+  }
   const [slidesContent, setSlidesContent] = useState("");
   const [previewId, setPreviewId]         = useState<string | null>(null);
   const [previewTs, setPreviewTs]         = useState(0);
@@ -271,131 +311,46 @@ export default function PropuestasPage() {
     return true;
   }
 
-  // ─── Generate proposal (markdown) ───────────────────────────────────────────
+  // ─── Generate proposal (unificada) ───────────────────────────────────────────
 
   async function generate() {
     setGenerating(true);
     setGeneratedContent("");
     setHtmlContent("");
-
-    const scopeLabels = form.serviceScope
-      .map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label ?? id)
-      .join(", ");
-
-    const diagnostico = [
-      form.problemasDetectados    && `**Problemas generales detectados:**\n${form.problemasDetectados}`,
-      form.problemaRedesSociales  && `**Problemas en redes sociales:**\n${form.problemaRedesSociales}`,
-      form.problemaWebLanding     && `**Problemas en web / landing page:**\n${form.problemaWebLanding}`,
-      form.debilidadesDetectadas  && `**Debilidades detectadas:**\n${form.debilidadesDetectadas}`,
-      form.fortalezasDetectadas   && `**Fortalezas detectadas:**\n${form.fortalezasDetectadas}`,
-    ].filter(Boolean).join("\n\n");
-
-    const kpis = [
-      form.kpi1Name && `- ${form.kpi1Name}: ${form.kpi1Start || "—"} → meta: ${form.kpi1Goal}`,
-      form.kpi2Name && `- ${form.kpi2Name}: ${form.kpi2Start || "—"} → meta: ${form.kpi2Goal}`,
-      form.kpi3Name && `- ${form.kpi3Name}: ${form.kpi3Start || "—"} → meta: ${form.kpi3Goal}`,
-    ].filter(Boolean).join("\n");
-
-    const buyerPersonaSection = [
-      form.buyerPersona        && `**Perfil del cliente final:**\n${form.buyerPersona}`,
-      form.doloresFuncionales  && `**Dolores funcionales:**\n${form.doloresFuncionales}`,
-      form.doloresEmocionales  && `**Dolores emocionales:**\n${form.doloresEmocionales}`,
-      form.objecionesCliente   && `**Objeciones frecuentes:**\n${form.objecionesCliente}`,
-    ].filter(Boolean).join("\n\n");
-
-    // Secciones específicas según el alcance seleccionado
-    const scopeSections: Record<string, string> = {
-      contenido:   "- Estrategia editorial y calendario de contenidos\n- Formatos, frecuencia y distribución de publicaciones\n- Métricas de crecimiento orgánico y engagement",
-      meta_ads:    "- Estructura de campañas en Meta Ads (objetivos, audiencias, creatividades)\n- Presupuesto recomendado y ROI esperado\n- KPIs: CPM, CPC, ROAS y leads generados",
-      google_ads:  "- Estructura de campañas (Search, Display, Shopping según aplique)\n- Estrategia de keywords y pujas\n- KPIs: CTR, CPC, conversiones y ROAS",
-      seo:         "- Auditoría SEO y análisis de keywords objetivo\n- Plan de optimización on-page y link building\n- Proyección de tráfico orgánico a 3-6 meses",
-      sem:         "- Estrategia de búsqueda pagada y segmentación\n- Estimación de impresiones, clics y conversiones\n- KPIs: CPC promedio, tasa de conversión y costo por lead",
-      email:       "- Flujos de automatización y campañas de nurturing\n- Segmentación de listas y frecuencia de envío\n- KPIs: open rate, CTR y conversiones",
-      estrategia:  "- Análisis de situación actual y posicionamiento competitivo\n- Plan de marketing integral 90-180 días\n- Roadmap de implementación con prioridades claras",
-    };
-    const scopeDetails = form.serviceScope
-      .map(id => scopeSections[id] ? `**${SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label}:**\n${scopeSections[id]}` : "")
-      .filter(Boolean)
-      .join("\n\n");
-
-    const prompt = `Genera una propuesta comercial completa, profesional y persuasiva con los siguientes datos:
-
-**ALCANCE DE LA PROPUESTA:** ${scopeLabels}
-
-**CLIENTE:** ${form.clientName}${form.clientCompany ? ` — ${form.clientCompany}` : ""}
-**INDUSTRIA:** ${form.clientIndustry}${form.clientEmail ? ` | Contacto: ${form.clientEmail}` : ""}
-
-**DESCRIPCIÓN DEL SERVICIO:**
-${form.serviceDescription}
-
-**OBJETIVOS DEL CLIENTE:**
-${form.clientGoals}
-${form.currentSituation ? `\n**SITUACIÓN ACTUAL:**\n${form.currentSituation}` : ""}
-${kpis ? `\n**KPIs CON OBJETIVOS NUMÉRICOS:**\n${kpis}` : ""}
-
-**ALCANCE Y ENTREGABLES:**
-${form.deliverables}
-- Duración: ${form.duration}
-${form.frequency ? `- Frecuencia: ${form.frequency}` : ""}
-${form.notIncluded ? `- NO incluye: ${form.notIncluded}` : ""}
-${diagnostico ? `\n**DIAGNÓSTICO PREVIO:**\n${diagnostico}` : ""}
-${buyerPersonaSection ? `\n**BUYER PERSONA Y DOLORES DEL CLIENTE FINAL:**\n${buyerPersonaSection}` : ""}
-
-**INVERSIÓN:** ${form.currency} ${form.price}
-**TÉRMINOS DE PAGO:** ${form.paymentTerms}
-
-La propuesta debe incluir EXACTAMENTE estas secciones:
-1. Carta de presentación personalizada al cliente (usa su nombre, menciona su industria)
-2. Diagnóstico: problemas detectados y por qué son urgentes de resolver${buyerPersonaSection ? " (incluye cómo los dolores del cliente final afectan el negocio)" : ""}
-3. Nuestra propuesta y metodología — adaptada específicamente al alcance: ${scopeLabels}
-${scopeDetails ? `\n   Incluye estos puntos para cada servicio:\n${scopeDetails}\n` : ""}4. Entregables y alcance detallado
-${kpis ? "5. Tabla de KPIs: columnas Métrica | Valor Actual | Objetivo (usa los datos proporcionados)" : "5. Resultados esperados"}
-6. Inversión y condiciones de pago (con tabla si hay opciones de pago)
-7. Por qué elegirnos (fortalezas y diferenciadores)
-8. Próximos pasos y llamada a la acción clara
-
-Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples secciones. Si hay diagnóstico previo o buyer persona, úsalos para reforzar la urgencia y el valor.${kpis ? " Los KPIs deben aparecer en una tabla Markdown con los valores actuales vs objetivos." : ""}`;
+    setSlidesContent("");
+    setStructuredContent(null);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/proposals/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: prompt }],
-          agentId: "propuestas",
-          agentContext: "",
-        }),
+        body: JSON.stringify({ form }),
       });
 
-      if (!res.ok || !res.body) throw new Error();
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulated = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        setGeneratedContent(accumulated);
-      }
+      if (!res.ok) throw new Error();
+      
+      const data = await res.json();
+      setStructuredContent(data);
+      
+      const md = jsonToMarkdown(data);
+      setGeneratedContent(md);
 
       // Actualiza viewingProposal en estado para que renderResult muestre el nuevo contenido
       setViewingProposal(prev =>
-        prev ? { ...prev, generated_content: accumulated, status: "generada", form_data: form } : null
+        prev ? { ...prev, generated_content: md, status: "generada", form_data: form } : null
       );
 
       setView("result");
       setResultTab("propuesta");
 
       // Si la propuesta ya estaba guardada, sincroniza todo en Supabase
-      if (savedProposalId && accumulated) {
+      if (savedProposalId && md) {
         await fetch("/api/proposals", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: savedProposalId,
-            generated_content: accumulated,
+            generated_content: md,
             status: "generada",
             client_name: form.clientName,
             industry: form.clientIndustry,
@@ -436,6 +391,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
           clientName: viewingProposal?.client_name ?? form.clientName,
           clientCompany: form.clientCompany,
           price: `${form.currency} ${form.price}`,
+          structuredContent: structuredContent, // Pasamos el JSON si existe
         }),
       });
 
@@ -546,6 +502,7 @@ Tono profesional y cercano. Personaliza con el nombre del cliente en múltiples 
           clientName: viewingProposal?.client_name ?? form.clientName,
           clientCompany: form.clientCompany,
           price: `${form.currency} ${form.price}`,
+          structuredContent: structuredContent, // Pasamos el JSON si existe
         }),
       });
 
