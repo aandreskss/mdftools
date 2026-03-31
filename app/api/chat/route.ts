@@ -175,8 +175,9 @@ export async function POST(request: Request) {
       }))
       .filter((m) => m.parts[0].text.trim());
 
+    const chatApiVersion = model.startsWith("gemini-2") ? "v1beta" : "v1";
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${settings.geminiApiKey}&alt=sse`,
+      `https://generativelanguage.googleapis.com/${chatApiVersion}/models/${model}:streamGenerateContent?key=${settings.geminiApiKey}&alt=sse`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
