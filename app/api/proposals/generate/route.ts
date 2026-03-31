@@ -94,18 +94,21 @@ ${JSON_SCHEMA}
 IMPORTANTE: No incluyas explicaciones, ni bloques de código markdown, solo el objeto JSON puro.`;
 
   try {
-    let rawJson = (await callAIJson(settings, settings.modelProposals, prompt, 4000, 0.7)).trim();
-    rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const aiText = (await callAIJson(settings, settings.modelProposals, prompt, 4000, 0.7)).trim();
 
-    // Validamos que sea JSON antes de enviar
-    JSON.parse(rawJson);
+    if (!aiText) throw new Error("La IA devolvió una respuesta vacía. Puede ser un filtro de seguridad o cuota agotada.");
+
+    let rawJson = aiText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+    JSON.parse(rawJson); // valida que sea JSON válido
 
     return new Response(rawJson, {
       headers: { "Content-Type": "application/json; charset=utf-8" },
     });
   } catch (err) {
-    console.error("Error generating proposal JSON:", err);
-    return new Response(JSON.stringify({ error: "Error al generar la propuesta" }), {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Error generating proposal JSON:", msg);
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

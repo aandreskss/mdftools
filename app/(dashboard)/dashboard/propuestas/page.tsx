@@ -353,8 +353,11 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         body: JSON.stringify({ form }),
       });
 
-      if (!res.ok) throw new Error();
-      
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || errBody.message || `HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       setStructuredContent(data);
       
@@ -385,8 +388,9 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         });
         await fetchProposals();
       }
-    } catch {
-      setGeneratedContent("Error al generar la propuesta. Intenta de nuevo.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error desconocido";
+      setGeneratedContent(`⚠️ Error al generar la propuesta\n\n**Detalle:** ${msg}\n\nRevisa tu API key y modelo en Perfil de Marca.`);
       setView("result");
     } finally {
       setGenerating(false);
