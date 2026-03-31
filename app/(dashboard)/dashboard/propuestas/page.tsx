@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
-  Code, Download, Layers, RefreshCw, Pencil, Upload, Mail,
+  Code, Download, RefreshCw, Pencil, Upload, Mail,
   MessageCircle, LayoutGrid, List, Building2, X, FileDown, Link2,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
@@ -135,12 +135,12 @@ export default function PropuestasPage() {
   const [loadingList, setLoadingList]       = useState(true);
   const [generating, setGenerating]         = useState(false);
   const [generatingHtml, setGeneratingHtml] = useState(false);
-  const [generatingSlides, setGeneratingSlides] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [structuredContent, setStructuredContent] = useState<any>(null);
   const [htmlContent, setHtmlContent]     = useState("");
+
 
   // Helper para convertir JSON a Markdown (para la pestaña "Propuesta")
   function jsonToMarkdown(data: any): string {
@@ -180,12 +180,10 @@ ${data.porQueNosotros?.map((d: any) => `### ${d.titulo}\n${d.descripcion}`).join
 ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     `.trim();
   }
-  const [slidesContent, setSlidesContent] = useState("");
   const [previewId, setPreviewId]         = useState<string | null>(null);
   const [previewTs, setPreviewTs]         = useState(0);
   const [htmlIframeKey, setHtmlIframeKey]     = useState(0);
-  const [slidesIframeKey, setSlidesIframeKey] = useState(0);
-  const [resultTab, setResultTab] = useState<"propuesta" | "html" | "slides">("propuesta");
+  const [resultTab, setResultTab] = useState<"propuesta" | "html">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
@@ -195,7 +193,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const htmlIframeRef    = useRef<HTMLIFrameElement>(null);
-  const slidesIframeRef  = useRef<HTMLIFrameElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchProposals(); }, []);
@@ -227,12 +224,10 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setGeneratedContent(viewingProposal.generated_content ?? "");
     setStructuredContent(null);
     setHtmlContent(viewingProposal.html_content ?? "");
-    setSlidesContent(viewingProposal.slides_content ?? "");
     setHtmlExpiresAt(viewingProposal.html_expires_at ?? null);
     setPreviewTs(Date.now());
     if (viewingProposal.form_data) setForm({ ...defaultForm, ...viewingProposal.form_data });
     if (viewingProposal.html_content) setHtmlIframeKey(k => k + 1);
-    if (viewingProposal.slides_content) setSlidesIframeKey(k => k + 1);
   }, [viewingProposal]);
 
   // Escribir HTML directamente al DOM del iframe (hereda origen del padre → CDN funciona)
@@ -248,18 +243,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     const t = setTimeout(write, 100);
     return () => clearTimeout(t);
   }, [htmlContent, htmlIframeKey, resultTab]);
-
-  useEffect(() => {
-    if (!slidesContent || resultTab !== "slides") return;
-    const write = () => {
-      const iframe = slidesIframeRef.current;
-      if (!iframe) return;
-      const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
-      if (doc) { doc.open(); doc.write(slidesContent); doc.close(); }
-    };
-    const t = setTimeout(write, 100);
-    return () => clearTimeout(t);
-  }, [slidesContent, slidesIframeKey, resultTab]);
 
   async function fetchProposals() {
     setLoadingList(true);
@@ -296,9 +279,10 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     const id = savedProposalId ?? proposal?.id;
     const link = id ? `\n\n🔗 Ver propuesta online: ${window.location.origin}/p/${id}` : "";
     const msg = encodeURIComponent(
-      `Hola ${name}! 👋\n\nTe comparto la propuesta comercial que preparamos especialmente para ${company || name}.${link}\n\nQuedo disponible para cualquier consulta o para agendar una llamada. ¡Espero tu respuesta!`
+      `Hola ${name || ""}! 👋\n\nTe comparto la propuesta comercial que preparamos especialmente para ${company || name || "ti"}.${link}\n\nQuedo disponible para cualquier consulta o para agendar una llamada. ¡Espero tu respuesta!`
     );
-    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+    const url = phone ? `https://wa.me/${phone}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    window.open(url, "_blank");
   }
 
   function sendViaEmail(proposal: Proposal | null) {
@@ -343,7 +327,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setGenerating(true);
     setGeneratedContent("");
     setHtmlContent("");
-    setSlidesContent("");
     setStructuredContent(null);
 
     try {
@@ -489,7 +472,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         formData: form,
         generatedContent,
         htmlContent,
-        slidesContent,
         status: "generada",
       }),
     });
@@ -525,75 +507,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setTimeout(() => setCopiedLink(false), 2500);
   }
 
-  // ─── Generate Slides (Reveal.js) ────────────────────────────────────────────
-
-  async function generateSlides(markdownContent: string) {
-    setGeneratingSlides(true);
-    setSlidesContent("");
-    setResultTab("slides");
-
-    try {
-      const res = await fetch("/api/proposals/slides", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          markdown: markdownContent,
-          clientName: viewingProposal?.client_name ?? form.clientName,
-          clientCompany: form.clientCompany,
-          price: `${form.currency} ${form.price}`,
-          structuredContent: structuredContent, // Pasamos el JSON si existe
-        }),
-      });
-
-      if (res.status === 402) {
-        setSlidesContent("");
-        setResultTab("propuesta");
-        alert("⚠️ Debes configurar tu API key de Anthropic en Perfil de Marca para usar esta función.");
-        return;
-      }
-      if (!res.ok || !res.body) throw new Error();
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulated = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        setSlidesContent(stripFences(accumulated));
-      }
-
-      // Auto-guardar en Supabase
-      const id = savedProposalId ?? viewingProposal?.id;
-      if (id && accumulated) {
-        await fetch("/api/proposals", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, slides_content: stripFences(accumulated) }),
-        });
-        setPreviewId(id);
-        setPreviewTs(Date.now());
-        setSlidesIframeKey(k => k + 1);
-        await fetchProposals();
-      }
-    } catch {
-      setSlidesContent("<p>Error al generar la presentación.</p>");
-    } finally {
-      setGeneratingSlides(false);
-    }
-  }
-
-  function downloadSlides() {
-    const blob = new Blob([slidesContent], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `slides-${(viewingProposal?.client_name ?? form.clientName).toLowerCase().replace(/\s+/g, "-")}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   function downloadPdf() {
     const win = window.open("", "_blank");
     if (!win) return;
@@ -611,7 +524,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setStep(0);
     setGeneratedContent("");
     setHtmlContent("");
-    setSlidesContent("");
     setHtmlExpiresAt(null);
     setSavedProposalId(null);
     setPreviewId(null);
@@ -1073,7 +985,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                 ))}
               </div>
               <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente. También podrás exportarla como HTML o Slides.</p>
+                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente. También podrás exportarla como HTML o PDF.</p>
               </div>
             </>
           )}
@@ -1157,36 +1069,22 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
               <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Generar contenido</p>
               <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
                 <button
-                  onClick={() => generateSlides(markdownContent)}
-                  disabled={generatingSlides}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${slidesContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-violet-600 hover:bg-violet-500 text-white"}`}
-                >
-                  {generatingSlides ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Layers size={11} /> {slidesContent ? "Regen. Slides" : "Slides"}</>}
-                </button>
-                <button
                   onClick={() => generateHtml(markdownContent)}
                   disabled={generatingHtml}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${htmlContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-indigo-600 hover:bg-indigo-500 text-white"}`}
                 >
                   {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Code size={11} /> {htmlContent ? "Regen. HTML" : "HTML"}</>}
                 </button>
-                {(htmlContent || slidesContent) && (
-                  <div className="w-px h-4 bg-gray-800 mx-0.5" />
-                )}
                 {htmlContent && (
-                  <button onClick={downloadHtml} title="Descargar HTML" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
-                    <Download size={11} />
-                  </button>
-                )}
-                {htmlContent && (
-                  <button onClick={downloadPdf} title="Descargar PDF" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
-                    <FileDown size={11} />
-                  </button>
-                )}
-                {slidesContent && (
-                  <button onClick={downloadSlides} title="Descargar Slides" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
-                    <Download size={11} />
-                  </button>
+                  <>
+                    <div className="w-px h-4 bg-gray-800 mx-0.5" />
+                    <button onClick={downloadHtml} title="Descargar HTML" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
+                      <Download size={11} />
+                    </button>
+                    <button onClick={downloadPdf} title="Descargar PDF" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
+                      <FileDown size={11} />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -1196,7 +1094,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
               <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Generar propuesta</p>
               <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
                 <button
-                  onClick={() => { setHtmlContent(""); setSlidesContent(""); generate(); }}
+                  onClick={() => { setHtmlContent(""); generate(); }}
                   disabled={generating}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-60 transition whitespace-nowrap"
                 >
@@ -1253,14 +1151,12 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                     </button>
                   ) : null
                 )}
-                {clientWhatsapp && (
-                  <button
-                    onClick={() => sendViaWhatsApp(viewingProposal)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
-                  >
-                    <MessageCircle size={11} /> WhatsApp
-                  </button>
-                )}
+                <button
+                  onClick={() => sendViaWhatsApp(viewingProposal)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
+                >
+                  <MessageCircle size={11} /> WhatsApp
+                </button>
                 {clientEmail && (
                   <button
                     onClick={() => sendViaEmail(viewingProposal)}
@@ -1268,9 +1164,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   >
                     <Mail size={11} /> Email
                   </button>
-                )}
-                {!clientWhatsapp && !clientEmail && !(savedProposalId || viewingProposal?.id) && (
-                  <span className="px-3 py-1.5 text-xs text-gray-600">Guarda la propuesta primero</span>
                 )}
               </div>
             </div>
@@ -1292,13 +1185,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           >
             <Code size={11} /> HTML
             {htmlContent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-          </button>
-          <button
-            onClick={() => { setResultTab("slides"); if (!slidesContent) generateSlides(markdownContent); }}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${resultTab === "slides" ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
-          >
-            <Layers size={11} /> Slides
-            {slidesContent && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
           </button>
         </div>
 
@@ -1334,41 +1220,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           </div>
         )}
 
-        {/* Slides tab */}
-        {resultTab === "slides" && (
-          <div className="rounded-xl overflow-hidden border border-gray-800 bg-gray-950">
-            {generatingSlides && (
-              <div className="flex items-center gap-2 p-6 text-gray-500 text-sm">
-                <Loader2 size={14} className="animate-spin" /> Generando presentación...
-              </div>
-            )}
-            {!generatingSlides && slidesContent && (
-              <>
-                <iframe
-                  key={slidesIframeKey}
-                  ref={slidesIframeRef}
-                  className="w-full"
-                  style={{ height: "520px", border: "none" }}
-                  title="Presentación Slides"
-                />
-                <div className="px-4 py-3 border-t border-gray-800 flex items-center justify-between">
-                  <p className="text-xs text-gray-500">← → para navegar · F para pantalla completa · ESC para salir</p>
-                  <button
-                    onClick={downloadSlides}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium rounded-lg transition"
-                  >
-                    <Download size={12} /> Descargar y abrir en pantalla completa
-                  </button>
-                </div>
-              </>
-            )}
-            {!generatingSlides && !slidesContent && (
-              <div className="p-8 text-gray-500 text-sm text-center">
-                Haz click en "Generar Slides" para crear la presentación.
-              </div>
-            )}
-          </div>
-        )}
       </div>
     );
   }
