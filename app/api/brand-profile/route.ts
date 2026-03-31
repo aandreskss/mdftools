@@ -25,8 +25,9 @@ export async function GET() {
     webUrl: data.web_url,
     redesSociales: data.social_media,
     updatedAt: data.updated_at,
-    // API key: never expose the actual value, only a boolean
-    hasApiKey: !!(data.anthropic_api_key?.trim()),
+    // API keys — never expose the actual values, only booleans
+    hasApiKey:    !!(data.anthropic_api_key?.trim()),
+    hasGeminiKey: !!(data.gemini_api_key?.trim()),
     // Model preferences
     modelAgents:    data.model_agents    || DEFAULT_MODEL_AGENTS,
     modelSeo:       data.model_seo       || DEFAULT_MODEL_SEO,
@@ -43,10 +44,10 @@ export async function POST(request: Request) {
 
   const upsertData: Record<string, unknown> = {
     user_id: user.id,
-    brand_name:        body.nombre         ?? "",
-    products_services: body.descripcion    ?? "",
-    industry:          body.industria      ?? "",
-    tone_of_voice:     body.tono           ?? "",
+    brand_name:        body.nombre          ?? "",
+    products_services: body.descripcion     ?? "",
+    industry:          body.industria       ?? "",
+    tone_of_voice:     body.tono            ?? "",
     target_audience:   body.publicoObjetivo ?? "",
     differentiators:   body.diferenciadores ?? "",
     web_url:           body.webUrl          ?? "",
@@ -54,10 +55,9 @@ export async function POST(request: Request) {
     updated_at:        new Date().toISOString(),
   };
 
-  // Only update API key if user explicitly sent a new one
-  if (body.anthropicApiKey?.trim()) {
-    upsertData.anthropic_api_key = body.anthropicApiKey.trim();
-  }
+  // Only update API keys if user explicitly sent new ones
+  if (body.anthropicApiKey?.trim()) upsertData.anthropic_api_key = body.anthropicApiKey.trim();
+  if (body.geminiApiKey?.trim())    upsertData.gemini_api_key    = body.geminiApiKey.trim();
 
   // Model preferences — only update if provided
   if (body.modelAgents)    upsertData.model_agents    = body.modelAgents;

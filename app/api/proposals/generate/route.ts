@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getUserSettings, noApiKeyResponse } from "@/lib/user-settings";
+import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 
 const JSON_SCHEMA = `{
   "tipoServicio": "string — Título profesional de la propuesta",
@@ -94,15 +94,7 @@ ${JSON_SCHEMA}
 IMPORTANTE: No incluyas explicaciones, ni bloques de código markdown, solo el objeto JSON puro.`;
 
   try {
-    const msg = await settings.anthropic.messages.create({
-      model: settings.modelProposals,
-      max_tokens: 4000,
-      temperature: 0.7,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    let rawJson = (msg.content[0] as { type: string; text: string }).text.trim();
-    // Limpieza de posibles bloques de código
+    let rawJson = (await callAIJson(settings, settings.modelProposals, prompt, 4000, 0.7)).trim();
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     // Validamos que sea JSON antes de enviar

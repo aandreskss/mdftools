@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink, Cpu } from "lucide-react";
 import type { BrandProfile } from "@/types";
-import { CLAUDE_MODELS, DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS } from "@/lib/user-settings";
+import { CLAUDE_MODELS, GEMINI_MODELS, DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS } from "@/lib/user-settings";
 
 const STORAGE_KEY = "mdf_brand_profile";
 
@@ -46,6 +46,9 @@ const MODEL_BADGE_COLORS: Record<string, string> = {
   green:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
   indigo: "bg-indigo-500/10  text-indigo-400  border-indigo-500/30",
   purple: "bg-purple-500/10  text-purple-400  border-purple-500/30",
+  teal:   "bg-teal-500/10    text-teal-400    border-teal-500/30",
+  blue:   "bg-blue-500/10    text-blue-400    border-blue-500/30",
+  orange: "bg-orange-500/10  text-orange-400  border-orange-500/30",
 };
 
 export default function PerfilPage() {
@@ -55,11 +58,14 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
 
-  // API key
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [keySaved, setKeySaved] = useState(false);
+  // API keys
+  const [apiKeyInput, setApiKeyInput]       = useState("");
+  const [hasApiKey, setHasApiKey]           = useState(false);
+  const [showApiKey, setShowApiKey]         = useState(false);
+  const [keySaved, setKeySaved]             = useState(false);
+  const [geminiKeyInput, setGeminiKeyInput] = useState("");
+  const [hasGeminiKey, setHasGeminiKey]     = useState(false);
+  const [showGeminiKey, setShowGeminiKey]   = useState(false);
 
   // Model preferences
   const [modelAgents,    setModelAgents]    = useState(DEFAULT_MODEL_AGENTS);
@@ -82,6 +88,7 @@ export default function PerfilPage() {
             setProfile(data);
             setHasProfile(true);
             setHasApiKey(!!data.hasApiKey);
+            setHasGeminiKey(!!data.hasGeminiKey);
             if (data.modelAgents)    setModelAgents(data.modelAgents);
             if (data.modelSeo)       setModelSeo(data.modelSeo);
             if (data.modelProposals) setModelProposals(data.modelProposals);
@@ -115,7 +122,8 @@ export default function PerfilPage() {
       modelSeo,
       modelProposals,
     };
-    if (apiKeyInput.trim()) body.anthropicApiKey = apiKeyInput.trim();
+    if (apiKeyInput.trim())    body.anthropicApiKey = apiKeyInput.trim();
+    if (geminiKeyInput.trim()) body.geminiApiKey    = geminiKeyInput.trim();
 
     try {
       await fetch("/api/brand-profile", {
@@ -128,6 +136,10 @@ export default function PerfilPage() {
         setApiKeyInput("");
         setKeySaved(true);
         setTimeout(() => setKeySaved(false), 3000);
+      }
+      if (geminiKeyInput.trim()) {
+        setHasGeminiKey(true);
+        setGeminiKeyInput("");
       }
     } catch {}
 
@@ -315,14 +327,58 @@ export default function PerfilPage() {
           </div>
         </div>
 
+        {/* ── API Key Gemini ───────────────────────────────────────── */}
+        <div className="pt-2 border-t border-gray-800">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Key size={14} className="text-blue-400" />
+              <h3 className="text-sm font-medium text-gray-300">Google Gemini API Key</h3>
+              {hasGeminiKey && (
+                <span className="flex items-center gap-1 text-xs text-blue-400">
+                  <CheckCircle size={11} /> Configurada
+                </span>
+              )}
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+              className="text-xs text-blue-400 underline hover:text-blue-200 flex items-center gap-0.5">
+              Obtener key <ExternalLink size={10} />
+            </a>
+          </div>
+
+          {!hasGeminiKey && (
+            <p className="text-xs text-blue-400/70 mb-2 flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400" />
+              Alternativa económica a Claude. Flash 2.0 cuesta ~10x menos que Haiku.
+            </p>
+          )}
+          {hasGeminiKey && (
+            <p className="text-xs text-gray-500 mb-2">Ya tienes una key configurada. Ingresa una nueva para reemplazarla.</p>
+          )}
+
+          <div className="relative">
+            <input
+              type={showGeminiKey ? "text" : "password"}
+              value={geminiKeyInput}
+              onChange={(e) => setGeminiKeyInput(e.target.value)}
+              placeholder={hasGeminiKey ? "AIza... (vacío = mantener la actual)" : "AIzaSy..."}
+              className="w-full px-4 py-2.5 pr-10 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition font-mono"
+            />
+            <button type="button" onClick={() => setShowGeminiKey((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition">
+              {showGeminiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+        </div>
+
         {/* ── Modelos de IA ────────────────────────────────────────── */}
         <div className="pt-2 border-t border-gray-800">
           <div className="flex items-center gap-2 mb-4">
             <Cpu size={14} className="text-indigo-400" />
             <h3 className="text-sm font-medium text-gray-300">Modelo de IA por sección</h3>
+            <span className="text-xs text-gray-600">— elige el proveedor y modelo para cada función</span>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-6">
             {MODEL_SECTIONS.map((section) => {
               const current = modelState[section.key].get;
               const setCurrent = modelState[section.key].set;
@@ -330,35 +386,68 @@ export default function PerfilPage() {
                 <div key={section.key}>
                   <div className="text-sm font-medium text-gray-300 mb-0.5">{section.label}</div>
                   <div className="text-xs text-gray-500 mb-3">{section.description}</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {CLAUDE_MODELS.map((m) => {
-                      const isSelected = current === m.id;
-                      return (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={() => setCurrent(m.id)}
-                          className={`p-3 rounded-xl border text-left transition ${
-                            isSelected
-                              ? "bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50"
-                              : "bg-gray-900 border-gray-700 hover:border-gray-600"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-semibold text-white">{m.label}</span>
-                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>
-                              {m.badge}
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-gray-400 leading-snug">{m.description}</div>
-                          {isSelected && (
-                            <div className="mt-2 flex items-center gap-1 text-[10px] text-indigo-400">
-                              <CheckCircle size={10} /> Seleccionado
+
+                  {/* Claude models */}
+                  <div className="mb-2">
+                    <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-sm bg-orange-500/20 inline-flex items-center justify-center text-orange-400 text-[8px] font-bold">A</span>
+                      Anthropic / Claude
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {CLAUDE_MODELS.map((m) => {
+                        const isSelected = current === m.id;
+                        const needsKey = !hasApiKey;
+                        return (
+                          <button key={m.id} type="button" onClick={() => setCurrent(m.id)}
+                            className={`p-3 rounded-xl border text-left transition ${
+                              isSelected ? "bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50"
+                                : needsKey ? "bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed"
+                                : "bg-gray-900 border-gray-700 hover:border-gray-600"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-white">{m.label}</span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>{m.badge}</span>
                             </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                            <div className="text-[11px] text-gray-400 leading-snug">{m.description}</div>
+                            {isSelected && <div className="mt-2 flex items-center gap-1 text-[10px] text-indigo-400"><CheckCircle size={10} /> Activo</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Gemini models */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-sm bg-blue-500/20 inline-flex items-center justify-center text-blue-400 text-[8px] font-bold">G</span>
+                      Google / Gemini
+                      {!hasGeminiKey && <span className="text-gray-700 normal-case tracking-normal font-normal">— configura tu key para activar</span>}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {GEMINI_MODELS.map((m) => {
+                        const isSelected = current === m.id;
+                        const needsKey = !hasGeminiKey;
+                        return (
+                          <button key={m.id} type="button"
+                            onClick={() => !needsKey && setCurrent(m.id)}
+                            disabled={needsKey}
+                            className={`p-3 rounded-xl border text-left transition ${
+                              isSelected ? "bg-blue-600/20 border-blue-500 ring-1 ring-blue-500/50"
+                                : needsKey ? "bg-gray-900 border-gray-800 opacity-40 cursor-not-allowed"
+                                : "bg-gray-900 border-gray-700 hover:border-gray-600"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-white">{m.label}</span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>{m.badge}</span>
+                            </div>
+                            <div className="text-[11px] text-gray-400 leading-snug">{m.description}</div>
+                            {isSelected && <div className="mt-2 flex items-center gap-1 text-[10px] text-blue-400"><CheckCircle size={10} /> Activo</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               );

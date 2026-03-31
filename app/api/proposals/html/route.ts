@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getUserSettings, noApiKeyResponse } from "@/lib/user-settings";
+import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 import { renderProposalHtml, type ProposalContent } from "@/lib/proposal-template";
 
 const JSON_SCHEMA = `{
@@ -77,13 +77,7 @@ IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin b
 
   let rawJson = "";
   try {
-    const msg = await settings.anthropic.messages.create({
-      model: settings.modelProposals,
-      max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    rawJson = (msg.content[0] as { type: string; text: string }).text.trim();
+    rawJson = (await callAIJson(settings, settings.modelProposals, prompt, 4096)).trim();
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const content: ProposalContent = JSON.parse(rawJson);

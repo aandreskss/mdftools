@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getUserSettings, noApiKeyResponse } from "@/lib/user-settings";
+import { getUserSettings, noApiKeyResponse, isGemini } from "@/lib/user-settings";
 import { getSystemPrompt } from "@/lib/prompts";
 import { createClient } from "@/lib/supabase/server";
 import type { Message } from "@/types";
@@ -32,8 +32,6 @@ export async function POST(request: Request) {
   } catch {
     return noApiKeyResponse();
   }
-  const anthropic: Anthropic = settings.anthropic;
-
   if (user) {
     const baseQueries = Promise.all([
       supabase.from("brand_profiles").select("*").eq("user_id", user.id).maybeSingle(),
@@ -157,6 +155,79 @@ export async function POST(request: Request) {
   const maxTokens = agentId === "propuestas"
     ? MAX_TOKENS_PROPOSALS
     : MAX_TOKENS_DEFAULT;
+
+  // ── Gemini streaming ──────────────────────────────────────────────────────
+  if (isGemini(model)) {
+    if (!settings.geminiApiKey) return noApiKeyResponse();
+
+    // Convert Anthropic message format → Gemini format (text-only, skip image blocks)
+    const geminiMessages = apiMessages
+      .map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{
+          text: typeof m.content === "string"
+            ? m.content
+            : (m.content as Anthropic.ContentBlockParam[])
+                .filter((b): b is Anthropic.TextBlockParam => b.type === "text")
+                .map((b) => b.text)
+                .join("\n"),
+        }],
+      }))
+      .filter((m) => m.parts[0].text.trim());
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${settings.geminiApiKey}&alt=sse`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: geminiMessages,
+          generationConfig: { maxOutputTokens: maxTokens },
+        }),
+      }
+    );
+
+    if (!geminiRes.ok || !geminiRes.body) return noApiKeyResponse();
+
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        const reader = geminiRes.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const raw = line.slice(6).trim();
+              if (!raw || raw === "[DONE]") continue;
+              try {
+                const chunk = JSON.parse(raw);
+                const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) controller.enqueue(new TextEncoder().encode(text));
+              } catch {}
+            }
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+    });
+
+    return new Response(readableStream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  // ── Anthropic streaming ───────────────────────────────────────────────────
+  if (!settings.anthropic) return noApiKeyResponse();
+  const anthropic = settings.anthropic;
 
   const stream = anthropic.messages.stream({
     model,
