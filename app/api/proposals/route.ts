@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("proposals")
-    .select("id, client_name, industry, status, created_at, generated_content, html_content, slides_content, form_data")
+    .select("id, client_name, industry, status, created_at, generated_content, html_content, slides_content, form_data, html_expires_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -58,6 +58,7 @@ export async function PATCH(request: Request) {
   if ("client_name"       in fields) allowed.client_name       = fields.client_name;
   if ("industry"          in fields) allowed.industry          = fields.industry;
   if ("form_data"         in fields) allowed.form_data         = fields.form_data;
+  if ("html_expires_at"   in fields) allowed.html_expires_at   = fields.html_expires_at;
 
   if (Object.keys(allowed).length === 0)
     return NextResponse.json({ error: "Nada que actualizar" }, { status: 400 });

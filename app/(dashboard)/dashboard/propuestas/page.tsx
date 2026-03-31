@@ -41,6 +41,7 @@ interface Proposal {
   id: string; client_name: string; industry: string;
   status: string; created_at: string; generated_content: string;
   html_content?: string; slides_content?: string;
+  html_expires_at?: string;
   form_data?: ProposalForm;
 }
 
@@ -189,6 +190,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [htmlExpiresAt, setHtmlExpiresAt] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft]   = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const htmlIframeRef    = useRef<HTMLIFrameElement>(null);
@@ -201,6 +204,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     if (generating) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [generatedContent, generating]);
 
+  // Countdown del enlace HTML
+  useEffect(() => {
+    if (!htmlExpiresAt) { setTimeLeft(null); return; }
+    const update = () => {
+      const diff = new Date(htmlExpiresAt).getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft("expirado"); return; }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      setTimeLeft(h > 0 ? `${h}h ${m}m` : `${m}m`);
+    };
+    update();
+    const t = setInterval(update, 60_000);
+    return () => clearInterval(t);
+  }, [htmlExpiresAt]);
+
   // Al abrir propuesta guardada: inicializar IDs, contenido y form para poder regenerar/editar
   useEffect(() => {
     if (!viewingProposal) return;
@@ -208,6 +226,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setPreviewId(viewingProposal.id);
     setHtmlContent(viewingProposal.html_content ?? "");
     setSlidesContent(viewingProposal.slides_content ?? "");
+    setHtmlExpiresAt(viewingProposal.html_expires_at ?? null);
     setPreviewTs(Date.now());
     if (viewingProposal.form_data) setForm(viewingProposal.form_data);
     if (viewingProposal.html_content) setHtmlIframeKey(k => k + 1);
@@ -422,11 +441,13 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       // Auto-guardar en Supabase
       const id = savedProposalId ?? viewingProposal?.id;
       if (id && accumulated) {
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
         await fetch("/api/proposals", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, html_content: stripFences(accumulated) }),
+          body: JSON.stringify({ id, html_content: stripFences(accumulated), html_expires_at: expires }),
         });
+        setHtmlExpiresAt(expires);
         setPreviewId(id);
         setPreviewTs(Date.now());
         setHtmlIframeKey(k => k + 1);
@@ -585,6 +606,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setGeneratedContent("");
     setHtmlContent("");
     setSlidesContent("");
+    setHtmlExpiresAt(null);
     setSavedProposalId(null);
     setPreviewId(null);
     setSaved(false);
@@ -1194,15 +1216,36 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
             {/* ── Sección 3: Compartir con cliente ── */}
             <div>
-              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Compartir con cliente</p>
+              <div className="flex items-center gap-2 mb-1.5 px-1">
+                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Compartir con cliente</p>
+                {/* Badge de expiración */}
+                {htmlContent && timeLeft && (
+                  timeLeft === "expirado"
+                    ? <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400">⏱ Expirado</span>
+                    : <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">⏱ {timeLeft}</span>
+                )}
+              </div>
               <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
-                {(savedProposalId || viewingProposal?.id) && htmlContent && (
-                  <button
-                    onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${copiedLink ? "bg-emerald-600/20 text-emerald-400" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
-                  >
-                    {copiedLink ? <><Check size={11} className="text-emerald-400" /> ¡Enlace copiado!</> : <><Link2 size={11} /> Copiar enlace</>}
-                  </button>
+                {/* Botón enlace — dinámico según estado */}
+                {(savedProposalId || viewingProposal?.id) && (
+                  timeLeft === "expirado" || (htmlContent && !htmlExpiresAt) ? (
+                    // HTML sin expiración definida o expirado → "Generar enlace"
+                    <button
+                      onClick={() => generateHtml(markdownContent)}
+                      disabled={generatingHtml}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
+                    >
+                      {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Link2 size={11} /> Generar enlace</>}
+                    </button>
+                  ) : htmlContent && timeLeft ? (
+                    // HTML válido con tiempo restante → "Copiar enlace"
+                    <button
+                      onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${copiedLink ? "bg-emerald-600/20 text-emerald-400" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
+                    >
+                      {copiedLink ? <><Check size={11} className="text-emerald-400" /> ¡Copiado!</> : <><Link2 size={11} /> Copiar enlace</>}
+                    </button>
+                  ) : null
                 )}
                 {clientWhatsapp && (
                   <button
