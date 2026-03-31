@@ -1103,50 +1103,6 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     );
   }
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => step === 0 ? setView("list") : setStep(s => s - 1)}
-            className="flex items-center gap-2 px-4 py-2 text-gray-400 hover:text-white text-sm transition"
-          >
-            <ArrowLeft size={14} /> {step === 0 ? "Cancelar" : "Anterior"}
-          </button>
-
-          {step < 7 ? (
-            <button
-              onClick={() => setStep(s => s + 1)}
-              disabled={!canNext()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition"
-            >
-              Siguiente <ArrowRight size={14} />
-            </button>
-          ) : (
-            <button
-              onClick={generate}
-              disabled={generating}
-              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition"
-            >
-              {generating ? <><Loader2 size={14} className="animate-spin" /> Generando...</> : <><Sparkles size={14} /> Generar propuesta</>}
-            </button>
-          )}
-        </div>
-
-        {/* Streaming preview */}
-        {generating && generatedContent && (
-          <div className="mt-8 p-5 bg-gray-900 border border-gray-800 rounded-xl">
-            <div className="flex items-center gap-2 mb-3 text-emerald-400 text-xs font-medium">
-              <Sparkles size={12} /> Generando propuesta...
-            </div>
-            <div className="text-sm">
-              <ReactMarkdown components={mdComponents}>{generatedContent}</ReactMarkdown>
-            </div>
-            <div ref={bottomRef} />
-          </div>
-        )}
-      </div>
-    );
-  }
-
   function renderResult() {
     const markdownContent = generatedContent || viewingProposal?.generated_content || "";
     const title = viewingProposal ? viewingProposal.client_name : form.clientName;
