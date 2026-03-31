@@ -359,12 +359,13 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       setResultTab("propuesta");
 
       // Si la propuesta ya estaba guardada, sincroniza todo en Supabase
-      if (savedProposalId && md) {
+      const existingId = savedProposalId || viewingProposal?.id;
+      if (existingId && md) {
         await fetch("/api/proposals", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: savedProposalId,
+            id: existingId,
             generated_content: md,
             status: "generada",
             client_name: form.clientName,
@@ -484,7 +485,10 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             status: "generada",
           }),
         });
-        if (!res.ok) throw new Error("Error al actualizar");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Error al actualizar");
+        }
       } else {
         // Crear nueva
         const res = await fetch("/api/proposals", {
@@ -507,15 +511,16 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             setPreviewTs(Date.now());
           }
         } else {
-          throw new Error("Error al crear");
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Error al crear");
         }
       }
       await fetchProposals();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("No se pudo guardar la propuesta.");
+      alert(`No se pudo guardar la propuesta: ${err.message || "Error desconocido"}`);
     } finally {
       setSaving(false);
     }
