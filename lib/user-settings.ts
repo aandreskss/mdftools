@@ -90,8 +90,9 @@ export async function callAIJson(
   if (isGemini(model)) {
     if (!settings.geminiApiKey) throw new Error("NO_GEMINI_KEY");
 
+    const apiVersion = model.startsWith("gemini-2") || model.startsWith("gemini-2.5") ? "v1beta" : "v1";
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${settings.geminiApiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
