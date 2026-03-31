@@ -74,56 +74,58 @@ const SERVICE_SCOPE_OPTIONS = [
 const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "PEN", "CLP"];
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  generada:     { label: "Generada",         color: "bg-emerald-500/20 text-emerald-400" },
-  draft:        { label: "Borrador",         color: "bg-gray-500/20 text-gray-400" },
-  sent:         { label: "Enviada",         color: "bg-blue-500/20 text-blue-400" },
-  negotiating:  { label: "En negociación",  color: "bg-yellow-500/20 text-yellow-400" },
-  closed_won:   { label: "Cerrada ✓",       color: "bg-green-500/20 text-green-400" },
-  closed_lost:  { label: "Cerrada ✗",       color: "bg-red-500/20 text-red-400" },
+  generada:     { label: "Generada",         color: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
+  draft:        { label: "Borrador",         color: "bg-slate-500/10 text-slate-400 border border-slate-500/20" },
+  sent:         { label: "Enviada",         color: "bg-brand-500/10 text-brand-400 border border-brand-500/20" },
+  negotiating:  { label: "En negociación",  color: "bg-amber-500/10 text-amber-400 border border-amber-500/20" },
+  closed_won:   { label: "Cerrada ✓",       color: "bg-green-500/10 text-green-400 border border-green-500/20" },
+  closed_lost:  { label: "Cerrada ✗",       color: "bg-red-500/10 text-red-400 border border-red-500/20" },
 };
 
-const STEPS = ["Tipo", "Cliente", "Servicio", "Objetivos", "Alcance", "Diagnóstico", "Inversión", "Generar"];
+const STEPS = ["Alcance", "Cliente", "Servicio", "Objetivos", "Detalle", "Diagnóstico", "Inversión", "Finalizar"];
 
 // ─── Markdown components ───────────────────────────────────────────────────────
 
 const mdComponents = {
-  h1: ({ children }: any) => <h1 className="text-lg font-bold text-white mb-3 mt-4 first:mt-0">{children}</h1>,
-  h2: ({ children }: any) => <h2 className="text-base font-bold text-white mb-2 mt-4 first:mt-0">{children}</h2>,
-  h3: ({ children }: any) => <h3 className="text-sm font-semibold text-white mb-1.5 mt-3 first:mt-0">{children}</h3>,
-  p: ({ children }: any) => <p className="mb-2 last:mb-0 leading-relaxed text-gray-200">{children}</p>,
-  ul: ({ children }: any) => <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul>,
-  ol: ({ children }: any) => <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol>,
-  li: ({ children }: any) => <li className="text-gray-200">{children}</li>,
-  strong: ({ children }: any) => <strong className="font-semibold text-white">{children}</strong>,
-  hr: () => <hr className="border-gray-700 my-4" />,
+  h1: ({ children }: any) => <h1 className="text-2xl font-bold text-white mb-4 mt-6 first:mt-0 tracking-tight">{children}</h1>,
+  h2: ({ children }: any) => <h2 className="text-xl font-bold text-white mb-3 mt-5 first:mt-0 tracking-tight">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="text-lg font-semibold text-white mb-2 mt-4 first:mt-0 tracking-tight">{children}</h3>,
+  p: ({ children }: any) => <p className="mb-3 last:mb-0 leading-relaxed text-slate-300">{children}</p>,
+  ul: ({ children }: any) => <ul className="list-disc pl-5 mb-4 space-y-2 text-slate-300">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal pl-5 mb-4 space-y-2 text-slate-300">{children}</ol>,
+  li: ({ children }: any) => <li className="text-slate-300">{children}</li>,
+  strong: ({ children }: any) => <strong className="font-bold text-white">{children}</strong>,
+  hr: () => <hr className="border-white/10 my-6" />,
 };
 
 // ─── Input helpers ─────────────────────────────────────────────────────────────
 
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1.5">
-        {label} {required && <span className="text-red-400">*</span>}
-        {hint && <span className="text-gray-500 font-normal ml-1 text-xs">({hint})</span>}
-      </label>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-semibold text-slate-200">
+          {label} {required && <span className="text-brand-400">*</span>}
+        </label>
+        {hint && <span className="text-slate-500 font-medium text-[10px] uppercase tracking-wider">{hint}</span>}
+      </div>
       {children}
     </div>
   );
 }
 
-const inputCls = "w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition";
-const textareaCls = `${inputCls} resize-none`;
+const inputCls = "w-full px-4 py-3 bg-navy-950 border border-white/[0.08] rounded-xl text-white placeholder-slate-600 text-sm focus:outline-none focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10 transition-all duration-200";
+const textareaCls = `${inputCls} resize-none min-h-[100px]`;
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
 const CRM_COLUMNS = [
-  { key: "draft",        label: "Borrador",        color: "border-gray-700" },
-  { key: "generada",     label: "Generada",         color: "border-emerald-700" },
-  { key: "sent",         label: "Enviada",          color: "border-blue-700" },
-  { key: "negotiating",  label: "Negociando",       color: "border-yellow-700" },
-  { key: "closed_won",   label: "Cerrada ✓",        color: "border-green-700" },
-  { key: "closed_lost",  label: "Perdida",          color: "border-red-700" },
+  { key: "draft",        label: "Borrador",        color: "border-slate-800" },
+  { key: "generada",     label: "Generada",         color: "border-emerald-800" },
+  { key: "sent",         label: "Enviada",          color: "border-brand-800" },
+  { key: "negotiating",  label: "Negociando",       color: "border-amber-800" },
+  { key: "closed_won",   label: "Ganada",           color: "border-green-800" },
+  { key: "closed_lost",  label: "Perdida",          color: "border-red-800" },
 ];
 
 export default function PropuestasPage() {
@@ -536,85 +538,99 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   function renderList() {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
           {/* Vista toggle */}
-          <div className="flex items-center bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
+          <div className="flex items-center glass-card rounded-2xl p-1.5 gap-1.5 border-white/[0.05]">
             <button
               onClick={() => setCrmMode(false)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${!crmMode ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all ${!crmMode ? "brand-gradient text-white shadow-lg shadow-brand/20" : "text-slate-400 hover:text-white hover:bg-white/10"}`}
             >
-              <List size={12} /> Lista
+              <List size={14} /> Lista
             </button>
             <button
               onClick={() => setCrmMode(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${crmMode ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all ${crmMode ? "brand-gradient text-white shadow-lg shadow-brand/20" : "text-slate-400 hover:text-white hover:bg-white/10"}`}
             >
-              <LayoutGrid size={12} /> CRM
+              <LayoutGrid size={14} /> Pipeline CRM
             </button>
           </div>
           <button
             onClick={() => { resetForm(); setView("form"); }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition"
+            className="flex items-center gap-2 px-5 py-2.5 brand-gradient hover:opacity-90 text-white text-[13px] font-bold rounded-xl transition-all shadow-lg shadow-brand/20"
           >
-            <Plus size={14} /> Nueva propuesta
+            <Plus size={16} /> Crear Propuesta
           </button>
         </div>
 
         {/* CRM Kanban */}
         {crmMode && !loadingList && (
-          <div className="overflow-x-auto pb-4 -mx-6 px-6">
-            <div className="flex gap-4" style={{ minWidth: `${CRM_COLUMNS.length * 220}px` }}>
+          <div className="overflow-x-auto pb-6 -mx-8 px-8 custom-scrollbar">
+            <div className="flex gap-6" style={{ minWidth: `${CRM_COLUMNS.length * 280}px` }}>
               {CRM_COLUMNS.map(col => {
                 const cards = proposals.filter(p => p.status === col.key);
                 const st = STATUS_LABELS[col.key] ?? STATUS_LABELS.draft;
                 return (
-                  <div key={col.key} className="w-52 flex-shrink-0">
-                    <div className={`flex items-center justify-between mb-3 pb-2 border-b ${col.color}`}>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${st.color}`}>{col.label}</span>
-                      <span className="text-xs text-gray-600">{cards.length}</span>
+                  <div key={col.key} className="w-64 flex-shrink-0 flex flex-col">
+                    <div className={`flex items-center justify-between mb-4 pb-3 border-b-2 ${col.color}`}>
+                      <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${st.color}`}>{col.label}</span>
+                      <span className="text-[11px] font-bold text-slate-500 bg-white/[0.03] px-2 py-0.5 rounded-md">{cards.length}</span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3 flex-1">
                       {cards.map(p => {
                         const logo = p.form_data?.clientLogo;
                         const value = p.form_data?.price ? `${p.form_data.currency ?? "USD"} ${p.form_data.price}` : null;
-                        const nextStatuses = CRM_COLUMNS.filter(c => c.key !== p.status);
                         return (
-                          <div key={p.id} className="p-3 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition group">
+                          <div key={p.id} className="p-4 glass-card rounded-2xl border-white/[0.05] hover:border-brand-500/30 hover:shadow-2xl hover:shadow-brand/5 transition-all group relative cursor-default">
                             {/* Logo + nombre */}
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-3 mb-3">
                               {logo ? (
-                                <img src={logo} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0 bg-gray-800" />
+                                <img src={logo} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0 bg-navy-950 border border-white/10" />
                               ) : (
-                                <div className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
-                                  <Building2 size={12} className="text-gray-600" />
+                                <div className="w-10 h-10 rounded-xl bg-navy-950 border border-white/[0.05] flex items-center justify-center flex-shrink-0 text-slate-500 group-hover:text-brand-400 transition-colors">
+                                  <Building2 size={18} />
                                 </div>
                               )}
-                              <span className="text-white text-xs font-medium truncate">{p.client_name}</span>
+                              <div className="min-w-0">
+                                <span className="text-white text-sm font-bold truncate block group-hover:text-brand-300 transition-colors">{p.client_name}</span>
+                                {p.industry && <p className="text-slate-500 text-[11px] truncate font-medium">{p.industry}</p>}
+                              </div>
                             </div>
-                            {p.industry && <p className="text-gray-500 text-xs mb-1 truncate">{p.industry}</p>}
-                            {value && <p className="text-emerald-400 text-xs font-semibold mb-2">{value}</p>}
-                            <p className="text-gray-600 text-xs mb-3">{new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</p>
-                            {/* Acciones */}
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <button
-                                onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
-                                className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition"
-                              >Ver</button>
-                              {/* Mover a estado */}
-                              <select
-                                value={p.status}
-                                onChange={e => updateProposalStatus(p.id, e.target.value)}
-                                className="px-1 py-1 text-xs bg-gray-800 text-gray-400 rounded-lg border-0 outline-none cursor-pointer"
-                              >
-                                {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
-                              </select>
+
+                            {value && (
+                              <div className="mb-3">
+                                <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">{value}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between mt-4">
+                              <span className="text-slate-500 text-[10px] font-bold uppercase">{new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</span>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
+                                  className="p-1.5 bg-white/[0.05] hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-lg transition-all"
+                                  title="Ver Propuesta"
+                                >
+                                  <Eye size={14} />
+                                </button>
+                                <select
+                                  value={p.status}
+                                  onChange={e => updateProposalStatus(p.id, e.target.value)}
+                                  className="w-8 h-8 opacity-0 absolute bottom-4 right-4 cursor-pointer"
+                                  title="Cambiar estado"
+                                >
+                                  {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                                </select>
+                                <div className="p-1.5 bg-white/[0.05] text-slate-400 rounded-lg pointer-events-none">
+                                  <RefreshCw size={14} />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
                       })}
                       {cards.length === 0 && (
-                        <div className="py-6 text-center text-gray-700 text-xs border border-dashed border-gray-800 rounded-xl">vacío</div>
+                        <div className="py-12 text-center text-slate-600 text-[11px] font-bold border-2 border-dashed border-white/[0.03] rounded-3xl uppercase tracking-widest">vacío</div>
                       )}
                     </div>
                   </div>
@@ -627,59 +643,75 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         {/* Lista normal */}
         {!crmMode && (
           loadingList ? (
-            <div className="flex items-center gap-2 text-gray-500 text-sm py-8">
-              <Loader2 size={14} className="animate-spin" /> Cargando...
+            <div className="flex items-center gap-3 text-slate-400 text-sm py-12 font-medium">
+              <Loader2 size={18} className="animate-spin text-brand-400" /> Cargando propuestas...
             </div>
           ) : proposals.length === 0 ? (
-            <div className="text-center py-16 text-gray-500">
-              <FileText size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No hay propuestas todavía.</p>
-              <p className="text-xs mt-1">Crea tu primera propuesta con el botón de arriba.</p>
+            <div className="text-center py-24 glass-card rounded-3xl border-dashed border-2 border-white/[0.05]">
+              <div className="w-16 h-16 bg-navy-950 rounded-2xl flex items-center justify-center mx-auto mb-6 text-slate-700">
+                <FileText size={32} />
+              </div>
+              <p className="text-slate-300 font-bold text-lg mb-2">No hay propuestas todavía</p>
+              <p className="text-slate-500 text-sm max-w-xs mx-auto">Comienza creando tu primera propuesta comercial asistida por inteligencia artificial.</p>
+              <button
+                onClick={() => { resetForm(); setView("form"); }}
+                className="mt-8 px-6 py-3 brand-gradient text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 hover:scale-105 transition-transform"
+              >
+                Crear Propuesta Ahora
+              </button>
             </div>
           ) : (
-            <div className="space-y-3 max-w-3xl">
+            <div className="grid grid-cols-1 gap-4 max-w-5xl">
               {proposals.map((p) => {
                 const status = STATUS_LABELS[p.status] ?? STATUS_LABELS.draft;
                 const logo = p.form_data?.clientLogo;
                 const value = p.form_data?.price ? `${p.form_data.currency ?? "USD"} ${p.form_data.price}` : null;
                 return (
-                  <div key={p.id} className="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div key={p.id} className="flex items-center justify-between p-5 glass-card rounded-3xl border-white/[0.05] hover:border-brand-500/20 hover:shadow-2xl transition-all group">
+                    <div className="flex items-center gap-5 flex-1 min-w-0">
                       {logo ? (
-                        <img src={logo} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0 bg-gray-800" />
+                        <img src={logo} alt="" className="w-14 h-14 rounded-2xl object-cover flex-shrink-0 bg-navy-950 border border-white/10 shadow-inner" />
                       ) : (
-                        <div className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0">
-                          <Building2 size={14} className="text-gray-600" />
+                        <div className="w-14 h-14 rounded-2xl bg-navy-950 border border-white/[0.05] flex items-center justify-center flex-shrink-0 text-slate-600 group-hover:text-brand-400 transition-colors">
+                          <Building2 size={24} />
                         </div>
                       )}
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-white font-medium text-sm truncate">{p.client_name}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${status.color}`}>{status.label}</span>
+                        <div className="flex items-center gap-3 mb-1.5">
+                          <span className="text-white font-bold text-base truncate tracking-tight">{p.client_name}</span>
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${status.color}`}>{status.label}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-gray-500 text-xs truncate">{p.industry}</p>
-                          {value && <span className="text-emerald-400 text-xs font-medium flex-shrink-0">{value}</span>}
-                          <span className="text-gray-700 text-xs flex-shrink-0">{new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                        <div className="flex items-center gap-4 text-[13px]">
+                          <p className="text-slate-400 font-medium">{p.industry}</p>
+                          {value && (
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-1 h-1 rounded-full bg-slate-700" />
+                              <span className="text-emerald-400 font-bold">{value}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1 h-1 rounded-full bg-slate-700" />
+                            <span className="text-slate-500 font-bold uppercase text-[10px]">{new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-3 ml-6">
                       <select
                         value={p.status}
                         onChange={e => updateProposalStatus(p.id, e.target.value)}
-                        className="px-2 py-1.5 text-xs bg-gray-800 text-gray-400 rounded-lg border border-gray-700 outline-none cursor-pointer"
+                        className="px-4 py-2 text-xs font-bold bg-navy-950 text-slate-400 rounded-xl border border-white/[0.08] outline-none cursor-pointer hover:border-brand-500/50 transition-colors"
                       >
                         {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                       </select>
                       <button
                         onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-lg transition"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.05] hover:bg-brand-500/10 text-slate-200 hover:text-brand-300 text-sm font-bold rounded-xl transition-all border border-white/[0.05]"
                       >
-                        Ver <ChevronRight size={12} />
+                        Ver Propuesta <ChevronRight size={16} />
                       </button>
-                      <button onClick={() => deleteProposal(p.id)} className="p-1.5 text-gray-600 hover:text-red-400 transition">
-                        <Trash2 size={14} />
+                      <button onClick={() => deleteProposal(p.id)} className="p-2.5 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
@@ -694,302 +726,382 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   function renderForm() {
     return (
-      <div className="p-6 max-w-2xl">
+      <div className="p-8 max-w-4xl mx-auto">
         {/* Step indicators */}
-        <div className="flex items-center gap-1 mb-8 flex-wrap">
+        <div className="flex items-center gap-2 mb-12 flex-wrap">
           {STEPS.map((s, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition flex-shrink-0 ${
-                i < step ? "bg-emerald-600 text-white" :
-                i === step ? "bg-indigo-600 text-white" : "bg-gray-800 text-gray-500"
+            <div key={i} className="flex items-center gap-2">
+              <div className={`flex items-center justify-center w-8 h-8 rounded-xl text-xs font-bold transition-all duration-300 ${
+                i < step ? "brand-gradient text-white shadow-lg shadow-brand/20" :
+                i === step ? "bg-white text-navy-950 shadow-xl scale-110" : "bg-white/[0.03] text-slate-600 border border-white/[0.05]"
               }`}>
                 {i < step ? "✓" : i + 1}
               </div>
-              <span className={`text-xs hidden sm:block ${i === step ? "text-white font-medium" : "text-gray-500"}`}>{s}</span>
-              {i < STEPS.length - 1 && <div className={`w-4 h-px ${i < step ? "bg-emerald-600" : "bg-gray-800"}`} />}
+              <span className={`text-[11px] font-bold uppercase tracking-wider hidden md:block ${i === step ? "text-white" : "text-slate-600"}`}>{s}</span>
+              {i < STEPS.length - 1 && <div className={`w-6 h-[2px] rounded-full mx-1 ${i < step ? "bg-brand-500/50" : "bg-white/[0.05]"}`} />}
             </div>
           ))}
         </div>
 
         {/* Step content */}
-        <div className="space-y-5 mb-8">
+        <div className="glass-card rounded-[2.5rem] border-white/[0.05] p-10 mb-8 relative overflow-hidden">
+          {/* Decorative background */}
+          <div className="absolute top-0 right-0 w-64 h-64 brand-gradient opacity-[0.03] blur-[100px] -mr-32 -mt-32" />
 
-          {/* PASO 0 — Tipo de propuesta (scope multi-select) */}
-          {step === 0 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-1">¿Qué servicios incluye esta propuesta?</h2>
-              <p className="text-xs text-gray-500 mb-5">Selecciona uno o varios. El prompt se adaptará automáticamente al alcance elegido.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {SERVICE_SCOPE_OPTIONS.map(opt => {
-                  const active = form.serviceScope.includes(opt.id);
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => toggleScope(opt.id)}
-                      className={`p-4 rounded-xl border text-left transition ${
-                        active
-                          ? "bg-indigo-600/20 border-indigo-500 text-white"
-                          : "bg-gray-900 border-gray-800 text-gray-400 hover:border-gray-600 hover:text-white"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{opt.label}</span>
-                        {active && <span className="text-xs text-indigo-400 font-bold">✓</span>}
-                      </div>
-                      <p className="text-xs text-gray-500">{opt.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          {/* PASO 1 — Cliente */}
-          {step === 1 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-4">Datos del cliente</h2>
-
-              {/* Logo upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Logo / Imagen del cliente</label>
-                <div className="flex items-center gap-4">
-                  {form.clientLogo ? (
-                    <div className="relative flex-shrink-0">
-                      <img src={form.clientLogo} alt="Logo" className="w-16 h-16 rounded-xl object-cover bg-gray-800" />
+          <div className="relative z-10 space-y-8">
+            {/* PASO 0 — Tipo de propuesta (scope multi-select) */}
+            {step === 0 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Alcance de la Propuesta</h2>
+                  <p className="text-slate-400 text-sm font-medium">Selecciona los servicios que formarán parte de este proyecto.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {SERVICE_SCOPE_OPTIONS.map(opt => {
+                    const active = form.serviceScope.includes(opt.id);
+                    return (
                       <button
+                        key={opt.id}
                         type="button"
-                        onClick={() => setForm(p => ({ ...p, clientLogo: "" }))}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center"
+                        onClick={() => toggleScope(opt.id)}
+                        className={`p-5 rounded-2xl border-2 text-left transition-all duration-300 group ${
+                          active
+                            ? "bg-brand-500/10 border-brand-500/50 shadow-2xl shadow-brand/10"
+                            : "bg-navy-950/50 border-white/[0.05] hover:border-white/10"
+                        }`}
                       >
-                        <X size={10} className="text-white" />
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-sm font-bold transition-colors ${active ? "text-brand-300" : "text-slate-300 group-hover:text-white"}`}>{opt.label}</span>
+                          <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${active ? "bg-brand-500 border-brand-500" : "border-white/10"}`}>
+                            {active && <Check size={12} className="text-white" />}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">{opt.desc}</p>
                       </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* PASO 1 — Cliente */}
+            {step === 1 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Datos del Cliente</h2>
+                  <p className="text-slate-400 text-sm font-medium">Personaliza la propuesta con la identidad de tu cliente.</p>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-10">
+                  {/* Logo upload */}
+                  <div className="flex-shrink-0">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 text-center md:text-left">Logo del Cliente</label>
+                    <div className="relative group mx-auto md:mx-0">
+                      <div className="w-32 h-32 rounded-[2rem] bg-navy-950 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-brand-500/50 relative">
+                        {form.clientLogo ? (
+                          <>
+                            <img src={form.clientLogo} alt="Logo" className="w-full h-full object-cover p-2" />
+                            <div className="absolute inset-0 bg-brand-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setForm(p => ({ ...p, clientLogo: "" })); }}
+                                className="p-2 bg-white rounded-full text-brand-600 shadow-xl"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-slate-700 group-hover:text-brand-500 transition-colors flex flex-col items-center gap-2">
+                            <Upload size={24} />
+                            <span className="text-[10px] font-bold uppercase">Subir</span>
+                          </div>
+                        )}
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={e => { if (e.target.files?.[0]) uploadLogo(e.target.files[0]); }}
+                        />
+                      </div>
+                      {uploadingLogo && (
+                        <div className="absolute inset-0 bg-navy-950/80 backdrop-blur-sm rounded-[2rem] flex items-center justify-center">
+                          <Loader2 size={24} className="animate-spin text-brand-400" />
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-gray-800 border-2 border-dashed border-gray-700 flex items-center justify-center flex-shrink-0">
-                      <Building2 size={20} className="text-gray-600" />
+                  </div>
+
+                  <div className="flex-1 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <Field label="Nombre de Contacto" required>
+                        <input className={inputCls} value={form.clientName} onChange={e => set("clientName", e.target.value)} placeholder="Ej: Juan Martínez" />
+                      </Field>
+                      <Field label="Empresa">
+                        <input className={inputCls} value={form.clientCompany} onChange={e => set("clientCompany", e.target.value)} placeholder="Ej: TechFlow S.A." />
+                      </Field>
                     </div>
-                  )}
-                  <div>
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={e => { if (e.target.files?.[0]) uploadLogo(e.target.files[0]); }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={uploadingLogo}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-60 text-gray-300 text-xs rounded-xl transition"
-                    >
-                      {uploadingLogo ? <><Loader2 size={12} className="animate-spin" /> Subiendo...</> : <><Upload size={12} /> {form.clientLogo ? "Cambiar logo" : "Subir logo"}</>}
-                    </button>
-                    <p className="text-xs text-gray-600 mt-1">PNG, JPG o SVG. Se mostrará en el CRM y en la propuesta.</p>
+                    <Field label="Industria / Sector" required>
+                      <input className={inputCls} value={form.clientIndustry} onChange={e => set("clientIndustry", e.target.value)} placeholder="Ej: Salud, E-commerce, Inmobiliaria..." />
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <Field label="Email corporativo">
+                        <input className={inputCls} type="email" value={form.clientEmail} onChange={e => set("clientEmail", e.target.value)} placeholder="hola@cliente.com" />
+                      </Field>
+                      <Field label="WhatsApp / Teléfono">
+                        <input className={inputCls} type="tel" value={form.clientWhatsapp} onChange={e => set("clientWhatsapp", e.target.value)} placeholder="+52 1 234 567 890" />
+                      </Field>
+                    </div>
                   </div>
                 </div>
               </div>
+            )}
 
-              <Field label="Nombre del cliente" required>
-                <input className={inputCls} value={form.clientName} onChange={e => set("clientName", e.target.value)} placeholder="Ej: Juan Martínez" />
-              </Field>
-              <Field label="Empresa">
-                <input className={inputCls} value={form.clientCompany} onChange={e => set("clientCompany", e.target.value)} placeholder="Ej: Empresa S.A." />
-              </Field>
-              <Field label="Industria" required>
-                <input className={inputCls} value={form.clientIndustry} onChange={e => set("clientIndustry", e.target.value)} placeholder="Ej: Salud, E-commerce, Educación..." />
-              </Field>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Email del cliente">
-                  <input className={inputCls} type="email" value={form.clientEmail} onChange={e => set("clientEmail", e.target.value)} placeholder="Ej: juan@empresa.com" />
-                </Field>
-                <Field label="WhatsApp del cliente">
-                  <input className={inputCls} type="tel" value={form.clientWhatsapp} onChange={e => set("clientWhatsapp", e.target.value)} placeholder="Ej: +521234567890" />
+            {/* PASO 2 — Servicio */}
+            {step === 2 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Descripción del Servicio</h2>
+                  <p className="text-slate-400 text-sm font-medium">
+                    Servicios activos: <span className="text-brand-400 font-bold">{form.serviceScope.map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label).join(", ")}</span>
+                  </p>
+                </div>
+                <Field label="¿Qué incluye tu solución?" required hint="Sé detallado">
+                  <textarea className={textareaCls} value={form.serviceDescription} onChange={e => set("serviceDescription", e.target.value)}
+                    placeholder="Describe tu propuesta de valor, metodología de trabajo y por qué eres la mejor opción para este cliente..." />
                 </Field>
               </div>
-            </>
-          )}
+            )}
 
-          {/* PASO 2 — Servicio */}
-          {step === 2 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-1">Descripción del servicio</h2>
-              <p className="text-xs text-gray-500 mb-5">
-                Servicios seleccionados: <span className="text-indigo-400 font-medium">{form.serviceScope.map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label).join(", ")}</span>
-              </p>
-              <Field label="Describe el servicio en detalle" required>
-                <textarea className={textareaCls} rows={5} value={form.serviceDescription} onChange={e => set("serviceDescription", e.target.value)}
-                  placeholder="Describe qué vas a ofrecer, cómo trabajarás, tu metodología, qué hace especial tu propuesta..." />
-              </Field>
-            </>
-          )}
+            {/* PASO 3 — Objetivos + KPIs */}
+            {step === 3 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Objetivos y KPIs</h2>
+                  <p className="text-slate-400 text-sm font-medium">Define metas claras para que el cliente visualice el éxito.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Field label="Metas del Cliente" required>
+                    <textarea className={textareaCls} value={form.clientGoals} onChange={e => set("clientGoals", e.target.value)}
+                      placeholder="Ej: Aumentar la facturación mensual en un 20% mediante pauta digital..." />
+                  </Field>
+                  <Field label="Situación Actual">
+                    <textarea className={textareaCls} value={form.currentSituation} onChange={e => set("currentSituation", e.target.value)}
+                      placeholder="Ej: Actualmente dependen de referidos y no tienen un sistema de captación de leads..." />
+                  </Field>
+                </div>
 
-          {/* PASO 3 — Objetivos + KPIs */}
-          {step === 3 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-4">Objetivos del cliente</h2>
-              <Field label="¿Qué quiere lograr el cliente?" required>
-                <textarea className={textareaCls} rows={3} value={form.clientGoals} onChange={e => set("clientGoals", e.target.value)}
-                  placeholder="Ej: Aumentar ventas online, mejorar presencia en redes, generar leads..." />
-              </Field>
-              <Field label="Situación actual del cliente">
-                <textarea className={textareaCls} rows={3} value={form.currentSituation} onChange={e => set("currentSituation", e.target.value)}
-                  placeholder="Ej: No tiene presencia digital, tiene web pero sin tráfico, competencia muy activa..." />
-              </Field>
-
-              <div className="pt-2">
-                <p className="text-sm font-medium text-gray-300 mb-1">KPIs con objetivos numéricos <span className="text-gray-500 font-normal text-xs">(opcional pero muy recomendado)</span></p>
-                <p className="text-xs text-gray-500 mb-4">Define métricas concretas que harán la propuesta más persuasiva.</p>
-                {[1, 2, 3].map(n => (
-                  <div key={n} className="grid grid-cols-3 gap-3 mb-3">
-                    <Field label={`KPI ${n} — Métrica`}>
+                <div className="mt-10 p-6 bg-navy-950/50 rounded-3xl border border-white/[0.05]">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Métricas de Rendimiento (KPIs)</p>
+                  {[1, 2, 3].map(n => (
+                    <div key={n} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 last:mb-0">
                       <input className={inputCls} value={(form as any)[`kpi${n}Name`]} onChange={e => set(`kpi${n}Name` as keyof ProposalForm, e.target.value)}
-                        placeholder={n === 1 ? "Seguidores IG" : n === 2 ? "Leads/mes" : "ROAS"} />
-                    </Field>
-                    <Field label="Valor actual">
+                        placeholder={`Métrica ${n} (ej: ROAS)`} />
                       <input className={inputCls} value={(form as any)[`kpi${n}Start`]} onChange={e => set(`kpi${n}Start` as keyof ProposalForm, e.target.value)}
-                        placeholder={n === 1 ? "1,200" : n === 2 ? "5" : "—"} />
-                    </Field>
-                    <Field label="Objetivo">
+                        placeholder="Valor Actual" />
                       <input className={inputCls} value={(form as any)[`kpi${n}Goal`]} onChange={e => set(`kpi${n}Goal` as keyof ProposalForm, e.target.value)}
-                        placeholder={n === 1 ? "5,000" : n === 2 ? "40" : "3x"} />
-                    </Field>
-                  </div>
-                ))}
+                        placeholder="Meta" />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </>
-          )}
+            )}
 
-          {/* PASO 4 — Alcance */}
-          {step === 4 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-4">Alcance del proyecto</h2>
-              <Field label="Entregables concretos" required>
-                <textarea className={textareaCls} rows={4} value={form.deliverables} onChange={e => set("deliverables", e.target.value)}
-                  placeholder="Ej: 12 posts/mes para Instagram y Facebook, 1 reels/semana, reportes mensuales..." />
-              </Field>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Duración del contrato" required>
-                  <input className={inputCls} value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ej: 3 meses, 6 meses..." />
+            {/* PASO 4 — Alcance */}
+            {step === 4 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Detalles Operativos</h2>
+                  <p className="text-slate-400 text-sm font-medium">Define los entregables y tiempos de ejecución.</p>
+                </div>
+                <Field label="Entregables Concretos" required>
+                  <textarea className={textareaCls} value={form.deliverables} onChange={e => set("deliverables", e.target.value)}
+                    placeholder="Ej: 8 piezas gráficas mensuales, 4 reportes semanales, gestión de 2 campañas de Meta Ads..." />
                 </Field>
-                <Field label="Frecuencia de trabajo">
-                  <input className={inputCls} value={form.frequency} onChange={e => set("frequency", e.target.value)} placeholder="Ej: 3 posts/semana" />
-                </Field>
-              </div>
-              <Field label="¿Qué NO incluye?">
-                <textarea className={textareaCls} rows={2} value={form.notIncluded} onChange={e => set("notIncluded", e.target.value)}
-                  placeholder="Ej: No incluye diseño gráfico, fotografía, pauta publicitaria..." />
-              </Field>
-            </>
-          )}
-
-          {/* PASO 5 — Diagnóstico + Buyer Persona */}
-          {step === 5 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-1">Diagnóstico del cliente</h2>
-              <p className="text-xs text-gray-500 mb-5">Todos los campos son opcionales. Cuanto más detailles, más personalizada será la propuesta.</p>
-
-              <Field label="Problemas generales detectados" hint="opcional">
-                <textarea className={textareaCls} rows={3} value={form.problemasDetectados} onChange={e => set("problemasDetectados", e.target.value)}
-                  placeholder="Ej: No tienen estrategia de contenido definida, sin identidad visual consistente..." />
-              </Field>
-
-              <Field label="Problemas en redes sociales" hint="opcional">
-                <textarea className={textareaCls} rows={3} value={form.problemaRedesSociales} onChange={e => set("problemaRedesSociales", e.target.value)}
-                  placeholder="Ej: Publicaciones irregulares, bajo engagement, sin uso de reels ni stories, sin bio optimizada..." />
-              </Field>
-
-              <Field label="Problemas en web / landing page" hint="opcional">
-                <textarea className={textareaCls} rows={3} value={form.problemaWebLanding} onChange={e => set("problemaWebLanding", e.target.value)}
-                  placeholder="Ej: Carga lenta, sin SEO, sin CTA claros, diseño desactualizado, sin versión móvil..." />
-              </Field>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Debilidades detectadas" hint="opcional">
-                  <textarea className={textareaCls} rows={3} value={form.debilidadesDetectadas} onChange={e => set("debilidadesDetectadas", e.target.value)}
-                    placeholder="Ej: Sin presupuesto para ads, equipo pequeño, competencia muy activa..." />
-                </Field>
-                <Field label="Fortalezas detectadas" hint="opcional">
-                  <textarea className={textareaCls} rows={3} value={form.fortalezasDetectadas} onChange={e => set("fortalezasDetectadas", e.target.value)}
-                    placeholder="Ej: Producto de calidad, buenas reseñas, base de clientes fieles, ubicación estratégica..." />
-                </Field>
-              </div>
-
-              <div className="border-t border-gray-800 pt-5 mt-2">
-                <p className="text-sm font-medium text-gray-300 mb-1">Buyer persona y dolores del cliente final <span className="text-gray-500 font-normal text-xs">(opcional)</span></p>
-                <p className="text-xs text-gray-500 mb-4">Información sobre el cliente final del negocio (no el cliente que te contrata). Esto hará la propuesta mucho más empática.</p>
-                <Field label="¿Quién es el cliente final del negocio?" hint="opcional">
-                  <textarea className={textareaCls} rows={2} value={form.buyerPersona} onChange={e => set("buyerPersona", e.target.value)}
-                    placeholder="Ej: Mujeres 30-50 años con dolor crónico, profesionistas de oficina que buscan alivio sin medicación..." />
-                </Field>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                  <Field label="Dolores funcionales" hint="opcional">
-                    <textarea className={textareaCls} rows={3} value={form.doloresFuncionales} onChange={e => set("doloresFuncionales", e.target.value)}
-                      placeholder="Ej: No saben dónde encontrar un fisioterapeuta confiable, citas difíciles de conseguir..." />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  <Field label="Duración Estimada" required>
+                    <input className={inputCls} value={form.duration} onChange={e => set("duration", e.target.value)} placeholder="Ej: 6 meses (con renovación)" />
                   </Field>
-                  <Field label="Dolores emocionales" hint="opcional">
-                    <textarea className={textareaCls} rows={3} value={form.doloresEmocionales} onChange={e => set("doloresEmocionales", e.target.value)}
-                      placeholder="Ej: Frustración por no ver resultados, miedo a que el dolor sea crónico, vergüenza..." />
+                  <Field label="Frecuencia / Ritmo">
+                    <input className={inputCls} value={form.frequency} onChange={e => set("frequency", e.target.value)} placeholder="Ej: Reunión quincenal de seguimiento" />
                   </Field>
                 </div>
-                <Field label="Objeciones frecuentes del cliente final" hint="opcional">
-                  <textarea className={textareaCls} rows={2} value={form.objecionesCliente} onChange={e => set("objecionesCliente", e.target.value)}
-                    placeholder="Ej: 'Es muy caro', 'No tengo tiempo', 'Ya lo intenté antes y no funcionó'..." />
-                </Field>
+                <div className="mt-6">
+                  <Field label="Exclusiones (Fuera de Alcance)">
+                    <textarea className={textareaCls} rows={2} value={form.notIncluded} onChange={e => set("notIncluded", e.target.value)}
+                      placeholder="Ej: No incluye costos de pauta publicitaria ni compra de licencias de software..." />
+                  </Field>
+                </div>
               </div>
-            </>
-          )}
+            )}
 
-          {/* PASO 6 — Inversión */}
-          {step === 6 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-4">Inversión</h2>
-              <div className="flex gap-3">
-                <Field label="Moneda">
-                  <select className={inputCls} value={form.currency} onChange={e => set("currency", e.target.value)}>
-                    {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </Field>
-                <Field label="Precio" required>
-                  <input className={inputCls} value={form.price} onChange={e => set("price", e.target.value)} placeholder="Ej: 800/mes, 2400 total..." />
-                </Field>
-              </div>
-              <Field label="Términos de pago" required>
-                <textarea className={textareaCls} rows={2} value={form.paymentTerms} onChange={e => set("paymentTerms", e.target.value)}
-                  placeholder="Ej: 50% anticipo, 50% al finalizar el mes. Pago por transferencia bancaria." />
-              </Field>
-            </>
-          )}
+            {/* PASO 5 — Diagnóstico */}
+            {step === 5 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Diagnóstico Especializado</h2>
+                  <p className="text-slate-400 text-sm font-medium">Aporta valor detectando problemas que el cliente ignora.</p>
+                </div>
 
-          {/* PASO 7 — Revisar y generar */}
-          {step === 7 && (
-            <>
-              <h2 className="text-base font-semibold text-white mb-4">Revisar y generar</h2>
-              <div className="space-y-3 text-sm">
-                {[
-                  ["Servicios", form.serviceScope.map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label).join(", ")],
-                  ["Cliente", `${form.clientName}${form.clientCompany ? ` · ${form.clientCompany}` : ""} · ${form.clientIndustry}`],
-                  ["Duración", form.duration],
-                  ["Inversión", `${form.currency} ${form.price}`],
-                  ["Pago", form.paymentTerms],
-                  ...(form.kpi1Name ? [["KPIs", `${form.kpi1Name}${form.kpi2Name ? `, ${form.kpi2Name}` : ""}${form.kpi3Name ? `, ${form.kpi3Name}` : ""}`]] : []),
-                  ...(form.problemasDetectados || form.problemaRedesSociales || form.problemaWebLanding
-                    ? [["Diagnóstico", "Incluido ✓"]] : []),
-                  ...(form.buyerPersona ? [["Buyer persona", "Incluido ✓"]] : []),
-                ].map(([k, v]) => (
-                  <div key={k} className="flex gap-3">
-                    <span className="text-gray-500 w-28 flex-shrink-0">{k}</span>
-                    <span className="text-gray-200">{v}</span>
+                <div className="space-y-6">
+                  <Field label="Problemas en Ecosistema Digital" hint="Opcional">
+                    <textarea className={textareaCls} value={form.problemasDetectados} onChange={e => set("problemasDetectados", e.target.value)}
+                      placeholder="Ej: Desconexión entre los anuncios y la landing page, alta tasa de rebote..." />
+                  </Field>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Field label="Auditoría Social Media">
+                      <textarea className={textareaCls} value={form.problemaRedesSociales} onChange={e => set("problemaRedesSociales", e.target.value)}
+                        placeholder="Ej: Contenido estático sin uso de reels, baja interacción histórica..." />
+                    </Field>
+                    <Field label="Auditoría Web/SEO">
+                      <textarea className={textareaCls} value={form.problemaWebLanding} onChange={e => set("problemaWebLanding", e.target.value)}
+                        placeholder="Ej: No está optimizada para dispositivos móviles, carga lenta (4.5s)..." />
+                    </Field>
                   </div>
-                ))}
+
+                  <div className="pt-6 border-t border-white/[0.05]">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Análisis del Cliente Final (Buyer Persona)</p>
+                    <Field label="¿A quién le vendemos?">
+                      <textarea className={textareaCls} rows={2} value={form.buyerPersona} onChange={e => set("buyerPersona", e.target.value)}
+                        placeholder="Ej: Dueños de PYMES que buscan automatizar procesos pero temen a la tecnología..." />
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                      <Field label="Puntos de Dolor Funcionales">
+                        <textarea className={textareaCls} value={form.doloresFuncionales} onChange={e => set("doloresFuncionales", e.target.value)}
+                          placeholder="Ej: Pierden 4 horas al día en tareas manuales..." />
+                      </Field>
+                      <Field label="Puntos de Dolor Emocionales">
+                        <textarea className={textareaCls} value={form.doloresEmocionales} onChange={e => set("doloresEmocionales", e.target.value)}
+                          placeholder="Ej: Sensación de estancamiento, miedo a perder competitividad..." />
+                      </Field>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                <p className="text-indigo-300 text-sm">Claude generará una propuesta completa y profesional lista para enviar al cliente. También podrás exportarla como HTML o PDF.</p>
+            )}
+
+            {/* PASO 6 — Inversión */}
+            {step === 6 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Estructura de Inversión</h2>
+                  <p className="text-slate-400 text-sm font-medium">Define el valor de tu trabajo y las condiciones comerciales.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <Field label="Moneda">
+                    <select className={inputCls} value={form.currency} onChange={e => set("currency", e.target.value)}>
+                      {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Valor del Servicio" required>
+                    <input className={inputCls} value={form.price} onChange={e => set("price", e.target.value)} placeholder="Ej: 1,500" />
+                  </Field>
+                  <Field label="Periodicidad">
+                    <select className={inputCls}>
+                      <option>Pago Único</option>
+                      <option>Mensual (Retainer)</option>
+                      <option>Trimestral</option>
+                    </select>
+                  </Field>
+                </div>
+                <div className="mt-6">
+                  <Field label="Términos de Pago y Garantías" required>
+                    <textarea className={textareaCls} rows={3} value={form.paymentTerms} onChange={e => set("paymentTerms", e.target.value)}
+                      placeholder="Ej: 50% de anticipo para reserva, 50% al entregar el primer hito comercial..." />
+                  </Field>
+                </div>
               </div>
-            </>
+            )}
+
+            {/* PASO 7 — Revisar y generar */}
+            {step === 7 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Confirmación Final</h2>
+                  <p className="text-slate-400 text-sm font-medium">Todo listo para que la IA redacte tu propuesta maestra.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { label: "Servicios", val: form.serviceScope.map(id => SERVICE_SCOPE_OPTIONS.find(o => o.id === id)?.label).join(", "), icon: LayoutGrid },
+                    { label: "Cliente", val: `${form.clientName} (${form.clientCompany || 'Particular'})`, icon: Building2 },
+                    { label: "Inversión", val: `${form.currency} ${form.price}`, icon: FileSignature },
+                    { label: "Duración", val: form.duration, icon: Calendar },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 bg-navy-950/50 rounded-2xl border border-white/[0.05]">
+                      <div className="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center text-white flex-shrink-0">
+                        <item.icon size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{item.label}</p>
+                        <p className="text-white font-bold text-sm truncate">{item.val}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-10 p-8 brand-gradient rounded-[2rem] shadow-2xl shadow-brand/20 relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+                   <p className="text-white font-bold text-lg mb-2 relative z-10 flex items-center gap-2">
+                     <Sparkles size={20} /> Inteligencia Artificial Activada
+                   </p>
+                   <p className="text-brand-100 text-sm leading-relaxed relative z-10 font-medium">
+                     Claude redactará una propuesta comercial de alto impacto, utilizando técnicas de copywriting persuasivo, neuroventas y estructurando cada sección para maximizar tu tasa de cierre.
+                   </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => step === 0 ? setView("list") : setStep(s => s - 1)}
+            className="flex items-center gap-2 px-6 py-3 text-slate-500 hover:text-white text-sm font-bold transition-all hover:bg-white/5 rounded-xl"
+          >
+            <ArrowLeft size={16} /> {step === 0 ? "Salir" : "Atrás"}
+          </button>
+
+          {step < 7 ? (
+            <button
+              onClick={() => setStep(s => s + 1)}
+              disabled={!canNext()}
+              className="flex items-center gap-2 px-8 py-3.5 brand-gradient hover:opacity-90 disabled:opacity-20 disabled:grayscale text-white text-sm font-bold rounded-xl transition-all shadow-xl shadow-brand/20 active:scale-95"
+            >
+              Continuar <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={generate}
+              disabled={generating}
+              className="flex items-center gap-3 px-10 py-4 bg-white text-navy-950 hover:bg-slate-100 disabled:opacity-50 text-base font-black rounded-2xl transition-all shadow-2xl shadow-white/10 active:scale-95"
+            >
+              {generating ? <><Loader2 size={20} className="animate-spin" /> Redactando...</> : <><Sparkles size={20} /> Generar Propuesta Maestra</>}
+            </button>
           )}
         </div>
+
+        {/* Streaming preview */}
+        {generating && generatedContent && (
+          <div className="mt-12 glass-card rounded-[2.5rem] p-10 border-brand-500/20 animate-in zoom-in-95 duration-500">
+            <div className="flex items-center gap-3 mb-8 text-brand-400 text-sm font-bold uppercase tracking-widest">
+              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center">
+                <Sparkles size={16} />
+              </div>
+              Generando Propuesta en Tiempo Real...
+            </div>
+            <div className="text-sm prose prose-invert max-w-none">
+              <ReactMarkdown components={mdComponents}>{generatedContent}</ReactMarkdown>
+            </div>
+            <div ref={bottomRef} className="h-10" />
+          </div>
+        )}
+      </div>
+    );
+  }
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
@@ -1040,186 +1152,182 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     const title = viewingProposal ? viewingProposal.client_name : form.clientName;
     const clientLogo = viewingProposal?.form_data?.clientLogo ?? form.clientLogo;
     const clientEmail = viewingProposal?.form_data?.clientEmail ?? form.clientEmail;
-    const clientWhatsapp = viewingProposal?.form_data?.clientWhatsapp ?? form.clientWhatsapp;
 
     return (
-      <div className="p-6 max-w-4xl">
-        {/* Header — dos filas para evitar que los botones se expandan con títulos largos */}
-        <div className="mb-5 space-y-3">
-          {/* Fila 1: navegación + título + logo */}
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="p-8 max-w-5xl mx-auto">
+        {/* Header toolbar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={() => { setView("list"); setViewingProposal(null); }}
-              className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition flex-shrink-0"
+              className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
             >
-              <ArrowLeft size={14} /> Volver
+              <ArrowLeft size={18} />
             </button>
-            <span className="text-gray-600 flex-shrink-0">·</span>
-            {clientLogo && (
-              <img src={clientLogo} alt="" className="w-7 h-7 rounded-lg object-cover bg-gray-800 flex-shrink-0" />
-            )}
-            <span className="text-white font-medium text-sm truncate">Propuesta — {title}</span>
-          </div>
-
-          {/* Toolbar — 3 secciones con título */}
-          <div className="flex flex-wrap items-start gap-3">
-
-            {/* ── Sección 1: Generar contenido ── */}
-            <div>
-              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Generar contenido</p>
-              <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
-                <button
-                  onClick={() => generateHtml(markdownContent)}
-                  disabled={generatingHtml}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${htmlContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-indigo-600 hover:bg-indigo-500 text-white"}`}
-                >
-                  {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Code size={11} /> {htmlContent ? "Regen. HTML" : "HTML"}</>}
-                </button>
-                {htmlContent && (
-                  <>
-                    <div className="w-px h-4 bg-gray-800 mx-0.5" />
-                    <button onClick={downloadHtml} title="Descargar HTML" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
-                      <Download size={11} />
-                    </button>
-                    <button onClick={downloadPdf} title="Descargar PDF" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
-                      <FileDown size={11} />
-                    </button>
-                  </>
-                )}
+            <div className="flex items-center gap-3 min-w-0">
+              {clientLogo && (
+                <img src={clientLogo} alt="" className="w-10 h-10 rounded-xl object-cover bg-navy-950 border border-white/10 flex-shrink-0 shadow-lg" />
+              )}
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-white truncate tracking-tight">{title}</h1>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Propuesta Comercial Asistida</p>
               </div>
             </div>
+          </div>
 
-            {/* ── Sección 2: Generar propuesta ── */}
-            <div>
-              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Generar propuesta</p>
-              <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
+          <div className="flex items-center gap-2 flex-wrap">
+             <div className="flex items-center glass-card rounded-xl p-1 border-white/[0.05]">
+                <button
+                  onClick={() => setResultTab("propuesta")}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "propuesta" ? "bg-white text-navy-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
+                >
+                  Propuesta
+                </button>
+                <button
+                  onClick={() => { setResultTab("html"); if (!htmlContent) generateHtml(markdownContent); }}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${resultTab === "html" ? "bg-white text-navy-950 shadow-lg" : "text-slate-400 hover:text-white"}`}
+                >
+                  <Code size={14} /> Vista Web
+                </button>
+             </div>
+
+             <div className="h-8 w-[1px] bg-white/10 mx-1" />
+
+             <button
+                onClick={() => sendViaWhatsApp(viewingProposal)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-bold rounded-xl border border-green-500/20 transition-all"
+              >
+                <MessageCircle size={14} /> WhatsApp
+              </button>
+
+              <button
+                onClick={saveProposal}
+                disabled={saving || saved || !!savedProposalId || !!viewingProposal}
+                className="flex items-center gap-2 px-4 py-2.5 brand-gradient text-white text-xs font-bold rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 disabled:opacity-50 disabled:grayscale transition-all"
+              >
+                {saved ? <><Check size={14} /> Guardado</> : saving ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : <><Save size={14} /> Guardar</>}
+              </button>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {resultTab === "propuesta" && (
+              <div className="glass-card rounded-[2.5rem] border-white/[0.05] p-10 animate-in fade-in duration-700">
+                <div className="prose prose-invert max-w-none prose-headings:tracking-tight prose-a:text-brand-400">
+                  <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+
+            {resultTab === "html" && (
+              <div className="glass-card rounded-[2.5rem] border-white/[0.05] overflow-hidden animate-in zoom-in-95 duration-700 h-[800px] relative">
+                {generatingHtml && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-navy-900/50 backdrop-blur-sm z-20">
+                    <Loader2 size={40} className="animate-spin text-brand-400 mb-4" />
+                    <p className="text-white font-bold text-lg">Generando experiencia interactiva...</p>
+                  </div>
+                )}
+                {!generatingHtml && htmlContent ? (
+                  <iframe
+                    key={htmlIframeKey}
+                    ref={htmlIframeRef}
+                    className="w-full h-full bg-white"
+                    title="Propuesta Interactiva"
+                  />
+                ) : !generatingHtml && (
+                  <div className="flex flex-col items-center justify-center h-full p-12 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-navy-950 flex items-center justify-center text-slate-700 mb-6">
+                      <Code size={32} />
+                    </div>
+                    <p className="text-slate-400 font-bold mb-4">La versión interactiva aún no ha sido generada.</p>
+                    <button
+                      onClick={() => generateHtml(markdownContent)}
+                      className="px-6 py-3 brand-gradient text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20"
+                    >
+                      Generar Vista Web Ahora
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar Actions */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="glass-card rounded-3xl border-white/[0.05] p-6 space-y-6">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acciones Rápidas</p>
+              
+              <div className="space-y-2">
                 <button
                   onClick={() => { setHtmlContent(""); generate(); }}
                   disabled={generating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-60 transition whitespace-nowrap"
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-white/[0.03] hover:bg-white/[0.08] text-slate-200 text-xs font-bold rounded-xl transition-all border border-white/[0.05]"
                 >
-                  {generating ? <><Loader2 size={11} className="animate-spin" /> Repensando...</> : <><RefreshCw size={11} /> Repensar</>}
+                  <RefreshCw size={14} className={generating ? "animate-spin text-brand-400" : ""} />
+                  Regenerar Propuesta
                 </button>
                 <button
                   onClick={() => { setStep(0); setView("form"); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition whitespace-nowrap"
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-white/[0.03] hover:bg-white/[0.08] text-slate-200 text-xs font-bold rounded-xl transition-all border border-white/[0.05]"
                 >
-                  <Pencil size={11} /> Editar datos
+                  <Pencil size={14} />
+                  Editar Parámetros
                 </button>
-                {!savedProposalId && !viewingProposal && (
-                  <button
-                    onClick={saveProposal}
-                    disabled={saving || saved}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
-                  >
-                    {saved ? <><Check size={11} /> Guardada</> : saving ? <><Loader2 size={11} className="animate-spin" /> Guardando...</> : <><Save size={11} /> Guardar</>}
-                  </button>
-                )}
               </div>
-            </div>
 
-            {/* ── Sección 3: Compartir con cliente ── */}
-            <div>
-              <div className="flex items-center gap-2 mb-1.5 px-1">
-                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Compartir con cliente</p>
-                {/* Badge de expiración */}
-                {htmlContent && timeLeft && (
-                  timeLeft === "expirado"
-                    ? <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400">⏱ Expirado</span>
-                    : <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">⏱ {timeLeft}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
-                {/* Botón enlace — dinámico según estado */}
-                {(savedProposalId || viewingProposal?.id) && (
-                  timeLeft === "expirado" || (htmlContent && !htmlExpiresAt) ? (
-                    // HTML sin expiración definida o expirado → "Generar enlace"
-                    <button
-                      onClick={() => generateHtml(markdownContent)}
-                      disabled={generatingHtml}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
-                    >
-                      {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Link2 size={11} /> Generar enlace</>}
-                    </button>
-                  ) : htmlContent && timeLeft ? (
-                    // HTML válido con tiempo restante → "Copiar enlace"
+              {htmlContent && (
+                <div className="pt-6 border-t border-white/[0.05] space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Exportar</p>
+                  <button
+                    onClick={downloadPdf}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 text-xs font-bold rounded-xl border border-brand-500/20 transition-all"
+                  >
+                    <FileDown size={14} />
+                    Descargar como PDF
+                  </button>
+                  <button
+                    onClick={downloadHtml}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-white/[0.03] hover:bg-white/[0.08] text-slate-200 text-xs font-bold rounded-xl border border-white/[0.05] transition-all"
+                  >
+                    <Download size={14} />
+                    Descargar HTML
+                  </button>
+                </div>
+              )}
+
+              {(savedProposalId || viewingProposal?.id) && htmlContent && timeLeft && (
+                 <div className="pt-6 border-t border-white/[0.05]">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Compartir Enlace</p>
                     <button
                       onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${copiedLink ? "bg-emerald-600/20 text-emerald-400" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all ${copiedLink ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-navy-950 border border-white/[0.1] text-white"}`}
                     >
-                      {copiedLink ? <><Check size={11} className="text-emerald-400" /> ¡Copiado!</> : <><Link2 size={11} /> Copiar enlace</>}
+                      {copiedLink ? <><Check size={14} /> ¡Copiado!</> : <><Link2 size={14} /> Copiar Link Público</>}
                     </button>
-                  ) : null
-                )}
-                <button
-                  onClick={() => sendViaWhatsApp(viewingProposal)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
-                >
-                  <MessageCircle size={11} /> WhatsApp
-                </button>
-                {clientEmail && (
-                  <button
-                    onClick={() => sendViaEmail(viewingProposal)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
-                  >
-                    <Mail size={11} /> Email
-                  </button>
-                )}
-              </div>
+                    <p className="mt-3 text-[10px] text-slate-500 text-center font-medium">
+                      {timeLeft === "expirado" ? "⚠️ El enlace ha expirado." : `⏱ Expira en ${timeLeft}`}
+                    </p>
+                 </div>
+              )}
             </div>
 
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-5 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
-          <button
-            onClick={() => setResultTab("propuesta")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${resultTab === "propuesta" ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
-          >
-            Propuesta (Markdown)
-          </button>
-          <button
-            onClick={() => { setResultTab("html"); if (!htmlContent) generateHtml(markdownContent); }}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${resultTab === "html" ? "bg-gray-700 text-white" : "text-gray-500 hover:text-gray-300"}`}
-          >
-            <Code size={11} /> HTML
-            {htmlContent && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-          </button>
-        </div>
-
-        {/* Propuesta tab */}
-        {resultTab === "propuesta" && (
-          <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl text-sm">
-            <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
-          </div>
-        )}
-
-        {/* HTML tab */}
-        {resultTab === "html" && (
-          <div className="rounded-xl overflow-hidden border border-gray-800">
-            {generatingHtml && (
-              <div className="flex items-center gap-2 p-6 text-gray-500 text-sm bg-gray-900">
-                <Loader2 size={14} className="animate-spin" /> Generando versión HTML...
-              </div>
-            )}
-            {!generatingHtml && htmlContent && (
-              <iframe
-                key={htmlIframeKey}
-                ref={htmlIframeRef}
-                className="w-full bg-white"
-                style={{ height: "700px", border: "none" }}
-                title="Propuesta HTML"
-              />
-            )}
-            {!generatingHtml && !htmlContent && (
-              <div className="p-8 text-gray-500 text-sm bg-gray-900 text-center">
-                Haz click en "Generar HTML" para crear la versión visual.
+            {clientEmail && (
+              <div className="glass-card rounded-3xl border-white/[0.05] p-6 bg-brand-500/5 border-brand-500/10">
+                <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-4">Email de Contacto</p>
+                <p className="text-white text-sm font-bold truncate mb-4">{clientEmail}</p>
+                <button
+                  onClick={() => sendViaEmail(viewingProposal)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-brand-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 transition-all"
+                >
+                  <Mail size={14} /> Enviar por Email
+                </button>
               </div>
             )}
           </div>
-        )}
-
+        </div>
       </div>
     );
   }
@@ -1227,21 +1335,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   // ─── Page shell ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-            <FileSignature size={15} className="text-emerald-400" />
+    <div className="flex flex-col h-screen bg-navy-950">
+      <div className="px-8 py-6 border-b border-white/[0.05] flex items-center justify-between flex-shrink-0 bg-navy-950/50 backdrop-blur-md z-30">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center shadow-lg shadow-brand/20">
+            <FileSignature size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white">Propuestas</h1>
-            <p className="text-xs text-gray-500">Propuestas comerciales generadas con IA</p>
+            <h1 className="text-lg font-bold text-white tracking-tight">Propuestas Inteligentes</h1>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Pipeline comercial & Generación de Contenido</p>
           </div>
         </div>
         <AgentBrain agentId="propuestas" />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {view === "list" && renderList()}
         {view === "form" && renderForm()}
         {view === "result" && renderResult()}

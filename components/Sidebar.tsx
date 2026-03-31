@@ -65,18 +65,23 @@ export default function Sidebar() {
   const initials = userEmail ? userEmail[0].toUpperCase() : "U";
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-gray-900 border-r border-gray-800 flex flex-col z-40">
+    <aside className="fixed left-0 top-0 h-screen w-60 bg-navy-950 border-r border-white/[0.05] flex flex-col z-40">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-gray-800">
-        <span className="text-lg font-bold text-white tracking-tight">MDF<span className="text-indigo-400">Tools</span></span>
+      <div className="px-6 py-6 border-b border-white/[0.05]">
+        <span className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg brand-gradient flex items-center justify-center text-white shadow-lg shadow-brand/20">
+            <LayoutDashboard size={18} />
+          </div>
+          MDF<span className="text-brand-400">Tools</span>
+        </span>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5 text-sm">
+      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1 text-sm custom-scrollbar">
         {navItems.map((item, i) => {
           if ("divider" in item) {
             return (
-              <p key={i} className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 pt-4 pb-1">
+              <p key={i} className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 pt-6 pb-2">
                 {item.label}
               </p>
             );
@@ -84,27 +89,27 @@ export default function Sidebar() {
 
           if (item.children) {
             return (
-              <div key={i}>
+              <div key={i} className="space-y-1">
                 <button
                   onClick={() => setSeoOpen(!seoOpen)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.05] transition-all group"
                 >
-                  <div className="flex items-center gap-2">
-                    <item.icon size={15} />
-                    {item.label}
+                  <div className="flex items-center gap-2.5">
+                    <item.icon size={18} className="text-slate-500 group-hover:text-brand-400 transition-colors" />
+                    <span className="font-medium">{item.label}</span>
                   </div>
-                  <ChevronDown size={13} className={`transition-transform ${seoOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${seoOpen ? "rotate-180" : ""}`} />
                 </button>
                 {seoOpen && (
-                  <div className="ml-4 mt-0.5 space-y-0.5 border-l border-gray-800 pl-3">
+                  <div className="ml-4 mt-1 space-y-1 border-l border-white/[0.05] pl-4">
                     {item.children.map((child) => (
                       <Link
                         key={child.href}
                         href={child.href}
-                        className={`block px-2 py-1.5 rounded-lg text-xs transition ${
+                        className={`block px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
                           pathname === child.href
-                            ? "text-white bg-gray-800"
-                            : "text-gray-400 hover:text-white hover:bg-gray-800"
+                            ? "text-brand-400 bg-brand/10 shadow-sm shadow-brand/5"
+                            : "text-slate-400 hover:text-white hover:bg-white/[0.03]"
                         }`}
                       >
                         {child.label}
@@ -121,13 +126,13 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href!}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all font-medium ${
                 isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                  ? "brand-gradient text-white shadow-lg shadow-brand/20 translate-x-1"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
               }`}
             >
-              <item.icon size={15} />
+              <item.icon size={18} className={isActive ? "text-white" : "text-slate-500 group-hover:text-brand-400 transition-colors"} />
               {item.label}
             </Link>
           );
@@ -135,20 +140,21 @@ export default function Sidebar() {
       </nav>
 
       {/* User + Logout */}
-      <div className="px-4 py-4 border-t border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+      <div className="px-5 py-5 border-t border-white/[0.05] bg-navy-950/50 backdrop-blur-md">
+        <div className="flex items-center gap-3 p-2 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
+          <div className="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-lg shadow-brand/10">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 truncate">{userEmail || "Cargando..."}</p>
+            <p className="text-xs font-semibold text-slate-200 truncate">{userEmail.split('@')[0] || "Usuario"}</p>
+            <p className="text-[10px] text-slate-500 truncate">{userEmail || "Cargando..."}</p>
           </div>
           <button
             onClick={handleLogout}
             title="Cerrar sesión"
-            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition"
+            className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
           >
-            <LogOut size={14} />
+            <LogOut size={16} />
           </button>
         </div>
       </div>

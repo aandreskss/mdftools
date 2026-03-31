@@ -6,6 +6,34 @@
   --sidebar-width: 240px;
 }
 
-body {
-  @apply bg-gray-950 text-gray-100 antialiased;
+@layer base {
+  body {
+    @apply bg-navy-950 text-slate-200 antialiased selection:bg-brand/30 selection:text-brand-300;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-navy-800 rounded-full hover:bg-navy-700 transition-colors;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-navy-900/40 border border-white/[0.05] backdrop-blur-sm shadow-xl;
+  }
+
+  .glass-input {
+    @apply bg-navy-950/50 border border-white/[0.08] focus:border-brand/40 focus:ring-1 focus:ring-brand/20 transition-all outline-none;
+  }
+
+  .brand-gradient {
+    @apply bg-gradient-to-br from-brand-500 to-brand-700;
+  }
 }
