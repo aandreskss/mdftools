@@ -466,26 +466,59 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   async function saveProposal() {
     setSaving(true);
-    const res = await fetch("/api/proposals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clientName: form.clientName,
-        clientIndustry: form.clientIndustry,
-        formData: form,
-        generatedContent,
-        htmlContent,
-        status: "generada",
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.id) { setSavedProposalId(data.id); setPreviewId(data.id); setPreviewTs(Date.now()); }
+    const id = savedProposalId || viewingProposal?.id;
+
+    try {
+      if (id) {
+        // Actualizar existente
+        const res = await fetch("/api/proposals", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            client_name: form.clientName,
+            industry: form.clientIndustry,
+            form_data: form,
+            generated_content: generatedContent,
+            html_content: htmlContent,
+            status: "generada",
+          }),
+        });
+        if (!res.ok) throw new Error("Error al actualizar");
+      } else {
+        // Crear nueva
+        const res = await fetch("/api/proposals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName: form.clientName,
+            clientIndustry: form.clientIndustry,
+            formData: form,
+            generatedContent,
+            htmlContent,
+            status: "generada",
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.id) {
+            setSavedProposalId(data.id);
+            setPreviewId(data.id);
+            setPreviewTs(Date.now());
+          }
+        } else {
+          throw new Error("Error al crear");
+        }
+      }
+      await fetchProposals();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo guardar la propuesta.");
+    } finally {
+      setSaving(false);
     }
-    await fetchProposals();
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
   }
 
   async function deleteProposal(id: string) {
