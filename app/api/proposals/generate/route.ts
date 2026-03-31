@@ -94,7 +94,7 @@ ${JSON_SCHEMA}
 IMPORTANTE: No incluyas explicaciones, ni bloques de código markdown, solo el objeto JSON puro.`;
 
   try {
-    const aiText = (await callAIJson(settings, settings.modelProposals, prompt, 4000, 0.7)).trim();
+    const aiText = (await callAIJson(settings, settings.modelProposals, prompt, 8192, 0.7)).trim();
 
     if (!aiText) throw new Error("La IA devolvió una respuesta vacía. Puede ser un filtro de seguridad o cuota agotada.");
 
