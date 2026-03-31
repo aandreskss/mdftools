@@ -327,6 +327,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   async function generate() {
     setGenerating(true);
+    setSaved(false);
     setGeneratedContent("");
     setHtmlContent("");
     setStructuredContent(null);
@@ -1158,7 +1159,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               <button
                 onClick={saveProposal}
-                disabled={saving || saved || !!savedProposalId || !!viewingProposal}
+                disabled={saving || saved}
                 className="flex items-center gap-2 px-4 py-2.5 brand-gradient text-white text-xs font-bold rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 disabled:opacity-50 disabled:grayscale transition-all"
               >
                 {saved ? <><Check size={14} /> Guardado</> : saving ? <><Loader2 size={14} className="animate-spin" /> Guardando...</> : <><Save size={14} /> Guardar</>}
