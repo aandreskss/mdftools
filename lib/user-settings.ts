@@ -133,7 +133,7 @@ export async function getUserSettings(
 ): Promise<UserSettings> {
   const { data } = await supabase
     .from("brand_profiles")
-    .select("anthropic_api_key, gemini_api_key, model_agents, model_seo, model_proposals")
+    .select("*")
     .eq("user_id", userId)
     .maybeSingle();
 
