@@ -230,7 +230,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setSlidesContent(viewingProposal.slides_content ?? "");
     setHtmlExpiresAt(viewingProposal.html_expires_at ?? null);
     setPreviewTs(Date.now());
-    if (viewingProposal.form_data) setForm(viewingProposal.form_data);
+    if (viewingProposal.form_data) setForm({ ...defaultForm, ...viewingProposal.form_data });
     if (viewingProposal.html_content) setHtmlIframeKey(k => k + 1);
     if (viewingProposal.slides_content) setSlidesIframeKey(k => k + 1);
   }, [viewingProposal]);

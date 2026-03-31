@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   if (profile?.brand_name) agencyName = profile.brand_name;
 
   // Construcción de contexto para el prompt
-  const scopeLabels = form.serviceScope.join(", ");
+  const scopeLabels = (form.serviceScope ?? []).join(", ") || form.serviceType || "Marketing digital";
   const diagnostico = [
     form.problemasDetectados,
     form.problemaRedesSociales,
