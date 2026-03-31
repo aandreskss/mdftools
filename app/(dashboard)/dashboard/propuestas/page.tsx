@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
-  Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
+  Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText, Eye,
   Code, Download, RefreshCw, Pencil, Upload, Mail,
   MessageCircle, LayoutGrid, List, Building2, X, FileDown, Link2,
 } from "lucide-react";
