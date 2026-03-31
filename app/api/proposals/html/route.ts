@@ -77,7 +77,7 @@ IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin b
 
   let rawJson = "";
   try {
-    rawJson = (await callAIJson(settings, settings.modelProposals, prompt, 4096)).trim();
+    rawJson = (await callAIJson(settings, settings.modelProposals, prompt, 16384)).trim();
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const content: ProposalContent = JSON.parse(rawJson);
