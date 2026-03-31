@@ -32,8 +32,8 @@ export const CLAUDE_MODELS = [
 
 export const GEMINI_MODELS = [
   {
-    id: "gemini-2.0-flash-lite",
-    label: "Flash Lite",
+    id: "gemini-1.5-flash",
+    label: "Flash 1.5",
     description: "Ultra económico y rápido",
     badge: "Más barato",
     color: "teal",
