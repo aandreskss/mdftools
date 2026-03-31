@@ -5,7 +5,7 @@ import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText,
   Code, Download, Layers, RefreshCw, Pencil, Upload, Mail,
-  MessageCircle, LayoutGrid, List, Building2, X, FileDown,
+  MessageCircle, LayoutGrid, List, Building2, X, FileDown, Link2,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -188,6 +188,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const htmlIframeRef    = useRef<HTMLIFrameElement>(null);
@@ -271,8 +272,10 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     const phone = (proposal?.form_data?.clientWhatsapp ?? form.clientWhatsapp).replace(/\D/g, "");
     const name = proposal?.client_name ?? form.clientName;
     const company = proposal?.form_data?.clientCompany ?? form.clientCompany;
+    const id = savedProposalId ?? proposal?.id;
+    const link = id ? `\n\n🔗 Ver propuesta online: ${window.location.origin}/p/${id}` : "";
     const msg = encodeURIComponent(
-      `Hola ${name}! 👋\n\nTe comparto la propuesta comercial que preparamos especialmente para ${company || name}.\n\nQuedo disponible para cualquier consulta o para agendar una llamada. ¡Espero tu respuesta!`
+      `Hola ${name}! 👋\n\nTe comparto la propuesta comercial que preparamos especialmente para ${company || name}.${link}\n\nQuedo disponible para cualquier consulta o para agendar una llamada. ¡Espero tu respuesta!`
     );
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   }
@@ -280,9 +283,11 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   function sendViaEmail(proposal: Proposal | null) {
     const email = proposal?.form_data?.clientEmail ?? form.clientEmail;
     const name = proposal?.client_name ?? form.clientName;
+    const id = savedProposalId ?? proposal?.id;
+    const link = id ? `\n\n🔗 Ver propuesta online: ${window.location.origin}/p/${id}` : "";
     const subject = encodeURIComponent(`Propuesta comercial para ${name}`);
     const body = encodeURIComponent(
-      `Hola ${name},\n\nAdjunto la propuesta comercial que preparamos para ti.\nEstamos a tu disposición para resolver cualquier duda.\n\n¡Saludos!`
+      `Hola ${name},\n\nTe comparto la propuesta comercial que preparamos para ti.${link}\n\nEstamos a tu disposición para resolver cualquier duda.\n\n¡Saludos!`
     );
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, "_blank");
   }
@@ -484,6 +489,13 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function copyShareLink(id: string) {
+    const url = `${window.location.origin}/p/${id}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
   }
 
   // ─── Generate Slides (Reveal.js) ────────────────────────────────────────────
@@ -1109,62 +1121,89 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             <span className="text-white font-medium text-sm truncate">Propuesta — {title}</span>
           </div>
 
-          {/* Toolbar organizada en grupos */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Toolbar — 3 secciones con título */}
+          <div className="flex flex-wrap items-start gap-3">
 
-            {/* ── Grupo 1: Generar formatos ── */}
-            <div className="flex items-center gap-1.5 p-1 bg-gray-900 border border-gray-800 rounded-xl">
-              <button
-                onClick={() => generateHtml(markdownContent)}
-                disabled={generatingHtml}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${htmlContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-indigo-600 hover:bg-indigo-500 text-white"}`}
-              >
-                {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Code size={11} /> {htmlContent ? "Regen. HTML" : "Generar HTML"}</>}
-              </button>
-              <button
-                onClick={() => generateSlides(markdownContent)}
-                disabled={generatingSlides}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${slidesContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-violet-600 hover:bg-violet-500 text-white"}`}
-              >
-                {generatingSlides ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Layers size={11} /> {slidesContent ? "Regen. Slides" : "Generar Slides"}</>}
-              </button>
+            {/* ── Sección 1: Generar contenido ── */}
+            <div>
+              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Generar contenido</p>
+              <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
+                <button
+                  onClick={() => generateSlides(markdownContent)}
+                  disabled={generatingSlides}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${slidesContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-violet-600 hover:bg-violet-500 text-white"}`}
+                >
+                  {generatingSlides ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Layers size={11} /> {slidesContent ? "Regen. Slides" : "Slides"}</>}
+                </button>
+                <button
+                  onClick={() => generateHtml(markdownContent)}
+                  disabled={generatingHtml}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap disabled:opacity-60 ${htmlContent ? "text-gray-300 hover:bg-gray-800 hover:text-white" : "bg-indigo-600 hover:bg-indigo-500 text-white"}`}
+                >
+                  {generatingHtml ? <><Loader2 size={11} className="animate-spin" /> Generando...</> : <><Code size={11} /> {htmlContent ? "Regen. HTML" : "HTML"}</>}
+                </button>
+                {(htmlContent || slidesContent) && (
+                  <div className="w-px h-4 bg-gray-800 mx-0.5" />
+                )}
+                {htmlContent && (
+                  <button onClick={downloadHtml} title="Descargar HTML" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
+                    <Download size={11} />
+                  </button>
+                )}
+                {htmlContent && (
+                  <button onClick={downloadPdf} title="Descargar PDF" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
+                    <FileDown size={11} />
+                  </button>
+                )}
+                {slidesContent && (
+                  <button onClick={downloadSlides} title="Descargar Slides" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition">
+                    <Download size={11} />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* ── Grupo 2: Descargar ── */}
-            <div className="flex items-center gap-1.5 p-1 bg-gray-900 border border-gray-800 rounded-xl">
-              <button
-                onClick={() => copyContent(markdownContent)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition whitespace-nowrap"
-              >
-                {copied ? <><Check size={11} className="text-green-400" /> Copiado</> : <><Copy size={11} /> Copiar MD</>}
-              </button>
-              {htmlContent && (<>
+            {/* ── Sección 2: Generar propuesta ── */}
+            <div>
+              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Generar propuesta</p>
+              <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
                 <button
-                  onClick={downloadHtml}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition whitespace-nowrap"
+                  onClick={() => { setHtmlContent(""); setSlidesContent(""); generate(); }}
+                  disabled={generating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-60 transition whitespace-nowrap"
                 >
-                  <Download size={11} /> HTML
+                  {generating ? <><Loader2 size={11} className="animate-spin" /> Repensando...</> : <><RefreshCw size={11} /> Repensar</>}
                 </button>
                 <button
-                  onClick={downloadPdf}
+                  onClick={() => { setStep(0); setView("form"); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition whitespace-nowrap"
                 >
-                  <FileDown size={11} /> PDF
+                  <Pencil size={11} /> Editar datos
                 </button>
-              </>)}
-              {slidesContent && (
-                <button
-                  onClick={downloadSlides}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition whitespace-nowrap"
-                >
-                  <Download size={11} /> Slides
-                </button>
-              )}
+                {!savedProposalId && !viewingProposal && (
+                  <button
+                    onClick={saveProposal}
+                    disabled={saving || saved}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
+                  >
+                    {saved ? <><Check size={11} /> Guardada</> : saving ? <><Loader2 size={11} className="animate-spin" /> Guardando...</> : <><Save size={11} /> Guardar</>}
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* ── Grupo 3: Enviar (solo si tiene datos) ── */}
-            {(clientWhatsapp || clientEmail) && (
-              <div className="flex items-center gap-1.5 p-1 bg-gray-900 border border-gray-800 rounded-xl">
+            {/* ── Sección 3: Compartir con cliente ── */}
+            <div>
+              <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-1.5 px-1">Compartir con cliente</p>
+              <div className="flex items-center gap-1 p-1 bg-gray-900 border border-gray-800 rounded-xl">
+                {(savedProposalId || viewingProposal?.id) && htmlContent && (
+                  <button
+                    onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${copiedLink ? "bg-emerald-600/20 text-emerald-400" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
+                  >
+                    {copiedLink ? <><Check size={11} className="text-emerald-400" /> ¡Enlace copiado!</> : <><Link2 size={11} /> Copiar enlace</>}
+                  </button>
+                )}
                 {clientWhatsapp && (
                   <button
                     onClick={() => sendViaWhatsApp(viewingProposal)}
@@ -1181,33 +1220,10 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                     <Mail size={11} /> Email
                   </button>
                 )}
+                {!clientWhatsapp && !clientEmail && !(savedProposalId || viewingProposal?.id) && (
+                  <span className="px-3 py-1.5 text-xs text-gray-600">Guarda la propuesta primero</span>
+                )}
               </div>
-            )}
-
-            {/* ── Grupo 4: Gestionar ── */}
-            <div className="flex items-center gap-1.5 p-1 bg-gray-900 border border-gray-800 rounded-xl">
-              <button
-                onClick={() => { setStep(0); setView("form"); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition whitespace-nowrap"
-              >
-                <Pencil size={11} /> Editar
-              </button>
-              <button
-                onClick={() => { setHtmlContent(""); setSlidesContent(""); generate(); }}
-                disabled={generating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:bg-gray-800 hover:text-white disabled:opacity-60 transition whitespace-nowrap"
-              >
-                {generating ? <><Loader2 size={11} className="animate-spin" /> Regenerando...</> : <><RefreshCw size={11} /> Regenerar</>}
-              </button>
-              {!savedProposalId && !viewingProposal && (
-                <button
-                  onClick={saveProposal}
-                  disabled={saving || saved}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-lg text-xs font-medium transition whitespace-nowrap"
-                >
-                  {saved ? <><Check size={11} /> Guardada</> : saving ? <><Loader2 size={11} className="animate-spin" /> Guardando...</> : <><Save size={11} /> Guardar</>}
-                </button>
-              )}
             </div>
 
           </div>
