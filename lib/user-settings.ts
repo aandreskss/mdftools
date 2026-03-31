@@ -32,19 +32,11 @@ export const CLAUDE_MODELS = [
 
 export const GEMINI_MODELS = [
   {
-    id: "gemini-1.5-flash",
-    label: "Flash 1.5",
-    description: "Ultra económico y rápido",
-    badge: "Más barato",
-    color: "teal",
-    provider: "gemini" as const,
-  },
-  {
     id: "gemini-2.0-flash",
     label: "Flash 2.0",
     description: "Rápido, económico y capaz",
     badge: "Económico",
-    color: "blue",
+    color: "teal",
     provider: "gemini" as const,
   },
   {
