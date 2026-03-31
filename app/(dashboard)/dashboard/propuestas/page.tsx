@@ -224,6 +224,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     if (!viewingProposal) return;
     setSavedProposalId(viewingProposal.id);
     setPreviewId(viewingProposal.id);
+    setGeneratedContent(viewingProposal.generated_content ?? "");
+    setStructuredContent(null);
     setHtmlContent(viewingProposal.html_content ?? "");
     setSlidesContent(viewingProposal.slides_content ?? "");
     setHtmlExpiresAt(viewingProposal.html_expires_at ?? null);
@@ -1118,7 +1120,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   }
 
   function renderResult() {
-    const markdownContent = viewingProposal ? viewingProposal.generated_content : generatedContent;
+    const markdownContent = generatedContent || viewingProposal?.generated_content || "";
     const title = viewingProposal ? viewingProposal.client_name : form.clientName;
     const clientLogo = viewingProposal?.form_data?.clientLogo ?? form.clientLogo;
     const clientEmail = viewingProposal?.form_data?.clientEmail ?? form.clientEmail;
