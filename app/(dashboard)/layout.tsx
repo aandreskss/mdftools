@@ -5,7 +5,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-gray-950">
       <Sidebar />
-      <main className="flex-1 ml-60 min-h-screen flex flex-col">
+      <main
+        className="flex-1 min-h-screen flex flex-col"
+        style={{
+          marginLeft: "var(--sidebar-width, 240px)",
+          transition: "margin-left 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
+        }}
+      >
         <ApiKeyBanner />
         {children}
       </main>
