@@ -524,6 +524,18 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setTimeout(() => setCopiedLink(false), 2500);
   }
 
+  async function renewShareLink() {
+    const id = savedProposalId ?? viewingProposal?.id;
+    if (!id) return;
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await fetch("/api/proposals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, html_expires_at: expires }),
+    });
+    setHtmlExpiresAt(expires);
+  }
+
   function downloadPdf() {
     const win = window.open("", "_blank");
     if (!win) return;
@@ -1439,13 +1451,10 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                         <>
                           <p className="text-[10px] text-amber-400/80 text-center">⚠️ El enlace ha expirado.</p>
                           <button
-                            onClick={() => generateHtml(markdownContent)}
-                            disabled={generatingHtml}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border bg-brand-500/10 text-brand-300 border-brand-500/20 hover:bg-brand-500/20 disabled:opacity-50"
+                            onClick={renewShareLink}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border bg-brand-500/10 text-brand-300 border-brand-500/20 hover:bg-brand-500/20"
                           >
-                            {generatingHtml
-                              ? <><Loader2 size={13} className="animate-spin" /> Regenerando...</>
-                              : <><RefreshCw size={13} /> Regenerar Enlace</>}
+                            <RefreshCw size={13} /> Renovar Enlace (24h)
                           </button>
                         </>
                       ) : (
