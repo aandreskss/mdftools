@@ -1435,21 +1435,36 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   )}
                   {(savedProposalId || viewingProposal?.id) && htmlContent && timeLeft && (
                     <>
-                      <button
-                        onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
-                        className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border ${
-                          copiedLink
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-white/[0.04] text-slate-200 border-white/[0.05] hover:bg-white/[0.08]"
-                        }`}
-                      >
-                        {copiedLink
-                          ? <><Check size={13} /> Copiado</>
-                          : <><Link2 size={13} /> Copiar Enlace Público</>}
-                      </button>
-                      <p className="text-[10px] text-slate-500 text-center mt-1">
-                        {timeLeft === "expirado" ? "⚠️ El enlace ha expirado." : `⏱ Expira en ${timeLeft}`}
-                      </p>
+                      {timeLeft === "expirado" ? (
+                        <>
+                          <p className="text-[10px] text-amber-400/80 text-center">⚠️ El enlace ha expirado.</p>
+                          <button
+                            onClick={() => generateHtml(markdownContent)}
+                            disabled={generatingHtml}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border bg-brand-500/10 text-brand-300 border-brand-500/20 hover:bg-brand-500/20 disabled:opacity-50"
+                          >
+                            {generatingHtml
+                              ? <><Loader2 size={13} className="animate-spin" /> Regenerando...</>
+                              : <><RefreshCw size={13} /> Regenerar Enlace</>}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
+                            className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border ${
+                              copiedLink
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : "bg-white/[0.04] text-slate-200 border-white/[0.05] hover:bg-white/[0.08]"
+                            }`}
+                          >
+                            {copiedLink
+                              ? <><Check size={13} /> Copiado</>
+                              : <><Link2 size={13} /> Copiar Enlace Público</>}
+                          </button>
+                          <p className="text-[10px] text-slate-500 text-center mt-1">⏱ Expira en {timeLeft}</p>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
