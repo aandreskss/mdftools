@@ -341,7 +341,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           body: JSON.stringify({
             id: existingId,
             generated_content: md,
-            status: "generada",
+            status: "draft",
             client_name: form.clientName,
             industry: form.clientIndustry,
             form_data: form,
@@ -358,7 +358,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             clientIndustry: form.clientIndustry,
             formData: form,
             generatedContent: md,
-            status: "generada",
+            status: "draft",
           }),
         });
         if (res.ok) {
@@ -471,7 +471,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             form_data: form,
             generated_content: generatedContent,
             html_content: htmlContent,
-            status: "generada",
+            status: "draft",
           }),
         });
         if (!res.ok) {
@@ -488,7 +488,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             formData: form,
             generatedContent,
             htmlContent,
-            status: "generada",
+            status: "draft",
           }),
         });
         if (res.ok) {
