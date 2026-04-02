@@ -1492,18 +1492,28 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                         </>
                       ) : (
                         <>
-                          <button
-                            onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
-                            className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border ${
-                              copiedLink
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : "bg-white/[0.04] text-slate-200 border-white/[0.05] hover:bg-white/[0.08]"
-                            }`}
-                          >
-                            {copiedLink
-                              ? <><Check size={13} /> Copiado</>
-                              : <><Link2 size={13} /> Copiar Enlace Público</>}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => copyShareLink(savedProposalId ?? viewingProposal!.id)}
+                              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border ${
+                                copiedLink
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                  : "bg-white/[0.04] text-slate-200 border-white/[0.05] hover:bg-white/[0.08]"
+                              }`}
+                            >
+                              {copiedLink
+                                ? <><Check size={13} /> Copiado</>
+                                : <><Link2 size={13} /> Copiar enlace</>}
+                            </button>
+                            <button
+                              onClick={() => generateHtml(markdownContent)}
+                              disabled={generatingHtml}
+                              title="Regenerar enlace con el contenido actualizado"
+                              className="flex items-center justify-center p-2.5 rounded-lg text-xs font-bold transition-all border bg-white/[0.04] text-slate-400 border-white/[0.05] hover:bg-brand-500/10 hover:text-brand-300 hover:border-brand-500/20 disabled:opacity-40"
+                            >
+                              <RefreshCw size={13} className={generatingHtml ? "animate-spin" : ""} />
+                            </button>
+                          </div>
                           <p className="text-[10px] text-slate-500 text-center mt-1">⏱ Expira en {timeLeft}</p>
                         </>
                       )}
