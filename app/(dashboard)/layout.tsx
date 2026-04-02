@@ -8,7 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main
         className="flex-1 min-h-screen flex flex-col"
         style={{
-          marginLeft: "var(--sidebar-width, 240px)",
+          marginLeft: "var(--sidebar-width, 256px)",
           transition: "margin-left 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
         }}
       >

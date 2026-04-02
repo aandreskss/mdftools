@@ -125,11 +125,11 @@ export default async function DashboardPage() {
   };
 
   return (
-    <div className="p-8 min-h-screen" style={{ background: "#131313" }}>
-      <div className="max-w-[960px] mx-auto space-y-6">
+    <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+      <div className="space-y-5">
 
         {/* ── Row 1: Hero + Quick Access ── */}
-        <div className="grid grid-cols-3 gap-5" style={{ minHeight: "220px" }}>
+        <div className="grid grid-cols-3 gap-5" style={{ minHeight: "240px" }}>
 
           {/* Welcome banner */}
           <div
@@ -144,10 +144,10 @@ export default async function DashboardPage() {
               }}
             />
             <div className="relative space-y-2">
-              <h1 className="font-extrabold text-[32px] text-white tracking-tight leading-tight">
+              <h1 className="font-extrabold text-[36px] text-white tracking-tight leading-tight">
                 Bienvenido, <span style={{ color: "#cbbeff" }}>{username}.</span>
               </h1>
-              <p className="text-[15px] leading-relaxed max-w-[460px]" style={{ color: "#cac4d5" }}>
+              <p className="text-[16px] leading-relaxed" style={{ color: "#cac4d5" }}>
                 {usageMsg}
               </p>
             </div>
