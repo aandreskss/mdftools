@@ -39,7 +39,59 @@ export async function GET(
     });
   }
 
-  return new NextResponse(data.html_content, {
+  // Inject accept-proposal script at serve time — works for all proposals (old & new HTML)
+  const acceptScript = `
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var cta = document.querySelector('.floating-cta');
+    if (!cta) return;
+    cta.removeAttribute('href');
+    cta.style.cursor = 'pointer';
+    cta.addEventListener('click', function(e) {
+      e.preventDefault();
+      acceptProposal('${params.id}');
+    });
+  });
+  async function acceptProposal(id) {
+    var btn = document.querySelector('.floating-cta');
+    if (!btn || btn.dataset.accepted) return;
+    btn.dataset.accepted = '1';
+    btn.style.opacity = '0.7';
+    btn.textContent = 'Procesando...';
+    try {
+      var res = await fetch('/api/proposals/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+      });
+      if (res.ok) {
+        btn.textContent = '✓ ¡Propuesta Aceptada!';
+        btn.style.background = '#059669';
+        btn.style.opacity = '1';
+        btn.style.boxShadow = '0 10px 15px -3px rgba(5,150,105,0.4)';
+        btn.style.cursor = 'default';
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:100px;right:32px;background:#065F46;color:white;padding:16px 24px;border-radius:12px;font-weight:600;font-size:14px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.25);';
+        toast.textContent = '\\uD83C\\uDF89 \\u00A1Gracias! Nos pondremos en contacto pronto.';
+        document.body.appendChild(toast);
+      } else {
+        delete btn.dataset.accepted;
+        btn.textContent = 'Aceptar Propuesta';
+        btn.style.opacity = '1';
+      }
+    } catch(e) {
+      delete btn.dataset.accepted;
+      btn.textContent = 'Aceptar Propuesta';
+      btn.style.opacity = '1';
+    }
+  }
+</script>`;
+
+  const finalHtml = data.html_content.includes("</body>")
+    ? data.html_content.replace("</body>", acceptScript + "\n</body>")
+    : data.html_content + acceptScript;
+
+  return new NextResponse(finalHtml, {
     status: 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
