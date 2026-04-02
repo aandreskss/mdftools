@@ -77,6 +77,7 @@ export function renderProposalHtml(
   agencyName: string,
   clientName: string,
   clientCompany?: string,
+  proposalId?: string,
 ): string {
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
   const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
@@ -585,7 +586,46 @@ export function renderProposalHtml(
     </main>
   </div>
 
-  <a href="#" class="floating-cta">Aceptar Propuesta</a>
+  ${proposalId ? `
+  <button class="floating-cta" id="accept-btn" onclick="acceptProposal('${proposalId}')">
+    ✓ Aceptar Propuesta
+  </button>
+
+  <script>
+    async function acceptProposal(id) {
+      var btn = document.getElementById('accept-btn');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = 'Procesando...';
+      btn.style.opacity = '0.7';
+      try {
+        var res = await fetch('/api/proposals/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id })
+        });
+        if (res.ok) {
+          btn.textContent = '✓ ¡Propuesta Aceptada!';
+          btn.style.background = '#059669';
+          btn.style.opacity = '1';
+          btn.style.boxShadow = '0 10px 15px -3px rgba(5,150,105,0.4)';
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:100px;right:32px;background:#065F46;color:white;padding:16px 24px;border-radius:12px;font-weight:600;font-size:14px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.25);animation:fadeIn 0.3s ease;';
+          toast.textContent = '🎉 ¡Gracias! Nos pondremos en contacto pronto.';
+          document.body.appendChild(toast);
+        } else {
+          btn.textContent = '✓ Aceptar Propuesta';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      } catch(e) {
+        btn.textContent = '✓ Aceptar Propuesta';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    }
+  </script>
+  ` : ''}
 
 </body>
 </html>`;

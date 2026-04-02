@@ -402,6 +402,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           clientCompany: form.clientCompany,
           price: `${form.currency} ${form.price}`,
           structuredContent,
+          proposalId: savedProposalId ?? viewingProposal?.id,
         }),
       });
 
@@ -1382,7 +1383,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   {!generatingHtml && htmlContent ? (
                     <iframe
                       key={htmlIframeKey}
-                      srcDoc={htmlContent}
+                      srcDoc={htmlContent.replace("</head>", `<style>#accept-btn,.floating-cta{display:none!important}</style></head>`)}
                       className="w-full h-full bg-white"
                       title="Propuesta Interactiva"
                     />

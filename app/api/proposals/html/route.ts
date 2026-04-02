@@ -29,7 +29,7 @@ const JSON_SCHEMA = `{
 }`;
 
 export async function POST(request: Request) {
-  const { markdown, clientName, clientCompany, price, structuredContent } = await request.json();
+  const { markdown, clientName, clientCompany, price, structuredContent, proposalId } = await request.json();
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
   // Si ya recibimos el contenido estructurado, renderizamos directamente
   if (structuredContent) {
-    const html = renderProposalHtml(structuredContent, agencyName, clientName, clientCompany);
+    const html = renderProposalHtml(structuredContent, agencyName, clientName, clientCompany, proposalId);
     return new Response(html, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
@@ -81,7 +81,7 @@ IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después. Sin b
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const content: ProposalContent = JSON.parse(rawJson);
-    const html = renderProposalHtml(content, agencyName, clientName, clientCompany);
+    const html = renderProposalHtml(content, agencyName, clientName, clientCompany, proposalId);
 
     return new Response(html, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
