@@ -222,17 +222,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     if (viewingProposal.html_content) setHtmlIframeKey(k => k + 1);
   }, [viewingProposal]);
 
-  useEffect(() => {
-    if (!htmlContent || resultTab !== "html") return;
-    const write = () => {
-      const iframe = htmlIframeRef.current;
-      if (!iframe) return;
-      const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
-      if (doc) { doc.open(); doc.write(htmlContent); doc.close(); }
-    };
-    const t = setTimeout(write, 100);
-    return () => clearTimeout(t);
-  }, [htmlContent, htmlIframeKey, resultTab]);
+  // srcDoc on the iframe handles HTML rendering natively — no need for doc.write()
 
   async function fetchProposals() {
     setLoadingList(true);
@@ -344,6 +334,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
       const existingId = savedProposalId || viewingProposal?.id;
       if (existingId && md) {
+        // Update existing proposal
         await fetch("/api/proposals", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -356,6 +347,27 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             form_data: form,
           }),
         });
+        await fetchProposals();
+      } else if (md) {
+        // Auto-save new proposal so regeneration always has an ID
+        const res = await fetch("/api/proposals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName: form.clientName,
+            clientIndustry: form.clientIndustry,
+            formData: form,
+            generatedContent: md,
+            status: "generada",
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.id) {
+            setSavedProposalId(data.id);
+            setPreviewId(data.id);
+          }
+        }
         await fetchProposals();
       }
     } catch (err) {
@@ -539,9 +551,27 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   function downloadPdf() {
     const win = window.open("", "_blank");
     if (!win) return;
-    const htmlWithPrint = htmlContent.replace(
+    const printCss = `
+      <style>
+        @page { margin: 1.5cm; size: A4; }
+        @media print {
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { font-size: 11pt; line-height: 1.5; }
+          h1 { font-size: 18pt; page-break-after: avoid; }
+          h2 { font-size: 14pt; page-break-after: avoid; }
+          h3 { font-size: 12pt; page-break-after: avoid; }
+          p, li { orphans: 3; widows: 3; }
+          table { page-break-inside: avoid; }
+          .no-print, nav, button, [class*="btn"] { display: none !important; }
+          a { color: inherit !important; text-decoration: none !important; }
+        }
+      </style>`;
+    const withPrintCss = htmlContent.includes("</head>")
+      ? htmlContent.replace("</head>", `${printCss}</head>`)
+      : printCss + htmlContent;
+    const htmlWithPrint = withPrintCss.replace(
       "</body>",
-      `<script>window.onload=function(){window.print();}<\/script></body>`
+      `<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script></body>`
     );
     win.document.open();
     win.document.write(htmlWithPrint);
@@ -1331,9 +1361,11 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               {/* Propuesta tab */}
               {resultTab === "propuesta" && (
-                <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 p-8">
-                  <div className="prose prose-invert max-w-none prose-headings:tracking-tight prose-a:text-brand-400">
-                    <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+                <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 overflow-hidden">
+                  <div className="overflow-y-auto max-h-[72vh] p-8 custom-scrollbar">
+                    <div className="prose prose-invert max-w-none prose-headings:tracking-tight prose-a:text-brand-400">
+                      <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1350,7 +1382,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   {!generatingHtml && htmlContent ? (
                     <iframe
                       key={htmlIframeKey}
-                      ref={htmlIframeRef}
+                      srcDoc={htmlContent}
                       className="w-full h-full bg-white"
                       title="Propuesta Interactiva"
                     />
