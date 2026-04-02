@@ -6,7 +6,7 @@ import {
   LayoutDashboard, User, Share2, Video, FileText, Search,
   Megaphone, Eye, FileSignature, Mail, Zap, RefreshCw,
   Calendar, BarChart2, ChevronDown, LogOut, Sparkles,
-  PanelLeftClose, PanelLeft, Settings, Plus,
+  PanelLeftClose, PanelLeft, Settings, Plus, Palette,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -32,7 +32,8 @@ const toolItems = [
 ];
 
 const ecosystemItems = [
-  { id: "propuestas", label: "Propuestas", href: "/dashboard/propuestas", icon: FileSignature },
+  { id: "propuestas",       label: "Propuestas Marketing", href: "/dashboard/propuestas",        icon: FileSignature },
+  { id: "propuestas-diseno", label: "Propuestas Diseño",   href: "/dashboard/propuestas/diseno", icon: Palette },
 ];
 
 const seoSuiteChildren = [
