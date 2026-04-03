@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -31,10 +32,12 @@ const toolItems = [
   { id: "calendario",  label: "Calendario",         href: "/dashboard/calendario",  icon: Calendar },
 ];
 
-const ecosystemItems = [
-  { id: "propuestas",        label: "Propuestas Marketing", href: "/dashboard/propuestas",           icon: FileSignature },
-  { id: "propuestas-diseno", label: "Propuestas Diseño",    href: "/dashboard/propuestas/diseno",    icon: Palette },
-  { id: "crm-propuestas",    label: "CRM Propuestas",       href: "/dashboard/crm-propuestas",       icon: Kanban },
+const ecosystemItems: { id: string; label: string; href: string; icon: React.ComponentType<{ className?: string }> }[] = [];
+
+const propuestasChildren = [
+  { label: "Marketing",     href: "/dashboard/propuestas",        icon: FileSignature },
+  { label: "Diseño",        href: "/dashboard/propuestas/diseno", icon: Palette },
+  { label: "CRM Pipeline",  href: "/dashboard/crm-propuestas",   icon: Kanban },
 ];
 
 const seoSuiteChildren = [
@@ -55,10 +58,11 @@ export default function Sidebar() {
   const router   = useRouter();
   const supabase = createClient();
 
-  const [collapsed, setCollapsed]     = useState(false);
-  const [userEmail, setUserEmail]     = useState("");
-  const [toolsOpen, setToolsOpen]     = useState(true);
-  const [seoOpen, setSeoOpen]         = useState(pathname.startsWith("/dashboard/seo-suite"));
+  const [collapsed, setCollapsed]         = useState(false);
+  const [userEmail, setUserEmail]         = useState("");
+  const [toolsOpen, setToolsOpen]         = useState(true);
+  const [propuestasOpen, setPropuestasOpen] = useState(pathname.startsWith("/dashboard/propuestas") || pathname.startsWith("/dashboard/crm-propuestas"));
+  const [seoOpen, setSeoOpen]             = useState(pathname.startsWith("/dashboard/seo-suite"));
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -176,56 +180,23 @@ export default function Sidebar() {
           {!collapsed && (
             <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Ecosystem</p>
           )}
-          {ecosystemItems.map(item => (
-            <NavItem key={item.id} item={item} isActive={pathname === item.href} collapsed={collapsed} />
-          ))}
 
-          {/* SEO Suite expandable */}
-          <button
-            onClick={() => !collapsed && setSeoOpen(v => !v)}
-            className="w-full rounded-lg transition-all duration-200 relative"
-            style={{
-              padding: collapsed ? undefined : "6px 12px",
-              height: collapsed ? "40px" : undefined,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: collapsed ? "center" : undefined,
-              color: pathname.startsWith("/dashboard/seo-suite") ? "#cbbeff" : "rgba(202,196,213,0.7)",
-              background: pathname.startsWith("/dashboard/seo-suite") ? "rgba(203,190,255,0.08)" : "transparent",
-            }}
-            onMouseEnter={e => {
-              if (!pathname.startsWith("/dashboard/seo-suite"))
-                e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-            }}
-            onMouseLeave={e => {
-              if (!pathname.startsWith("/dashboard/seo-suite"))
-                e.currentTarget.style.background = "transparent";
-            }}
+          {/* Propuestas expandable */}
+          <ExpandableSection
+            label="Propuestas"
+            icon={FileSignature}
+            isActive={pathname.startsWith("/dashboard/propuestas") || pathname.startsWith("/dashboard/crm-propuestas")}
+            open={propuestasOpen}
+            collapsed={collapsed}
+            onToggle={() => !collapsed && setPropuestasOpen(v => !v)}
           >
-            {pathname.startsWith("/dashboard/seo-suite") && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full" style={{ background: "#cbbeff" }} />
-            )}
-            <div className="flex items-center gap-3 w-full">
-              <BarChart2 className="w-4 h-4 flex-shrink-0" />
-              {!collapsed && (
-                <>
-                  <span className="flex-1 text-left text-[13.5px] font-medium">SEO Suite</span>
-                  <ChevronDown
-                    className="w-3 h-3 transition-transform duration-200"
-                    style={{ transform: seoOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
-                  />
-                </>
-              )}
-            </div>
-          </button>
-
-          {!collapsed && seoOpen && (
-            <div className="ml-4 mt-1 pl-4 space-y-0.5" style={{ borderLeft: "1px solid rgba(203,190,255,0.12)" }}>
-              {seoSuiteChildren.map(child => (
+            {propuestasChildren.map(child => {
+              const Icon = child.icon;
+              return (
                 <Link
                   key={child.href}
                   href={child.href}
-                  className="block px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
                   style={{
                     color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
                     background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
@@ -243,11 +214,48 @@ export default function Sidebar() {
                     }
                   }}
                 >
+                  <Icon className="w-3 h-3 flex-shrink-0" />
                   {child.label}
                 </Link>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </ExpandableSection>
+
+          {/* SEO Suite expandable */}
+          <ExpandableSection
+            label="SEO Suite"
+            icon={BarChart2}
+            isActive={pathname.startsWith("/dashboard/seo-suite")}
+            open={seoOpen}
+            collapsed={collapsed}
+            onToggle={() => !collapsed && setSeoOpen(v => !v)}
+          >
+            {seoSuiteChildren.map(child => (
+              <Link
+                key={child.href}
+                href={child.href}
+                className="block px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
+                style={{
+                  color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
+                  background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
+                }}
+                onMouseEnter={e => {
+                  if (pathname !== child.href) {
+                    (e.currentTarget as HTMLElement).style.color = "#cac4d5";
+                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (pathname !== child.href) {
+                    (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }
+                }}
+              >
+                {child.label}
+              </Link>
+            ))}
+          </ExpandableSection>
         </div>
       </nav>
 
@@ -381,5 +389,65 @@ function NavItem({
         <span className="text-[13.5px] font-medium tracking-[-0.2px]">{item.label}</span>
       )}
     </Link>
+  );
+}
+
+// ─── ExpandableSection ────────────────────────────────────────────────────────
+
+function ExpandableSection({
+  label, icon: Icon, isActive, open, collapsed, onToggle, children,
+}: {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  isActive: boolean;
+  open: boolean;
+  collapsed: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <button
+        onClick={onToggle}
+        className="w-full rounded-lg transition-all duration-200 relative"
+        style={{
+          padding: collapsed ? undefined : "6px 12px",
+          height: collapsed ? "40px" : undefined,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : undefined,
+          color: isActive ? "#cbbeff" : "rgba(202,196,213,0.7)",
+          background: isActive ? "rgba(203,190,255,0.08)" : "transparent",
+        }}
+        onMouseEnter={e => {
+          if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        }}
+        onMouseLeave={e => {
+          if (!isActive) e.currentTarget.style.background = "transparent";
+        }}
+      >
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full" style={{ background: "#cbbeff" }} />
+        )}
+        <div className="flex items-center gap-3 w-full">
+          <Icon className="w-4 h-4 flex-shrink-0" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left text-[13.5px] font-medium">{label}</span>
+              <ChevronDown
+                className="w-3 h-3 transition-transform duration-200"
+                style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+              />
+            </>
+          )}
+        </div>
+      </button>
+
+      {!collapsed && open && (
+        <div className="ml-4 mt-1 pl-4 space-y-0.5" style={{ borderLeft: "1px solid rgba(203,190,255,0.12)" }}>
+          {children}
+        </div>
+      )}
+    </>
   );
 }

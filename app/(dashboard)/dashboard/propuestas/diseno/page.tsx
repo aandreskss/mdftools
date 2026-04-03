@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import {
   Palette, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, Eye,
-  Download, RefreshCw, Mail, MessageCircle, List,
-  FileDown, Link2, X, LayoutGrid, Layers,
+  Download, RefreshCw, Mail, MessageCircle,
+  FileDown, Link2, X,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -149,7 +149,6 @@ const textareaCls = `${inputCls} resize-none min-h-[100px]`;
 
 export default function DisenoPropuestasPage() {
   const [view, setView]           = useState<"list" | "form" | "result">("list");
-  const [crmMode, setCrmMode]     = useState(false);
   const [step, setStep]           = useState(0);
   const [form, setForm]           = useState<DesignForm>(defaultForm);
   const [proposals, setProposals] = useState<DesignProposal[]>([]);
@@ -558,135 +557,165 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   // ─── Render: List view ─────────────────────────────────────────────────────
 
   if (view === "list") {
+    const totalValue = proposals.reduce((sum, p) => {
+      const price = parseFloat((p.form_data?.price ?? "").replace(/,/g, "") || "0");
+      return sum + (isNaN(price) ? 0 : price);
+    }, 0);
+    const activeProposals = proposals.filter(p => ["sent", "negotiating", "generada"].includes(p.status)).length;
+    const closedWon   = proposals.filter(p => p.status === "closed_won").length;
+    const closedTotal = proposals.filter(p => ["closed_won", "closed_lost"].includes(p.status)).length;
+    const winRate     = closedTotal > 0 ? (closedWon / closedTotal) * 100 : 0;
+
+    const stats = [
+      { label: "Total Propuestas", value: proposals.length.toString(),                                      accent: "#a78bfa" },
+      { label: "Valor Total",      value: totalValue > 0 ? `$${totalValue.toLocaleString()}` : "—",         accent: "#4ade80" },
+      { label: "Activas",          value: activeProposals.toString(),                                        accent: "#c084fc" },
+      { label: "Tasa de Cierre",   value: `${winRate.toFixed(0)}%`,                                         accent: "#fb923c" },
+    ];
+
     return (
-      <div className="p-8 max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-violet-400" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">Propuestas de Diseño</h1>
-                <p className="text-slate-500 text-sm">Genera propuestas creativas y profesionales para tus clientes</p>
-              </div>
+      <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+
+        {/* Hero header */}
+        <div
+          className="relative flex flex-col justify-between p-8 rounded-2xl overflow-hidden mb-6"
+          style={{ background: "#1c1b1b" }}
+        >
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ top: "-30%", right: "-5%", width: "380px", height: "340px", background: "rgba(167,139,250,0.07)", filter: "blur(60px)" }}
+          />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h1 className="font-extrabold text-[32px] text-white tracking-tight leading-tight mb-1">
+                Propuestas <span style={{ color: "#a78bfa" }}>Diseño</span>
+              </h1>
+              <p className="text-[14px]" style={{ color: "#938e9e" }}>
+                Genera propuestas creativas y profesionales para tus clientes
+              </p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCrmMode(m => !m)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                crmMode
-                  ? "bg-violet-500/10 border-violet-500/30 text-violet-400"
-                  : "border-white/[0.08] text-slate-400 hover:text-white hover:border-white/20"
-              }`}
-            >
-              {crmMode ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-              {crmMode ? "Vista Lista" : "Vista CRM"}
-            </button>
             <button
               onClick={startNew}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all flex-shrink-0"
+              style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}
             >
-              <Plus className="w-4 h-4" />
-              Nueva Propuesta
+              <Plus className="w-4 h-4" /> Nueva Propuesta
             </button>
           </div>
         </div>
 
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="flex flex-col gap-1 p-6 rounded-2xl"
+              style={{ background: "#201f1f", borderLeft: `3px solid ${stat.accent}` }}
+            >
+              <span className="text-[10px] font-bold uppercase tracking-[1px] mb-1" style={{ color: "#938e9e" }}>
+                {stat.label}
+              </span>
+              <div className="font-bold text-[24px] text-white leading-tight">{stat.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* List */}
         {loadingList ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
+          <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a78bfa" }} /> Cargando propuestas...
           </div>
         ) : proposals.length === 0 ? (
-          <div className="text-center py-24 border border-dashed border-white/[0.08] rounded-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
-              <Palette className="w-8 h-8 text-violet-400" />
+          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/[0.05] py-20" style={{ background: "rgba(167,139,250,0.03)" }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ background: "rgba(167,139,250,0.1)" }}>
+              <Palette className="w-7 h-7" style={{ color: "#a78bfa" }} />
             </div>
-            <h3 className="text-white font-semibold text-lg mb-2">Sin propuestas de diseño</h3>
-            <p className="text-slate-500 text-sm mb-6">Crea tu primera propuesta de diseño profesional</p>
-            <button onClick={startNew} className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-semibold text-sm transition-colors">
-              Crear propuesta
+            <p className="text-white font-bold text-lg mb-2">Sin propuestas de diseño</p>
+            <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
+              Crea tu primera propuesta de diseño profesional asistida por IA.
+            </p>
+            <button
+              onClick={startNew}
+              className="px-6 py-3 text-white text-sm font-bold rounded-xl transition-all"
+              style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}
+            >
+              Crear Primera Propuesta
             </button>
           </div>
-        ) : crmMode ? (
-          // CRM kanban view
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-            {CRM_COLUMNS.map(col => (
-              <div key={col.key} className={`bg-surface-800 rounded-2xl border-t-2 ${col.color} p-4`}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{col.label}</span>
-                  <span className="text-xs bg-white/5 text-slate-500 px-2 py-0.5 rounded-full">
-                    {proposals.filter(p => p.status === col.key).length}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {proposals.filter(p => p.status === col.key).map(p => (
-                    <div
-                      key={p.id}
-                      className="p-3 bg-navy-950 rounded-xl border border-white/[0.06] cursor-pointer hover:border-violet-500/30 transition-colors"
-                      onClick={() => openProposal(p)}
-                    >
-                      <div className="font-semibold text-sm text-white truncate">{p.client_name}</div>
-                      <div className="text-xs text-slate-500 mt-0.5 truncate">{p.industry}</div>
-                      <div className="text-xs text-slate-600 mt-1">
-                        {new Date(p.created_at).toLocaleDateString("es-ES")}
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {proposals.map(p => {
+              const status = STATUS_LABELS[p.status] ?? STATUS_LABELS.draft;
+              const value  = p.form_data?.price ? `${p.form_data.currency ?? "USD"} ${p.form_data.price}` : null;
+              return (
+                <div
+                  key={p.id}
+                  className="group relative overflow-hidden rounded-xl border border-white/[0.08] p-6 transition-all duration-200 cursor-pointer"
+                  style={{ background: "#1c1b1b" }}
+                  onClick={() => openProposal(p)}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.3)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(124,58,237,0.08)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                  }}
+                >
+                  {/* Card header */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(167,139,250,0.1)" }}>
+                        <Palette className="w-5 h-5" style={{ color: "#a78bfa" }} />
                       </div>
-                      <div className="flex gap-1 mt-2">
-                        {Object.entries(STATUS_LABELS)
-                          .filter(([k]) => k !== col.key && k !== "generada" && k !== "draft")
-                          .slice(0, 3)
-                          .map(([k, v]) => (
-                            <button
-                              key={k}
-                              onClick={e => { e.stopPropagation(); updateProposalStatus(p.id, k); }}
-                              className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
-                            >
-                              → {v.label}
-                            </button>
-                          ))}
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-white truncate leading-snug group-hover:text-violet-300 transition-colors">
+                          {p.client_name}
+                        </h3>
+                        {p.industry && (
+                          <p className="text-sm text-slate-400 truncate">{p.industry}</p>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
+                        {status.label}
+                      </span>
+                      <button
+                        onClick={e => { e.stopPropagation(); if (confirm(`¿Eliminar propuesta de ${p.client_name}?`)) deleteProposal(p.id); }}
+                        className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card footer */}
+                  <div className="flex items-center gap-4 text-sm">
+                    {value && (
+                      <span className="font-bold text-emerald-400 text-xs">{value}</span>
+                    )}
+                    {(p.form_data?.designType?.length ?? 0) > 0 && (
+                      <span className="text-xs text-slate-500 truncate">
+                        {(p.form_data?.designType as string[] ?? []).slice(0, 2).join(", ")}
+                      </span>
+                    )}
+                    <span className="text-slate-500 text-xs ml-auto">
+                      {new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
+                    <div className="flex items-center gap-1.5 ml-auto" onClick={e => e.stopPropagation()}>
+                      <select
+                        value={p.status}
+                        onChange={e => updateProposalStatus(p.id, e.target.value)}
+                        className="text-[10px] font-bold bg-navy-950 text-slate-400 rounded-lg border border-white/[0.08] outline-none cursor-pointer hover:border-violet-500/40 transition-colors px-1.5 py-1"
+                      >
+                        {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          // List view
-          <div className="space-y-2">
-            {proposals.map(p => (
-              <div
-                key={p.id}
-                className="flex items-center gap-4 p-4 bg-surface-800 rounded-2xl border border-white/[0.06] hover:border-violet-500/20 transition-all cursor-pointer group"
-                onClick={() => openProposal(p)}
-              >
-                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                  <Layers className="w-4 h-4 text-violet-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white text-sm truncate">{p.client_name}</div>
-                  <div className="text-xs text-slate-500 truncate">{p.industry}</div>
-                </div>
-                <div className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${STATUS_LABELS[p.status]?.color ?? STATUS_LABELS.draft.color}`}>
-                  {STATUS_LABELS[p.status]?.label ?? p.status}
-                </div>
-                <div className="text-xs text-slate-600">
-                  {new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" })}
-                </div>
-                {p.html_content && (
-                  <Eye className="w-4 h-4 text-slate-600 group-hover:text-violet-400 transition-colors flex-shrink-0" />
-                )}
-                <button
-                  onClick={e => { e.stopPropagation(); if (confirm(`¿Eliminar propuesta de ${p.client_name}?`)) deleteProposal(p.id); }}
-                  className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-                <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-slate-500 transition-colors flex-shrink-0" />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

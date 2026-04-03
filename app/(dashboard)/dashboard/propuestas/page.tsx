@@ -604,49 +604,60 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     const winRate = closedTotal > 0 ? (closedWon / closedTotal) * 100 : 0;
 
     const stats = [
-      { label: "Total Propuestas", value: proposals.length.toString(), icon: FileText, color: "text-brand-400" },
-      { label: "Valor Total", value: totalValue > 0 ? `$${totalValue.toLocaleString()}` : "—", icon: DollarSign, color: "text-emerald-400" },
-      { label: "Activas", value: activeProposals.toString(), icon: TrendingUp, color: "text-purple-400" },
-      { label: "Tasa de Cierre", value: `${winRate.toFixed(0)}%`, icon: Award, color: "text-yellow-400" },
+      { label: "Total Propuestas", value: proposals.length.toString(),                                        icon: FileText,   accent: "#cbbeff" },
+      { label: "Valor Total",      value: totalValue > 0 ? `$${totalValue.toLocaleString()}` : "—",           icon: DollarSign, accent: "#4ade80" },
+      { label: "Activas",          value: activeProposals.toString(),                                          icon: TrendingUp, accent: "#a78bfa" },
+      { label: "Tasa de Cierre",   value: `${winRate.toFixed(0)}%`,                                           icon: Award,      accent: "#fb923c" },
     ];
 
     return (
-      <div className="p-8">
-        {/* Page header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Propuestas</h1>
-          <p className="text-slate-400 text-sm">Gestiona y trackea todas tus propuestas comerciales en un solo lugar</p>
+      <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+
+        {/* Hero header */}
+        <div
+          className="relative flex flex-col justify-between p-8 rounded-2xl overflow-hidden mb-6"
+          style={{ background: "#1c1b1b" }}
+        >
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{ top: "-30%", right: "-5%", width: "380px", height: "340px", background: "rgba(203,190,255,0.07)", filter: "blur(60px)" }}
+          />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h1 className="font-extrabold text-[32px] text-white tracking-tight leading-tight mb-1">
+                Propuestas <span style={{ color: "#cbbeff" }}>Marketing</span>
+              </h1>
+              <p className="text-[14px]" style={{ color: "#938e9e" }}>
+                Genera, gestiona y trackea tus propuestas comerciales con IA
+              </p>
+            </div>
+            <button
+              onClick={() => { resetForm(); setView("form"); }}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all flex-shrink-0"
+              style={{ background: "linear-gradient(90deg,#cbbeff,#9d85ff)", color: "#1e0061", boxShadow: "0 0 20px rgba(157,133,255,0.25)" }}
+            >
+              <Plus size={16} /> Nueva Propuesta
+            </button>
+          </div>
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-navy-900/40 p-6 transition-all hover:border-brand-500/30 hover:shadow-lg hover:shadow-brand/5"
+              className="flex flex-col gap-1 p-6 rounded-2xl"
+              style={{ background: "#201f1f", borderLeft: `3px solid ${stat.accent}` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-500/0 to-brand-700/0 opacity-0 transition-opacity duration-300 group-hover:opacity-[0.04]" />
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-slate-400 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                </div>
-                <div className={`rounded-lg bg-white/[0.05] p-2.5 ${stat.color}`}>
-                  <stat.icon className="h-5 w-5" />
-                </div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-[1px]" style={{ color: "#938e9e" }}>
+                  {stat.label}
+                </span>
+                <stat.icon className="w-3.5 h-3.5" style={{ color: stat.accent }} />
               </div>
+              <div className="font-bold text-[24px] text-white leading-tight">{stat.value}</div>
             </div>
           ))}
-        </div>
-
-        {/* Controls row */}
-        <div className="flex items-center justify-end mb-6">
-          <button
-            onClick={() => { resetForm(); setView("form"); }}
-            className="flex items-center gap-2 px-5 py-2.5 brand-gradient hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-brand/20"
-          >
-            <Plus size={16} /> Nueva Propuesta
-          </button>
         </div>
 
         {/* List view */}
