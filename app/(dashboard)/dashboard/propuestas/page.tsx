@@ -5,7 +5,7 @@ import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText, Eye, Calendar,
   Code, Download, RefreshCw, Pencil, Upload, Mail,
-  MessageCircle, LayoutGrid, List, Building2, X, FileDown, Link2,
+  MessageCircle, Building2, LayoutGrid, X, FileDown, Link2,
   DollarSign, TrendingUp, Award,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
@@ -123,7 +123,6 @@ const textareaCls = `${inputCls} resize-none min-h-[100px]`;
 
 export default function PropuestasPage() {
   const [view, setView]           = useState<"list" | "form" | "result">("list");
-  const [crmMode, setCrmMode]     = useState(false);
   const [step, setStep]           = useState(0);
   const [form, setForm]           = useState<ProposalForm>(defaultForm);
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -641,22 +640,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         </div>
 
         {/* Controls row */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-1 bg-navy-900/50 rounded-xl p-1 border border-white/[0.06]">
-            <button
-              onClick={() => setCrmMode(false)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${!crmMode ? "bg-white text-navy-950 shadow-md" : "text-slate-400 hover:text-white"}`}
-            >
-              <List size={15} /> Lista
-            </button>
-            <button
-              onClick={() => setCrmMode(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${crmMode ? "bg-white text-navy-950 shadow-md" : "text-slate-400 hover:text-white"}`}
-            >
-              <LayoutGrid size={15} /> Pipeline
-            </button>
-          </div>
-
+        <div className="flex items-center justify-end mb-6">
           <button
             onClick={() => { resetForm(); setView("form"); }}
             className="flex items-center gap-2 px-5 py-2.5 brand-gradient hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-brand/20"
@@ -665,98 +649,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           </button>
         </div>
 
-        {/* Pipeline CRM */}
-        {crmMode && !loadingList && (
-          <div className="overflow-x-auto pb-6 -mx-8 px-8">
-            <div className="flex gap-5" style={{ minWidth: `${CRM_COLUMNS.length * 256}px` }}>
-              {CRM_COLUMNS.map(col => {
-                const cards = proposals.filter(p => p.status === col.key);
-                const st = STATUS_LABELS[col.key] ?? STATUS_LABELS.draft;
-                const colValue = cards.reduce((s, p) => {
-                  const price = parseFloat((p.form_data?.price ?? "").replace(/,/g, "") || "0");
-                  return s + (isNaN(price) ? 0 : price);
-                }, 0);
-
-                return (
-                  <div key={col.key} className="w-56 flex-shrink-0 flex flex-col">
-                    {/* Column header */}
-                    <div className="mb-4 rounded-xl border border-white/[0.08] bg-navy-900/40 p-4">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <h3 className="font-semibold text-white text-sm">{col.label}</h3>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.color}`}>{cards.length}</span>
-                      </div>
-                      {colValue > 0 && (
-                        <p className="text-xs text-slate-400">${colValue.toLocaleString()}</p>
-                      )}
-                    </div>
-
-                    {/* Cards */}
-                    <div className="space-y-3 flex-1">
-                      {cards.length === 0 ? (
-                        <div className="rounded-xl border-2 border-dashed border-white/[0.04] bg-navy-900/20 p-4 text-center">
-                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">vacío</p>
-                        </div>
-                      ) : (
-                        cards.map(p => {
-                          const logo = p.form_data?.clientLogo;
-                          const value = p.form_data?.price ? `${p.form_data.currency ?? "USD"} ${p.form_data.price}` : null;
-                          return (
-                            <div
-                              key={p.id}
-                              className="group cursor-pointer rounded-xl border border-white/[0.08] bg-navy-900/40 p-4 transition-all hover:border-brand-500/30 hover:shadow-lg hover:shadow-brand/5"
-                            >
-                              <div className="flex items-center gap-2.5 mb-3">
-                                {logo ? (
-                                  <img src={logo} alt="" className="w-8 h-8 rounded-lg object-cover bg-navy-950 border border-white/10 flex-shrink-0" />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-lg bg-navy-950 border border-white/[0.05] flex items-center justify-center flex-shrink-0 text-slate-600 group-hover:text-brand-400 transition-colors">
-                                    <Building2 size={14} />
-                                  </div>
-                                )}
-                                <span className="text-white text-sm font-semibold truncate group-hover:text-brand-300 transition-colors">{p.client_name}</span>
-                              </div>
-
-                              {value && (
-                                <p className="text-emerald-400 text-xs font-bold mb-3 bg-emerald-500/10 px-2 py-0.5 rounded-md w-fit">{value}</p>
-                              )}
-
-                              <div className="flex items-center justify-between mt-3">
-                                <span className="text-slate-500 text-[10px] font-bold uppercase">
-                                  {new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}
-                                </span>
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    onClick={() => { setViewingProposal(p); setResultTab("propuesta"); setView("result"); }}
-                                    className="p-1.5 bg-white/[0.05] hover:bg-brand-500/20 text-slate-400 hover:text-brand-400 rounded-lg transition-all"
-                                    title="Ver propuesta"
-                                  >
-                                    <Eye size={13} />
-                                  </button>
-                                  <select
-                                    value={p.status}
-                                    onChange={e => updateProposalStatus(p.id, e.target.value)}
-                                    className="text-[10px] font-bold bg-navy-950 text-slate-400 rounded-lg border border-white/[0.08] outline-none cursor-pointer hover:border-brand-500/40 transition-colors px-1.5 py-1"
-                                    title="Cambiar estado"
-                                  >
-                                    {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
-                                  </select>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* List view */}
-        {!crmMode && (
-          loadingList ? (
+        {loadingList ? (
             <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
               <Loader2 size={18} className="animate-spin text-brand-400" /> Cargando propuestas...
             </div>
@@ -853,7 +747,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
               })}
             </div>
           )
-        )}
+        }
       </div>
     );
   }

@@ -10,6 +10,7 @@ export async function GET() {
     .from("proposals")
     .select("id, client_name, industry, status, created_at, generated_content, html_content, slides_content, form_data, html_expires_at")
     .eq("user_id", user.id)
+    .or("form_data->>proposalType.is.null,form_data->>proposalType.neq.design")
     .order("created_at", { ascending: false });
 
   return NextResponse.json(data ?? []);
