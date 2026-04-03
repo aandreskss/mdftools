@@ -1167,9 +1167,9 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     const status = STATUS_LABELS[viewingProposal?.status ?? "generada"] ?? STATUS_LABELS.generada;
 
     return (
-      <div className="min-h-full">
+      <div className="min-h-full" style={{ background: "#131313" }}>
         {/* Sticky sub-header */}
-        <div className="sticky top-0 z-30 border-b border-white/[0.06] bg-navy-950/95 backdrop-blur-md">
+        <div className="sticky top-0 z-30 border-b border-white/[0.06] backdrop-blur-md" style={{ background: "rgba(19,19,19,0.97)" }}>
           <div className="px-8 py-3.5">
             <div className="flex items-center justify-between">
               <button
@@ -1223,7 +1223,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                 </div>
 
                 {/* Meta grid */}
-                <div className="grid grid-cols-2 gap-4 rounded-xl border border-white/[0.08] bg-navy-900/40 p-5">
+                <div className="grid grid-cols-2 gap-4 rounded-2xl p-5" style={{ background: "#201f1f" }}>
                   {value && (
                     <div className="flex items-center gap-3">
                       <div className="rounded-lg bg-brand-500/10 p-2.5 flex-shrink-0">
@@ -1267,7 +1267,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               {/* Propuesta tab */}
               {resultTab === "propuesta" && (
-                <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 overflow-hidden">
+                <div className="rounded-2xl overflow-hidden" style={{ background: "#1c1b1b" }}>
                   <div className="overflow-y-auto max-h-[72vh] p-8 custom-scrollbar">
                     <div className="prose prose-invert max-w-none prose-headings:tracking-tight prose-a:text-brand-400">
                       <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
@@ -1278,7 +1278,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               {/* HTML / Vista Web tab */}
               {resultTab === "html" && (
-                <div className="rounded-xl border border-white/[0.08] overflow-hidden h-[750px] relative">
+                <div className="rounded-2xl overflow-hidden h-[750px] relative" style={{ background: "#1c1b1b" }}>
                   {generatingHtml && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-navy-900/70 backdrop-blur-sm z-20">
                       <Loader2 size={36} className="animate-spin text-brand-400 mb-4" />
@@ -1293,7 +1293,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       title="Propuesta Interactiva"
                     />
                   ) : !generatingHtml && (
-                    <div className="flex flex-col items-center justify-center h-full p-12 text-center bg-navy-900/40">
+                    <div className="flex flex-col items-center justify-center h-full p-12 text-center" style={{ background: "#1c1b1b" }}>
                       <div className="w-14 h-14 rounded-2xl bg-navy-950 flex items-center justify-center text-slate-600 mb-5 border border-white/[0.05]">
                         <Code size={28} />
                       </div>
@@ -1314,9 +1314,9 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             <div className="space-y-4">
 
               {/* Quick Actions */}
-              <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 p-5">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-white mb-4">
-                  <Sparkles className="h-4 w-4 text-brand-400" /> Acciones Rápidas
+              <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #cbbeff" }}>
+                <h3 className="flex items-center gap-2 text-sm font-bold text-white mb-4" style={{ color: "#cbbeff" }}>
+                  <Sparkles className="h-4 w-4" /> Acciones Rápidas
                 </h3>
                 <div className="space-y-2">
                   <button
@@ -1346,8 +1346,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               {/* Export */}
               {htmlContent && (
-                <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 p-5">
-                  <h3 className="text-sm font-semibold text-white mb-4">Exportar</h3>
+                <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #4ade80" }}>
+                  <h3 className="text-sm font-bold mb-4" style={{ color: "#4ade80" }}>Exportar</h3>
                   <div className="space-y-2">
                     <button
                       onClick={downloadPdf}
@@ -1366,8 +1366,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
               )}
 
               {/* Share */}
-              <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 p-5">
-                <h3 className="text-sm font-semibold text-white mb-4">Compartir</h3>
+              <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #60a5fa" }}>
+                <h3 className="text-sm font-bold mb-4" style={{ color: "#60a5fa" }}>Compartir</h3>
                 <div className="space-y-2">
                   <button
                     onClick={() => sendViaWhatsApp(viewingProposal)}
@@ -1429,8 +1429,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               {/* Client info */}
               {(clientEmail || clientWhatsapp || clientCompany) && (
-                <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 p-5">
-                  <h3 className="text-sm font-semibold text-white mb-4">Información del Cliente</h3>
+                <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #fb923c" }}>
+                  <h3 className="text-sm font-bold mb-4" style={{ color: "#fb923c" }}>Información del Cliente</h3>
                   <div className="space-y-3 text-sm">
                     {clientCompany && (
                       <div>
@@ -1456,15 +1456,16 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
               {/* Status update */}
               {viewingProposal && (
-                <div className="rounded-xl border border-white/[0.08] bg-navy-900/40 p-5">
-                  <h3 className="text-sm font-semibold text-white mb-3">Estado de la Propuesta</h3>
+                <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #a78bfa" }}>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: "#a78bfa" }}>Estado</h3>
                   <select
                     value={viewingProposal.status}
                     onChange={e => {
                       updateProposalStatus(viewingProposal.id, e.target.value);
                       setViewingProposal(prev => prev ? { ...prev, status: e.target.value } : null);
                     }}
-                    className="w-full px-4 py-2.5 bg-navy-950 border border-white/[0.08] rounded-xl text-white text-sm font-semibold outline-none cursor-pointer hover:border-brand-500/50 transition-colors"
+                    className="w-full px-4 py-2.5 border border-white/[0.08] rounded-xl text-white text-sm font-semibold outline-none cursor-pointer transition-colors"
+                    style={{ background: "#131313" }}
                   >
                     {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                   </select>

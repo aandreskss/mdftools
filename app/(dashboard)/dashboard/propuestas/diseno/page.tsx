@@ -5,7 +5,7 @@ import {
   Palette, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, Eye,
   Download, RefreshCw, Mail, MessageCircle,
-  FileDown, Link2, X,
+  FileDown, Link2, X, DollarSign,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -1079,188 +1079,326 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   // ─── Render: Result ────────────────────────────────────────────────────────
 
   const currentId = savedProposalId ?? viewingProposal?.id;
+  const title        = viewingProposal?.client_name ?? form.clientName;
+  const clientEmail  = viewingProposal?.form_data?.clientEmail   ?? form.clientEmail;
+  const clientWa     = viewingProposal?.form_data?.clientWhatsapp ?? form.clientWhatsapp;
+  const clientCo     = viewingProposal?.form_data?.clientCompany  ?? form.clientCompany;
+  const value        = viewingProposal?.form_data?.price
+    ? `${viewingProposal.form_data.currency ?? "USD"} ${viewingProposal.form_data.price}`
+    : form.price ? `${form.currency} ${form.price}` : null;
+  const status = STATUS_LABELS[viewingProposal?.status ?? "generada"] ?? STATUS_LABELS.generada;
+  const markdownContent = generatedContent || viewingProposal?.generated_content || "";
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Topbar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06] bg-surface-900 flex-shrink-0">
-        <button onClick={() => setView("list")} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-white truncate">
-            {(viewingProposal?.client_name ?? form.clientName) || "Nueva Propuesta"}
-          </div>
-          <div className="text-xs text-slate-500">
-            {viewingProposal?.industry ?? form.clientIndustry}
-          </div>
-        </div>
-
-        {/* Status selector */}
-        {currentId && (
-          <select
-            value={viewingProposal?.status ?? "draft"}
-            onChange={e => { if (currentId) updateProposalStatus(currentId, e.target.value); }}
-            className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg text-slate-300 focus:outline-none"
-          >
-            {Object.entries(STATUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </select>
-        )}
-
-        {/* Share link */}
-        {currentId && htmlContent && (
-          <div className="flex items-center gap-1">
+    <div className="min-h-full" style={{ background: "#131313" }}>
+      {/* Sticky sub-header */}
+      <div className="sticky top-0 z-30 border-b border-white/[0.06] backdrop-blur-md" style={{ background: "rgba(19,19,19,0.97)" }}>
+        <div className="px-8 py-3.5">
+          <div className="flex items-center justify-between">
             <button
-              onClick={() => copyShareLink(currentId)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                copiedLink ? "bg-violet-500/20 text-violet-400" : "bg-white/5 hover:bg-white/10 text-slate-400"
-              }`}
+              onClick={() => { setView("list"); setViewingProposal(null); }}
+              className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white text-sm font-semibold transition-all hover:bg-white/[0.05] rounded-lg"
             >
-              {copiedLink ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
-              {copiedLink ? "¡Copiado!" : "Copiar enlace"}
-              {timeLeft && <span className="text-slate-600 ml-1">· {timeLeft}</span>}
+              <ArrowLeft className="w-4 h-4" /> Volver
             </button>
-            <button
-              onClick={renewShareLink}
-              title="Renovar enlace (24h)"
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-500 hover:text-slate-300 transition-all"
-            >
-              <RefreshCw className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => sendViaWhatsApp(viewingProposal)}
+                className="flex items-center gap-2 px-3.5 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-bold rounded-lg border border-green-500/20 transition-all"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+              </button>
+              <button
+                onClick={saveProposal}
+                disabled={saving || saved}
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg shadow-md hover:opacity-90 disabled:opacity-50 transition-all"
+                style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff" }}
+              >
+                {saved
+                  ? <><Check className="w-3.5 h-3.5" /> Guardado</>
+                  : saving
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando...</>
+                  : <><Save className="w-3.5 h-3.5" /> Guardar</>}
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => sendViaWhatsApp(viewingProposal)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
-            title="Enviar por WhatsApp"
-          >
-            <MessageCircle className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => sendViaEmail(viewingProposal)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
-            title="Enviar por Email"
-          >
-            <Mail className="w-4 h-4" />
-          </button>
-          <button
-            onClick={saveProposal}
-            disabled={saving}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              saved ? "bg-green-500/20 text-green-400" : "bg-white/5 hover:bg-white/10 text-slate-400"
-            }`}
-          >
-            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : saved ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />}
-            {saved ? "Guardado" : "Guardar"}
-          </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 px-6 py-3 border-b border-white/[0.06] bg-surface-900 flex-shrink-0">
-        <button
-          onClick={() => setResultTab("propuesta")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            resultTab === "propuesta" ? "bg-violet-500/15 text-violet-400" : "text-slate-500 hover:text-white"
-          }`}
-        >
-          Propuesta
-        </button>
-        <button
-          onClick={() => { if (generatedContent) generateHtml(generatedContent); else setResultTab("html"); }}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            resultTab === "html" ? "bg-violet-500/15 text-violet-400" : "text-slate-500 hover:text-white"
-          }`}
-        >
-          {generatingHtml ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
-          Vista HTML
-          {!htmlContent && !generatingHtml && generatedContent && (
-            <span className="text-[10px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded-md">Generar</span>
-          )}
-        </button>
+      <div className="px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* HTML actions */}
-        {resultTab === "html" && htmlContent && (
-          <div className="ml-auto flex items-center gap-1">
-            <button
-              onClick={() => copyContent(htmlContent)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-            >
-              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              Copiar
-            </button>
-            <button
-              onClick={downloadHtml}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-            >
-              <Download className="w-3 h-3" /> HTML
-            </button>
-            <button
-              onClick={downloadPdf}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-            >
-              <FileDown className="w-3 h-3" /> PDF
-            </button>
-          </div>
-        )}
+          {/* Main content — 2/3 */}
+          <div className="lg:col-span-2">
+            {/* Status + title */}
+            <div className="mb-6">
+              <span className={`inline-flex text-[10px] font-bold px-2.5 py-1 rounded-full mb-4 ${status.color}`}>
+                {status.label}
+              </span>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(167,139,250,0.15)" }}>
+                  <Palette className="w-6 h-6" style={{ color: "#a78bfa" }} />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-white tracking-tight">{title}</h1>
+                  {clientCo && <p className="text-slate-400 mt-0.5">{clientCo}</p>}
+                </div>
+              </div>
 
-        {/* Regenerate */}
-        <button
-          onClick={() => { setView("form"); setStep(0); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-white hover:bg-white/5 transition-all ml-auto"
-        >
-          <RefreshCw className="w-3 h-3" /> Editar y regenerar
-        </button>
-      </div>
+              {/* Meta grid */}
+              <div className="grid grid-cols-2 gap-4 rounded-2xl p-5" style={{ background: "#201f1f" }}>
+                {value && (
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg p-2.5 flex-shrink-0" style={{ background: "rgba(167,139,250,0.1)" }}>
+                      <ChevronRight className="h-4 w-4" style={{ color: "#a78bfa" }} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-0.5">Inversión</p>
+                      <p className="text-lg font-bold text-white">{value}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg p-2.5 flex-shrink-0" style={{ background: "rgba(74,222,128,0.1)" }}>
+                    <Eye className="h-4 w-4" style={{ color: "#4ade80" }} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-0.5">Creada</p>
+                    <p className="font-semibold text-white text-sm">
+                      {new Date(viewingProposal?.created_at ?? Date.now()).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        {resultTab === "propuesta" && (
-          <div className="h-full overflow-y-auto p-6">
-            {generating && !generatedContent && (
-              <div className="flex items-center gap-3 text-violet-400 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Generando propuesta creativa...
+            {/* Tabs */}
+            <div className="flex items-center gap-1 rounded-xl p-1 border border-white/[0.06] mb-5 w-fit" style={{ background: "rgba(32,31,31,0.5)" }}>
+              <button
+                onClick={() => setResultTab("propuesta")}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "propuesta" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
+              >
+                Propuesta
+              </button>
+              <button
+                onClick={() => { setResultTab("html"); if (!htmlContent && generatedContent) generateHtml(generatedContent); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "html" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
+              >
+                <Eye className="w-3.5 h-3.5" /> Vista Web
+              </button>
+            </div>
+
+            {/* Propuesta tab */}
+            {resultTab === "propuesta" && (
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#1c1b1b" }}>
+                <div className="overflow-y-auto max-h-[72vh] p-8 custom-scrollbar">
+                  {generating && !generatedContent ? (
+                    <div className="flex items-center gap-3 text-sm" style={{ color: "#a78bfa" }}>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Generando propuesta creativa...
+                    </div>
+                  ) : (
+                    <div className="prose prose-invert max-w-none">
+                      <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            {generatedContent && (
-              <div className="prose prose-invert max-w-none">
-                <ReactMarkdown components={mdComponents}>{generatedContent}</ReactMarkdown>
-              </div>
-            )}
-          </div>
-        )}
 
-        {resultTab === "html" && (
-          <div className="h-full flex flex-col">
-            {generatingHtml && (
-              <div className="flex items-center gap-2 px-6 py-3 text-violet-400 text-sm border-b border-white/[0.06]">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Generando template visual...
+            {/* HTML tab */}
+            {resultTab === "html" && (
+              <div className="rounded-2xl overflow-hidden h-[750px] relative" style={{ background: "#1c1b1b" }}>
+                {generatingHtml && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm z-20" style={{ background: "rgba(19,19,19,0.7)" }}>
+                    <Loader2 className="w-9 h-9 animate-spin mb-4" style={{ color: "#a78bfa" }} />
+                    <p className="text-white font-bold">Generando experiencia interactiva...</p>
+                  </div>
+                )}
+                {!generatingHtml && htmlContent ? (
+                  <iframe
+                    key={htmlIframeKey}
+                    srcDoc={htmlContent.replace("</head>", '<style>#accept-btn,.floating-cta{display:none!important}</style></head>')}
+                    className="w-full h-full bg-white"
+                    title="Propuesta de Diseño"
+                  />
+                ) : !generatingHtml && (
+                  <div className="flex flex-col items-center justify-center h-full p-12 text-center" style={{ background: "#1c1b1b" }}>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 border border-white/[0.05]" style={{ background: "#131313" }}>
+                      <Eye className="w-7 h-7 text-slate-600" />
+                    </div>
+                    <p className="text-slate-400 font-semibold mb-5">La versión web aún no ha sido generada</p>
+                    <button
+                      onClick={() => generateHtml(markdownContent)}
+                      className="px-5 py-2.5 text-white text-sm font-bold rounded-xl transition-all"
+                      style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}
+                    >
+                      Generar Vista Web
+                    </button>
+                  </div>
+                )}
               </div>
             )}
-            {htmlContent ? (
-              <iframe
-                key={htmlIframeKey}
-                className="flex-1 w-full bg-white"
-                srcDoc={htmlContent.replace("</head>", '<style>#accept-btn,.floating-cta{display:none!important}</style></head>')}
-                sandbox="allow-same-origin allow-scripts"
-                title="Preview propuesta de diseño"
-              />
-            ) : !generatingHtml ? (
-              <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
-                {generatedContent
-                  ? "Haz clic en \"Vista HTML\" para generar el template visual"
-                  : "Genera la propuesta primero"}
-              </div>
-            ) : null}
           </div>
-        )}
+
+          {/* Sidebar — 1/3 */}
+          <div className="space-y-4">
+
+            {/* Quick Actions */}
+            <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #a78bfa" }}>
+              <h3 className="flex items-center gap-2 text-sm font-bold mb-4" style={{ color: "#a78bfa" }}>
+                <Sparkles className="h-4 w-4" /> Acciones Rápidas
+              </h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => { setHtmlContent(""); generate(); }}
+                  disabled={generating}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 border"
+                  style={{ background: "rgba(167,139,250,0.1)", color: "#a78bfa", borderColor: "rgba(167,139,250,0.2)" }}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${generating ? "animate-spin" : ""}`} /> Regenerar con IA
+                </button>
+                <button
+                  onClick={() => { setStep(0); setView("form"); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs font-bold rounded-lg border border-white/[0.05] transition-all"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" /> Editar Parámetros
+                </button>
+                <button
+                  onClick={() => copyContent(markdownContent)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs font-bold rounded-lg border border-white/[0.05] transition-all"
+                >
+                  {copied
+                    ? <><Check className="w-3.5 h-3.5 text-emerald-400" /> Copiado</>
+                    : <><Copy className="w-3.5 h-3.5" /> Copiar Texto</>}
+                </button>
+              </div>
+            </div>
+
+            {/* Export */}
+            {htmlContent && (
+              <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #4ade80" }}>
+                <h3 className="text-sm font-bold mb-4" style={{ color: "#4ade80" }}>Exportar</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={downloadPdf}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border"
+                    style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", borderColor: "rgba(74,222,128,0.2)" }}
+                  >
+                    <FileDown className="w-3.5 h-3.5" /> Descargar PDF
+                  </button>
+                  <button
+                    onClick={downloadHtml}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs font-bold rounded-lg border border-white/[0.05] transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Descargar HTML
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Share */}
+            <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #60a5fa" }}>
+              <h3 className="text-sm font-bold mb-4" style={{ color: "#60a5fa" }}>Compartir</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => sendViaWhatsApp(viewingProposal)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-bold rounded-lg border border-green-500/20 transition-all"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" /> Enviar por WhatsApp
+                </button>
+                {clientEmail && (
+                  <button
+                    onClick={() => sendViaEmail(viewingProposal)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold border transition-all"
+                    style={{ background: "rgba(96,165,250,0.08)", color: "#60a5fa", borderColor: "rgba(96,165,250,0.2)" }}
+                  >
+                    <Mail className="w-3.5 h-3.5" /> Enviar por Email
+                  </button>
+                )}
+                {currentId && htmlContent && timeLeft && (
+                  timeLeft === "expirado" ? (
+                    <>
+                      <p className="text-[10px] text-amber-400/80 text-center">⚠️ El enlace ha expirado.</p>
+                      <button
+                        onClick={renewShareLink}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold border transition-all"
+                        style={{ background: "rgba(96,165,250,0.08)", color: "#60a5fa", borderColor: "rgba(96,165,250,0.2)" }}
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" /> Renovar Enlace (24h)
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => copyShareLink(currentId)}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all border ${
+                            copiedLink ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-white/[0.04] text-slate-200 border-white/[0.05] hover:bg-white/[0.08]"
+                          }`}
+                        >
+                          {copiedLink ? <><Check className="w-3.5 h-3.5" /> Copiado</> : <><Link2 className="w-3.5 h-3.5" /> Copiar enlace</>}
+                        </button>
+                        <button
+                          onClick={renewShareLink}
+                          disabled={generatingHtml}
+                          className="flex items-center justify-center p-2.5 rounded-lg text-xs font-bold border bg-white/[0.04] text-slate-400 border-white/[0.05] hover:bg-white/10 disabled:opacity-40 transition-all"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${generatingHtml ? "animate-spin" : ""}`} />
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-500 text-center mt-1">⏱ Expira en {timeLeft}</p>
+                    </>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Client info */}
+            {(clientEmail || clientWa || clientCo) && (
+              <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #fb923c" }}>
+                <h3 className="text-sm font-bold mb-4" style={{ color: "#fb923c" }}>Información del Cliente</h3>
+                <div className="space-y-3 text-sm">
+                  {clientCo && (
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Empresa</p>
+                      <p className="font-semibold text-white">{clientCo}</p>
+                    </div>
+                  )}
+                  {clientEmail && (
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Email</p>
+                      <p className="font-semibold truncate" style={{ color: "#a78bfa" }}>{clientEmail}</p>
+                    </div>
+                  )}
+                  {clientWa && (
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">WhatsApp</p>
+                      <p className="font-semibold text-white">{clientWa}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Status */}
+            {viewingProposal && (
+              <div className="rounded-2xl p-5" style={{ background: "#201f1f", borderLeft: "3px solid #c084fc" }}>
+                <h3 className="text-sm font-bold mb-3" style={{ color: "#c084fc" }}>Estado</h3>
+                <select
+                  value={viewingProposal.status}
+                  onChange={e => {
+                    updateProposalStatus(viewingProposal.id, e.target.value);
+                    setViewingProposal(prev => prev ? { ...prev, status: e.target.value } : null);
+                  }}
+                  className="w-full px-4 py-2.5 border border-white/[0.08] rounded-xl text-white text-sm font-semibold outline-none cursor-pointer transition-colors"
+                  style={{ background: "#131313" }}
+                >
+                  {CRM_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
