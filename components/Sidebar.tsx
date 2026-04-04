@@ -66,7 +66,7 @@ export default function Sidebar() {
 
   const [collapsed, setCollapsed]         = useState(false);
   const [userEmail, setUserEmail]         = useState("");
-  const [toolsOpen, setToolsOpen]         = useState(true);
+  const [toolsOpen, setToolsOpen]         = useState(false);
   const [propuestasOpen, setPropuestasOpen] = useState(pathname.startsWith("/dashboard/propuestas"));
   const [crmOpen, setCrmOpen]             = useState(pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows"));
   const [seoOpen, setSeoOpen]             = useState(pathname.startsWith("/dashboard/seo-suite"));
