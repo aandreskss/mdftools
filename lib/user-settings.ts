@@ -52,6 +52,7 @@ export const GEMINI_MODELS = [
 export const DEFAULT_MODEL_AGENTS    = "claude-sonnet-4-6";
 export const DEFAULT_MODEL_SEO       = "claude-sonnet-4-6";
 export const DEFAULT_MODEL_PROPOSALS = "claude-haiku-4-5-20251001";
+export const DEFAULT_MODEL_WORKFLOWS = "claude-sonnet-4-6";
 
 // ─── Settings interface ───────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ export interface UserSettings {
   modelAgents: string;
   modelSeo: string;
   modelProposals: string;
+  modelWorkflows: string;
 }
 
 // ─── Provider detection ───────────────────────────────────────────────────────
@@ -141,6 +143,7 @@ export async function getUserSettings(
     modelAgents:    data?.model_agents    || DEFAULT_MODEL_AGENTS,
     modelSeo:       data?.model_seo       || DEFAULT_MODEL_SEO,
     modelProposals: data?.model_proposals || DEFAULT_MODEL_PROPOSALS,
+    modelWorkflows: data?.model_workflows || DEFAULT_MODEL_WORKFLOWS,
   };
 }
 

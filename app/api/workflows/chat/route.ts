@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+import { getUserSettings, isGemini, DEFAULT_MODEL_WORKFLOWS } from "@/lib/user-settings";
 
 const SYSTEM_PROMPT = `Eres un experto en automatización de ventas, CRM y workflows de seguimiento de clientes. Tu rol es ayudar al usuario a diseñar workflows de ventas efectivos.
 
@@ -39,6 +38,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response("No autenticado", { status: 401 });
 
+  const settings = await getUserSettings(supabase, user.id).catch(() => null);
+  const model = settings?.modelWorkflows || DEFAULT_MODEL_WORKFLOWS;
+
   const { messages, currentNodes } = await request.json();
 
   const contextMsg = currentNodes?.length > 0
@@ -50,14 +52,69 @@ export async function POST(request: Request) {
     { ...messages[messages.length - 1], content: messages[messages.length - 1].content + contextMsg }
   ];
 
+  const encoder = new TextEncoder();
+
+  // ── Gemini ──────────────────────────────────────────────────────────────────
+  if (isGemini(model)) {
+    if (!settings?.geminiApiKey) return new Response("NO_GEMINI_KEY", { status: 402 });
+
+    const geminiMessages = messagesWithContext.map((m: any) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+
+    const apiVersion = model.startsWith("gemini-2") ? "v1beta" : "v1";
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:streamGenerateContent?key=${settings.geminiApiKey}&alt=sse`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: geminiMessages,
+          generationConfig: { maxOutputTokens: 2048 },
+        }),
+      }
+    );
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        const reader = res.body?.getReader();
+        const dec = new TextDecoder();
+        if (!reader) { controller.close(); return; }
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const lines = dec.decode(value).split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const json = JSON.parse(line.slice(6));
+              const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) controller.enqueue(encoder.encode(text));
+            } catch {}
+          }
+        }
+        controller.close();
+      },
+    });
+
+    return new Response(readable, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
+    });
+  }
+
+  // ── Claude ───────────────────────────────────────────────────────────────────
+  const anthropicKey = settings?.anthropic ? (settings.anthropic as any).apiKey : process.env.ANTHROPIC_API_KEY;
+  const client = new Anthropic({ apiKey: anthropicKey });
+
   const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
+    model,
     max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: messagesWithContext,
   });
 
-  const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
       for await (const chunk of stream) {

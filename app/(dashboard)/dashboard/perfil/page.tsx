@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink, Cpu } from "lucide-react";
 import type { BrandProfile } from "@/types";
-import { CLAUDE_MODELS, GEMINI_MODELS, DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS } from "@/lib/user-settings";
+import { CLAUDE_MODELS, GEMINI_MODELS, DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS, DEFAULT_MODEL_WORKFLOWS } from "@/lib/user-settings";
 
 const STORAGE_KEY = "mdf_brand_profile";
 
@@ -40,6 +40,12 @@ const MODEL_SECTIONS = [
     description: "Generación de propuestas comerciales (markdown, HTML y presentación)",
     default: DEFAULT_MODEL_PROPOSALS,
   },
+  {
+    key: "modelWorkflows" as const,
+    label: "CRM y Workflows",
+    description: "Agente IA del constructor de workflows de ventas y automatización",
+    default: DEFAULT_MODEL_WORKFLOWS,
+  },
 ];
 
 const MODEL_BADGE_COLORS: Record<string, string> = {
@@ -71,11 +77,13 @@ export default function PerfilPage() {
   const [modelAgents,    setModelAgents]    = useState(DEFAULT_MODEL_AGENTS);
   const [modelSeo,       setModelSeo]       = useState(DEFAULT_MODEL_SEO);
   const [modelProposals, setModelProposals] = useState(DEFAULT_MODEL_PROPOSALS);
+  const [modelWorkflows, setModelWorkflows] = useState(DEFAULT_MODEL_WORKFLOWS);
 
   const modelState: Record<string, { get: string; set: (v: string) => void }> = {
     modelAgents:    { get: modelAgents,    set: setModelAgents },
     modelSeo:       { get: modelSeo,       set: setModelSeo },
     modelProposals: { get: modelProposals, set: setModelProposals },
+    modelWorkflows: { get: modelWorkflows, set: setModelWorkflows },
   };
 
   useEffect(() => {
@@ -92,6 +100,7 @@ export default function PerfilPage() {
             if (data.modelAgents)    setModelAgents(data.modelAgents);
             if (data.modelSeo)       setModelSeo(data.modelSeo);
             if (data.modelProposals) setModelProposals(data.modelProposals);
+            if (data.modelWorkflows) setModelWorkflows(data.modelWorkflows);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             setLoading(false);
             return;
@@ -121,6 +130,7 @@ export default function PerfilPage() {
       modelAgents,
       modelSeo,
       modelProposals,
+      modelWorkflows,
     };
     if (apiKeyInput.trim())    body.anthropicApiKey = apiKeyInput.trim();
     if (geminiKeyInput.trim()) body.geminiApiKey    = geminiKeyInput.trim();

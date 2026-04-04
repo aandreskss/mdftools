@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS } from "@/lib/user-settings";
+import { DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS, DEFAULT_MODEL_WORKFLOWS } from "@/lib/user-settings";
 
 export async function GET() {
   const supabase = createClient();
@@ -32,6 +32,7 @@ export async function GET() {
     modelAgents:    data.model_agents    || DEFAULT_MODEL_AGENTS,
     modelSeo:       data.model_seo       || DEFAULT_MODEL_SEO,
     modelProposals: data.model_proposals || DEFAULT_MODEL_PROPOSALS,
+    modelWorkflows: data.model_workflows || DEFAULT_MODEL_WORKFLOWS,
   });
 }
 
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
   if (body.modelAgents)    upsertData.model_agents    = body.modelAgents;
   if (body.modelSeo)       upsertData.model_seo       = body.modelSeo;
   if (body.modelProposals) upsertData.model_proposals = body.modelProposals;
+  if (body.modelWorkflows) upsertData.model_workflows = body.modelWorkflows;
 
   const { error } = await supabase.from("brand_profiles").upsert(
     upsertData,
