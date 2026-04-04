@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = createServiceClient();
 
   const userAgent = request.headers.get("user-agent") ?? "";
@@ -18,7 +19,7 @@ export async function POST(
   const device = /mobile|android|iphone|ipad/i.test(userAgent) ? "mobile" : "desktop";
 
   await supabase.from("proposal_views").insert({
-    proposal_id: params.id,
+    proposal_id: id,
     ip_hash: ipHash,
     device,
     user_agent: userAgent.slice(0, 200),

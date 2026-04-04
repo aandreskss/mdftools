@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
 
@@ -43,7 +43,7 @@ RESPONDE ÚNICAMENTE CON EL HTML COMPLETO.`;
     // Set expiry 24h
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     if (proposalId) {
-      const supa = createClient();
+      const supa = await createClient();
       await supa.from("proposals").update({ html_content: cleanHtml, html_expires_at: expiresAt, updated_at: new Date().toISOString() }).eq("id", proposalId);
     }
 

@@ -67,7 +67,7 @@ trigger(deal_won) → email(bienvenida oficial) → tag(cliente_activo en CRM) �
 Responde SIEMPRE en español. Sé cálido, didáctico y práctico. Usa negritas (**texto**) para resaltar puntos clave.`;
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response("No autenticado", { status: 401 });
 

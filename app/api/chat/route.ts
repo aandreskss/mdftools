@@ -8,7 +8,7 @@ const MAX_TOKENS_DEFAULT  = 2048;
 const MAX_TOKENS_PROPOSALS = 14000;
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { messages, agentId, agentContext } = await request.json() as {

@@ -4,7 +4,13 @@
       "mcp__claude_ai_Figma__get_design_context",
       "Bash(npm run:*)",
       "Bash(xargs ls:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm audit:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "Bash(grep:*)",
+      "Bash(xargs sed:*)",
+      "Bash(git add:*)"
     ]
   }
 }

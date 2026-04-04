@@ -29,7 +29,7 @@ const JSON_SCHEMA = `{
 }`;
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
 
