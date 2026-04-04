@@ -11,3 +11,9 @@ dist/
 e2e/.auth/user.json
 playwright-report/
 test-results/
+
+# Generados automáticamente
+tsconfig.tsbuildinfo
+
+# Claude Code
+.claude/
