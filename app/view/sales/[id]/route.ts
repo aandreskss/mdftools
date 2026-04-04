@@ -9,20 +9,20 @@ export async function GET(
 
   const { data } = await supabase
     .from("proposals")
-    .select("html_content, client_name, html_expires_at")
+    .select("html_content, client_name, html_expires_at, form_data")
     .eq("id", params.id)
     .single();
 
   const expiredHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Propuesta expirada</title>
     <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0f0f0f;color:#888;}
     .box{text-align:center;max-width:360px;}.box h1{color:#fff;font-size:1.25rem;margin-bottom:.75rem;}
-    .box p{line-height:1.6;font-size:.9rem;}.badge{display:inline-block;margin-bottom:1.5rem;padding:.35rem .9rem;background:#7C3AED22;color:#a78bfa;border-radius:999px;font-size:.75rem;font-weight:600;}
+    .box p{line-height:1.6;font-size:.9rem;}.badge{display:inline-block;margin-bottom:1.5rem;padding:.35rem .9rem;background:#f59e0b22;color:#fbbf24;border-radius:999px;font-size:.75rem;font-weight:600;}
     </style></head><body><div class="box"><div class="badge">⏱ Enlace expirado</div>
     <h1>Esta propuesta ya no está disponible</h1>
     <p>El enlace de vista previa tiene una vigencia de 24 horas.<br>Pide al remitente que genere un nuevo enlace.</p>
     </div></body></html>`;
 
-  if (!data?.html_content) {
+  if (!data?.html_content || (data as any)?.form_data?.proposalType !== "sales") {
     return new NextResponse(
       `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Propuesta no encontrada</title>
       <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0f0f0f;color:#888;}
@@ -59,13 +59,13 @@ export async function GET(
     btn.style.opacity = '0.7';
     btn.textContent = 'Procesando...';
     try {
-      var res = await fetch('/api/design-proposals/accept', {
+      var res = await fetch('/api/proposals/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id })
       });
       if (res.ok) {
-        btn.textContent = '✓ ¡Propuesta Aceptada!';
+        btn.textContent = '\\u2713 \\u00A1Propuesta Aceptada!';
         btn.style.background = '#059669';
         btn.style.opacity = '1';
         btn.style.boxShadow = '0 10px 15px -3px rgba(5,150,105,0.4)';

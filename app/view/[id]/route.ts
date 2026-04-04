@@ -59,13 +59,13 @@ export async function GET(
     btn.style.opacity = '0.7';
     btn.textContent = 'Procesando...';
     try {
-      var res = await fetch('/api/design-proposals/accept', {
+      var res = await fetch('/api/proposals/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id })
       });
       if (res.ok) {
-        btn.textContent = '✓ ¡Propuesta Aceptada!';
+        btn.textContent = '\\u2713 \\u00A1Propuesta Aceptada!';
         btn.style.background = '#059669';
         btn.style.opacity = '1';
         btn.style.boxShadow = '0 10px 15px -3px rgba(5,150,105,0.4)';

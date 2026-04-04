@@ -7,7 +7,7 @@ import {
   LayoutDashboard, User, Share2, Video, FileText, Search,
   Megaphone, Eye, FileSignature, Mail, Zap, RefreshCw,
   Calendar, BarChart2, ChevronDown, LogOut, Sparkles,
-  PanelLeftClose, PanelLeft, Settings, Plus, Palette, Kanban,
+  PanelLeftClose, PanelLeft, Settings, Plus, Palette, Kanban, ShoppingBag,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -35,9 +35,10 @@ const toolItems = [
 const ecosystemItems: { id: string; label: string; href: string; icon: React.ComponentType<{ className?: string }> }[] = [];
 
 const propuestasChildren = [
-  { label: "Marketing",     href: "/dashboard/propuestas",        icon: FileSignature },
-  { label: "Diseño",        href: "/dashboard/propuestas/diseno", icon: Palette },
-  { label: "CRM Pipeline",  href: "/dashboard/crm-propuestas",   icon: Kanban },
+  { label: "Marketing",     href: "/dashboard/propuestas",          icon: FileSignature },
+  { label: "Diseño",        href: "/dashboard/propuestas/diseno",   icon: Palette },
+  { label: "Ventas",        href: "/dashboard/propuestas/ventas",   icon: ShoppingBag },
+  { label: "CRM Pipeline",  href: "/dashboard/crm-propuestas",     icon: Kanban },
 ];
 
 const seoSuiteChildren = [
