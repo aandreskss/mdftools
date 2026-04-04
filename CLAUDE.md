@@ -29,7 +29,9 @@ Test files live in `e2e/`. Structure:
 - `auth.spec.ts` — auth flows (no stored session)
 - `dashboard.spec.ts` — dashboard smoke tests (uses stored session)
 
-**CI** runs on every PR via `.github/workflows/ci.yml`: lint → type-check → build → E2E. The GitHub repo needs 4 secrets: `TEST_SUPABASE_URL`, `TEST_SUPABASE_ANON_KEY`, `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`.
+**CI** runs on every PR via `.github/workflows/ci.yml`: npm audit → lint → type-check → build → E2E. The GitHub repo needs 4 secrets: `TEST_SUPABASE_URL`, `TEST_SUPABASE_ANON_KEY`, `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`.
+
+**Dependabot** opens weekly PRs for dependency updates (major Next.js/React bumps are excluded and must be reviewed manually).
 
 **Pre-commit hook** (Husky + lint-staged) runs ESLint on staged `.ts/.tsx` files before every commit.
 
@@ -54,6 +56,7 @@ Test files live in `e2e/`. Structure:
 | `lib/supabase/server.ts` | **async** `createClient()` (cookie-based, for Server Components/Route Handlers — always `await`) and `createServiceClient()` (service role, synchronous, bypasses RLS) |
 | `lib/supabase/client.ts` | Synchronous `createClient()` for Client Components only |
 | `lib/prompts.ts` | `getSystemPrompt(agentId, brandProfile)` — returns the system prompt for each AI agent |
+| `lib/env.ts` | Zod schema that validates required env vars at server startup — throws with a clear message if any are missing |
 | `lib/anthropic.ts` | Module-level `anthropic` singleton (legacy — prefer `getUserSettings` in new routes) |
 | `types/index.ts` | `BrandProfile`, `Message`, `AgentId` |
 
@@ -109,6 +112,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ANTHROPIC_API_KEY          # fallback only; users provide their own keys via the UI
 ```
+
+## Security
+
+HTTP security headers are configured in `next.config.js` (applied to all routes): `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
+
+Env var validation runs at server startup via `instrumentation.ts` → `lib/env.ts`. If `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` are missing, the server fails immediately with a descriptive error.
 
 ## Next.js 16 patterns (breaking vs. 14)
 
