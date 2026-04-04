@@ -4,7 +4,8 @@ Plataforma SaaS de herramientas de marketing con IA. Cada usuario conecta su pro
 
 ## Stack
 
-- **Next.js 14** (App Router) + TypeScript + Tailwind CSS
+- **Next.js 16** (App Router) + TypeScript + Tailwind CSS
+- **React 19**
 - **Supabase** — autenticación y base de datos
 - **Anthropic / Google Gemini** — modelos de IA configurables por usuario
 
@@ -12,7 +13,7 @@ Plataforma SaaS de herramientas de marketing con IA. Cada usuario conecta su pro
 
 ## Requisitos previos
 
-- Node.js 18+
+- Node.js 20+
 - npm
 - Una cuenta en [Supabase](https://supabase.com) (plan gratuito es suficiente para desarrollo)
 

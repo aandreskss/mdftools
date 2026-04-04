@@ -10,7 +10,15 @@
       "Bash(npm install:*)",
       "Bash(grep:*)",
       "Bash(xargs sed:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Read(//home/jose/.agents/skills/skill-creator/**)",
+      "Bash(python -m scripts.aggregate_benchmark /home/jose/.claude/skills/mdftools-patterns-workspace/iteration-1 --skill-name mdftools-patterns)",
+      "Bash(python3 -m scripts.aggregate_benchmark /home/jose/.claude/skills/mdftools-patterns-workspace/iteration-1 --skill-name mdftools-patterns)",
+      "Bash(nohup python3:*)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(sort -t'\\(' -k2 -n)",
+      "Bash(kill -0 51833)",
+      "Bash(claude --version)"
     ]
   }
 }
