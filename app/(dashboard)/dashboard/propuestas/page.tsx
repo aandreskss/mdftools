@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   FileSignature, Plus, ArrowLeft, ArrowRight, Sparkles,
-  Copy, Check, Save, Loader2, Trash2, ChevronRight, FileText, Eye, Calendar,
+  Copy, Check, Save, Loader2, Trash2, FileText, Calendar,
   Code, Download, RefreshCw, Pencil, Upload, Mail,
   MessageCircle, Building2, LayoutGrid, X, FileDown, Link2,
   DollarSign, TrendingUp, Award,
@@ -173,8 +173,8 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     `.trim();
   }
 
-  const [previewId, setPreviewId]         = useState<string | null>(null);
-  const [previewTs, setPreviewTs]         = useState(0);
+  const [_previewId, setPreviewId]         = useState<string | null>(null);
+  const [_previewTs, setPreviewTs]         = useState(0);
   const [htmlIframeKey, setHtmlIframeKey] = useState(0);
   const [resultTab, setResultTab] = useState<"propuesta" | "html">("propuesta");
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
@@ -185,7 +185,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   const [timeLeft, setTimeLeft]   = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const htmlIframeRef    = useRef<HTMLIFrameElement>(null);
+  const _htmlIframeRef    = useRef<HTMLIFrameElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchProposals(); }, []);
@@ -571,7 +571,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       : printCss + htmlContent;
     const htmlWithPrint = withPrintCss.replace(
       "</body>",
-      `<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script></body>`
+      `<script>window.onload=function(){setTimeout(function(){window.print();},600);}</script></body>`
     );
     win.document.open();
     win.document.write(htmlWithPrint);

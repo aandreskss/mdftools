@@ -125,7 +125,7 @@ export async function POST(request: Request) {
               const json = JSON.parse(line.slice(6));
               const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
               if (text) controller.enqueue(encoder.encode(text));
-            } catch {}
+            } catch { /* skip malformed SSE chunk */ }
           }
         }
         controller.close();

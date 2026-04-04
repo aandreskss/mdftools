@@ -13,7 +13,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   const ids = (data ?? []).map(p => p.id);
-  let viewsMap: Record<string, { total: number; lastViewed: string | null }> = {};
+  const viewsMap: Record<string, { total: number; lastViewed: string | null }> = {};
 
   if (ids.length > 0) {
     const { data: views } = await supabase

@@ -43,14 +43,6 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { form } = body;
 
-  let agencyName = "Nuestra Agencia";
-  const { data: profile } = await supabase
-    .from("brand_profiles")
-    .select("brand_name")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (profile?.brand_name) agencyName = profile.brand_name;
-
   const designTypes = Array.isArray(form.designType) ? form.designType.join(", ") : (form.designType || "Diseño");
 
   const prompt = `Actúa como un director creativo senior con 15 años de experiencia en diseño de marca. Genera una propuesta de diseño profesional y altamente persuasiva en formato JSON.
@@ -100,7 +92,7 @@ IMPORTANTE: Solo el JSON puro. Sin texto antes ni después. Sin bloques de códi
 
     if (!aiText) throw new Error("La IA devolvió una respuesta vacía.");
 
-    let rawJson = aiText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const rawJson = aiText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     JSON.parse(rawJson); // validate
 

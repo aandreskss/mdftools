@@ -106,11 +106,11 @@ export default function PerfilPage() {
             return;
           }
         }
-      } catch {}
+      } catch { /* auth check failed, continue to localStorage fallback */ }
 
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        try { setProfile(JSON.parse(raw)); setHasProfile(true); } catch {}
+        try { setProfile(JSON.parse(raw)); setHasProfile(true); } catch { /* invalid JSON in localStorage */ }
       }
       setLoading(false);
     }
@@ -151,7 +151,7 @@ export default function PerfilPage() {
         setHasGeminiKey(true);
         setGeminiKeyInput("");
       }
-    } catch {}
+    } catch { /* save failed silently */ }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     setHasProfile(true);

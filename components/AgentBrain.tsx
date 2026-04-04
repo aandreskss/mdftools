@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Brain, X, Save, Upload, Trash2, FileText, CheckCircle, Loader2, ChevronRight } from "lucide-react";
+import { Brain, X, Save, Upload, Trash2, FileText, CheckCircle, Loader2 } from "lucide-react";
 
 interface AgentFile {
   id: string;

@@ -33,7 +33,6 @@ const toolItems = [
   { id: "calendario",  label: "Calendario",         href: "/dashboard/calendario",  icon: Calendar },
 ];
 
-const ecosystemItems: { id: string; label: string; href: string; icon: React.ComponentType<{ className?: string }> }[] = [];
 
 const propuestasChildren = [
   { label: "Marketing",     href: "/dashboard/propuestas",          icon: FileSignature },

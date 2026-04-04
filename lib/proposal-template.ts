@@ -24,7 +24,7 @@ function esc(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function badge(text: string): string {
+function _badge(text: string): string {
   return `<span class="badge">${esc(text)}</span>`;
 }
 

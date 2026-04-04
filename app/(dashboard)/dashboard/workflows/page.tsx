@@ -882,7 +882,7 @@ export default function WorkflowsPage() {
 // ─── InsertPopover ────────────────────────────────────────────────────────────
 
 function InsertPopover({
-  afterIndex,
+  afterIndex: _afterIndex,
   onAdd,
   onClose,
 }: {
