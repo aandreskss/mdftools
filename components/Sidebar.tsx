@@ -8,6 +8,7 @@ import {
   Megaphone, Eye, FileSignature, Mail, Zap, RefreshCw,
   Calendar, BarChart2, ChevronDown, LogOut, Sparkles,
   PanelLeftClose, PanelLeft, Settings, Plus, Palette, Kanban, ShoppingBag,
+  GitBranch, Workflow,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -38,7 +39,11 @@ const propuestasChildren = [
   { label: "Marketing",     href: "/dashboard/propuestas",          icon: FileSignature },
   { label: "Diseño",        href: "/dashboard/propuestas/diseno",   icon: Palette },
   { label: "Ventas",        href: "/dashboard/propuestas/ventas",   icon: ShoppingBag },
+];
+
+const crmWorkflowsChildren = [
   { label: "CRM Pipeline",  href: "/dashboard/crm-propuestas",     icon: Kanban },
+  { label: "Workflows",     href: "/dashboard/workflows",           icon: GitBranch },
 ];
 
 const seoSuiteChildren = [
@@ -62,7 +67,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed]         = useState(false);
   const [userEmail, setUserEmail]         = useState("");
   const [toolsOpen, setToolsOpen]         = useState(true);
-  const [propuestasOpen, setPropuestasOpen] = useState(pathname.startsWith("/dashboard/propuestas") || pathname.startsWith("/dashboard/crm-propuestas"));
+  const [propuestasOpen, setPropuestasOpen] = useState(pathname.startsWith("/dashboard/propuestas"));
+  const [crmOpen, setCrmOpen]             = useState(pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows"));
   const [seoOpen, setSeoOpen]             = useState(pathname.startsWith("/dashboard/seo-suite"));
 
   useEffect(() => {
@@ -186,12 +192,52 @@ export default function Sidebar() {
           <ExpandableSection
             label="Propuestas"
             icon={FileSignature}
-            isActive={pathname.startsWith("/dashboard/propuestas") || pathname.startsWith("/dashboard/crm-propuestas")}
+            isActive={pathname.startsWith("/dashboard/propuestas")}
             open={propuestasOpen}
             collapsed={collapsed}
             onToggle={() => !collapsed && setPropuestasOpen(v => !v)}
           >
             {propuestasChildren.map(child => {
+              const Icon = child.icon;
+              return (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
+                  style={{
+                    color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
+                    background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
+                  }}
+                  onMouseEnter={e => {
+                    if (pathname !== child.href) {
+                      (e.currentTarget as HTMLElement).style.color = "#cac4d5";
+                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (pathname !== child.href) {
+                      (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }
+                  }}
+                >
+                  <Icon className="w-3 h-3 flex-shrink-0" />
+                  {child.label}
+                </Link>
+              );
+            })}
+          </ExpandableSection>
+
+          {/* CRM y Workflows expandable */}
+          <ExpandableSection
+            label="CRM y Workflows"
+            icon={Workflow}
+            isActive={pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows")}
+            open={crmOpen}
+            collapsed={collapsed}
+            onToggle={() => !collapsed && setCrmOpen(v => !v)}
+          >
+            {crmWorkflowsChildren.map(child => {
               const Icon = child.icon;
               return (
                 <Link
