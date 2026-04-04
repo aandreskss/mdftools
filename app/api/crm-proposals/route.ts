@@ -12,9 +12,29 @@ export async function GET() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  const ids = (data ?? []).map(p => p.id);
+  let viewsMap: Record<string, { total: number; lastViewed: string | null }> = {};
+
+  if (ids.length > 0) {
+    const { data: views } = await supabase
+      .from("proposal_views")
+      .select("proposal_id, viewed_at")
+      .in("proposal_id", ids)
+      .order("viewed_at", { ascending: false });
+
+    for (const v of views ?? []) {
+      if (!viewsMap[v.proposal_id]) viewsMap[v.proposal_id] = { total: 0, lastViewed: null };
+      viewsMap[v.proposal_id].total++;
+      if (!viewsMap[v.proposal_id].lastViewed) viewsMap[v.proposal_id].lastViewed = v.viewed_at;
+    }
+  }
+
   const proposals = (data ?? []).map(p => ({
     ...p,
-    module: p.form_data?.proposalType === "design" ? "Diseño" : "Marketing",
+    module: p.form_data?.proposalType === "design" ? "Diseño"
+          : p.form_data?.proposalType === "sales"  ? "Ventas"
+          : "Marketing",
+    views: viewsMap[p.id] ?? { total: 0, lastViewed: null },
   }));
 
   return NextResponse.json(proposals);

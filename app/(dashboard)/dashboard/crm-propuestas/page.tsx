@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Kanban, Loader2, Building2, FileText, DollarSign,
-  TrendingUp, Award, Megaphone, Palette,
+  TrendingUp, Award, Megaphone, Palette, Eye,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -19,6 +19,10 @@ interface CRMProposal {
     clientLogo?: string;
     price?: string;
     currency?: string;
+  };
+  views?: {
+    total: number;
+    lastViewed: string | null;
   };
 }
 
@@ -259,6 +263,26 @@ export default function CRMPropuestasPage() {
 
                             {value && (
                               <p className="text-xs font-bold mb-3 px-2 py-0.5 rounded-md w-fit" style={{ color: "#4ade80", background: "rgba(74,222,128,0.1)" }}>{value}</p>
+                            )}
+
+                            {/* Views badge */}
+                            {(p.views?.total ?? 0) > 0 ? (
+                              <div className="flex items-center gap-1 mb-3">
+                                <Eye className="w-3 h-3" style={{ color: "#60a5fa" }} />
+                                <span className="text-[10px] font-semibold" style={{ color: "#60a5fa" }}>
+                                  {p.views!.total} vista{p.views!.total !== 1 ? "s" : ""}
+                                </span>
+                                {p.views?.lastViewed && (
+                                  <span className="text-[10px]" style={{ color: "#938e9e" }}>
+                                    · {new Date(p.views.lastViewed).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 mb-3">
+                                <Eye className="w-3 h-3" style={{ color: "#2a2a2a" }} />
+                                <span className="text-[10px]" style={{ color: "#2a2a2a" }}>Sin vistas</span>
+                              </div>
                             )}
 
                             <div className="flex items-center justify-between">
