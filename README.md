@@ -71,11 +71,57 @@ La app quedará disponible en [http://localhost:3000](http://localhost:3000).
 ## Scripts disponibles
 
 ```bash
-npm run dev      # Servidor de desarrollo con hot reload
-npm run build    # Build de producción
-npm run start    # Inicia el build de producción
-npm run lint     # Linting con ESLint
+npm run dev           # Servidor de desarrollo con hot reload
+npm run build         # Build de producción
+npm run start         # Inicia el build de producción
+npm run lint          # Linting con ESLint
+npm run type-check    # Verificación de tipos TypeScript
+npm run test:e2e      # Tests E2E con Playwright (requiere .env.test.local)
+npm run test:e2e:ui   # Tests E2E con interfaz visual
 ```
+
+---
+
+## Tests E2E
+
+Los tests usan Playwright contra un proyecto de Supabase de testing separado.
+
+### Configuración
+
+1. Crea un proyecto en Supabase exclusivo para testing (`mdftools-test`).
+2. Aplica el schema: **SQL Editor** → pega `supabase/schema.sql` → ejecuta.
+3. Crea un usuario de prueba: **Authentication → Users → Add user → Create new user** con "Auto Confirm User" activado.
+4. Crea `.env.test.local` en la raíz:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<proyecto-test>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-test>
+TEST_USER_EMAIL=test@mdftools.test
+TEST_USER_PASSWORD=TestPassword123!
+```
+
+5. Instala los browsers de Playwright (solo la primera vez):
+
+```bash
+npx playwright install chromium
+```
+
+6. Corre los tests:
+
+```bash
+npm run test:e2e
+```
+
+### CI
+
+El CI en GitHub Actions corre automáticamente lint, type-check, build y los tests E2E en cada PR. Requiere configurar estos secrets en el repositorio (**Settings → Secrets and variables → Actions**):
+
+| Secret | Descripción |
+|--------|-------------|
+| `TEST_SUPABASE_URL` | URL del proyecto Supabase de testing |
+| `TEST_SUPABASE_ANON_KEY` | Anon key del proyecto de testing |
+| `TEST_USER_EMAIL` | Email del usuario de prueba |
+| `TEST_USER_PASSWORD` | Contraseña del usuario de prueba |
 
 ---
 

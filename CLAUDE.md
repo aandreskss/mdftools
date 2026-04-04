@@ -5,12 +5,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Start dev server (localhost:3000)
-npm run build    # Production build
-npm run lint     # ESLint
+npm run dev           # Start dev server (localhost:3000)
+npm run build         # Production build
+npm run lint          # ESLint (flat config, typescript-eslint)
+npm run type-check    # tsc --noEmit
+npm run test:e2e      # Playwright E2E tests (requires .env.test.local)
+npm run test:e2e:ui   # Playwright UI mode
 ```
 
-There are no automated tests in this project.
+## Testing
+
+**E2E tests** use Playwright against a separate Supabase test project. Before running tests locally, create `.env.test.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<test-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+TEST_USER_EMAIL=test@mdftools.test
+TEST_USER_PASSWORD=TestPassword123!
+```
+
+Test files live in `e2e/`. Structure:
+- `auth.setup.ts` — logs in once and saves session to `e2e/.auth/user.json`
+- `auth.spec.ts` — auth flows (no stored session)
+- `dashboard.spec.ts` — dashboard smoke tests (uses stored session)
+
+**CI** runs on every PR via `.github/workflows/ci.yml`: lint → type-check → build → E2E. The GitHub repo needs 4 secrets: `TEST_SUPABASE_URL`, `TEST_SUPABASE_ANON_KEY`, `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`.
+
+**Pre-commit hook** (Husky + lint-staged) runs ESLint on staged `.ts/.tsx` files before every commit.
+
+**Roadmap**: see `docs/ROADMAP.md` for the full quality/robustness plan and what's been completed.
 
 ## Architecture Overview
 
