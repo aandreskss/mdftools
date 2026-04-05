@@ -19,7 +19,7 @@ Estrategia por etapas para convertir mdftools en una aplicación production-read
 - [x] Usuario autenticado en `/login` → redirige a `/dashboard`
 - [x] Dashboard carga sin errores JS en consola
 - [x] Rutas del dashboard devuelven < 500
-- [ ] Smoke test streaming de un agente de chat ← pendiente (requiere API key en test env)
+- [x] Smoke test streaming de un agente de chat (Gemini 2.5 Flash vía API real)
 
 ### 1.3 Pre-commit hooks ✅
 - Husky + lint-staged instalados y configurados

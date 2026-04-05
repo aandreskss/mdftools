@@ -23,7 +23,7 @@ export default defineConfig({
     // Proyecto especial: setup de autenticación (corre primero)
     {
       name: "setup",
-      testMatch: /.*\.setup\.ts/,
+      testMatch: /.*auth\.setup\.ts/,
     },
     // Tests del dashboard usando la sesión guardada
     {
@@ -40,6 +40,21 @@ export default defineConfig({
       name: "auth-flows",
       testMatch: /.*auth\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
+    },
+    // Setup que inyecta la API key de Gemini en brand_profiles del usuario de prueba
+    {
+      name: "chat-setup",
+      testMatch: /.*chat\.setup\.ts/,
+    },
+    // Smoke test de streaming con API real (depende de auth + chat-setup)
+    {
+      name: "chat",
+      testMatch: /.*chat\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "e2e/.auth/user.json",
+      },
+      dependencies: ["setup", "chat-setup"],
     },
   ],
 
