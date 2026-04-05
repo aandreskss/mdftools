@@ -35,7 +35,7 @@ Estrategia por etapas para convertir mdftools en una aplicación production-read
 
 ---
 
-## Etapa 2 — Seguridad y dependencias
+## Etapa 2 — Seguridad y dependencias ✅ COMPLETADA
 
 ### 2.1 Vulnerabilidades
 - `npm audit` en CI — falla si hay vulnerabilidades críticas
@@ -55,8 +55,6 @@ En `next.config.js`:
 ### 2.4 Auditoría Supabase
 - Verificar que todas las tablas tienen RLS activado
 - Revisar políticas de RLS
-
-**Estado**: [ ] Pendiente
 
 ---
 
