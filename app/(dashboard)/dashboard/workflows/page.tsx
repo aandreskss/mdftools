@@ -1748,7 +1748,7 @@ function ChatPanel({
   messages: ChatMessage[];
   input: string;
   loading: boolean;
-  chatEndRef: React.RefObject<HTMLDivElement>;
+  chatEndRef: React.RefObject<HTMLDivElement | null>;
   onInputChange: (v: string) => void;
   onSend: () => void;
 }) {
