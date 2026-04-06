@@ -58,44 +58,33 @@ En `next.config.js`:
 
 ---
 
-## Etapa 3 — Tests unitarios e integración
+## Etapa 3 — Tests unitarios e integración ✅ COMPLETADA
 
 ### 3.1 Stack de testing
-- **Vitest** (más rápido que Jest, compatible con Next.js App Router)
-- `@testing-library/react` para componentes
-- Supabase mockeado para tests de API routes
+- **Vitest** instalado y configurado (`vitest.config.ts`)
+- Scripts: `test:unit` (una vez) y `test:unit:watch` (modo watch)
 
-### 3.2 Qué testear primero (mayor ROI)
-- `lib/user-settings.ts`: `getUserSettings`, `isGemini`, `callAIJson`, `noApiKeyResponse`
-- `lib/prompts.ts`: `getSystemPrompt` por agentId
-- API routes críticas: `/api/chat`, `/api/proposals`
-- Middleware: lógica de redirección auth
-
-**Estado**: [ ] Pendiente
+### 3.2 Tests implementados (25 casos)
+- `lib/user-settings.test.ts`: `isGemini`, `noApiKeyResponse`, `getUserSettings`, `callAIJson`
+- `lib/prompts.test.ts`: `getSystemPrompt` — todos los agentIds, contexto de marca, campos opcionales
 
 ---
 
-## Etapa 4 — CI/CD completo
+## Etapa 4 — CI/CD completo ✅ COMPLETADA (parcial)
 
-### Pipeline completo
+### Pipeline CI (implementado)
 ```
 PR abierto:
-  lint → type-check → unit tests → E2E → build
-
-Merge a main:
-  Todo lo anterior → deploy a Vercel (producción)
-
-Merge a develop:
-  Todo lo anterior → deploy a Vercel (staging)
+  lint → type-check → build   ← job: lint-and-build
+  unit tests                  ← job: unit-tests (paralelo con E2E)
+  E2E                         ← job: e2e (paralelo con unit tests)
 ```
 
 ### Configuraciones adicionales
-- Environments en GitHub con secrets separados (staging / production)
-- Branch protection: no merge sin CI verde
-- PR template con checklist (tests, docs, security)
-- Revisión de código requerida antes de merge
-
-**Estado**: [ ] Pendiente
+- [x] Unit tests (`vitest run`) en CI — job `unit-tests`
+- [x] PR template con checklist — `.github/pull_request_template.md`
+- [x] Deploy automático — integración nativa Vercel (main → prod, PRs → preview)
+- [ ] Branch protection: no merge sin CI verde ← configurar en GitHub Settings
 
 ---
 
