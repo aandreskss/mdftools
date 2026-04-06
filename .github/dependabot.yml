@@ -8,6 +8,16 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    groups:
+      # @types/react y @types/react-dom deben actualizarse juntos
+      react-types:
+        patterns:
+          - "@types/react*"
+      # typescript y sus tipos relacionados
+      typescript:
+        patterns:
+          - "typescript"
+          - "@typescript-eslint/*"
     ignore:
       # Major version bumps de Next.js/React se evalúan manualmente
       - dependency-name: next
