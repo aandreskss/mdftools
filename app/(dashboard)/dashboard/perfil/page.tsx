@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink, Cpu } from "lucide-react";
+import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink, Cpu, User } from "lucide-react";
 import type { BrandProfile } from "@/types";
 import { CLAUDE_MODELS, GEMINI_MODELS, DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS, DEFAULT_MODEL_WORKFLOWS } from "@/lib/user-settings";
 
@@ -56,6 +56,15 @@ const MODEL_BADGE_COLORS: Record<string, string> = {
   blue:   "bg-blue-500/10    text-blue-400    border-blue-500/30",
   orange: "bg-orange-500/10  text-orange-400  border-orange-500/30",
 };
+
+const inputStyle = {
+  background: "#201f1f",
+  border: "1px solid rgba(255,255,255,0.08)",
+  color: "white" as const,
+};
+
+const labelStyle = { color: "#e5e2e1" };
+const sublabelStyle = { color: "#938e9e" };
 
 export default function PerfilPage() {
   const [profile, setProfile] = useState<BrandProfile>(defaultProfile);
@@ -162,324 +171,483 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center gap-2 text-gray-500 text-sm">
+      <div className="p-8 flex items-center gap-2 text-sm" style={{ color: "#938e9e" }}>
         <Loader2 size={15} className="animate-spin" /> Cargando perfil...
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Perfil de Marca</h1>
-        <p className="text-gray-400 mt-1 text-sm">
-          Este contexto se inyecta automáticamente en todos los agentes. Solo necesitas configurarlo una vez.
-        </p>
-      </div>
+    <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+      <div className="max-w-2xl">
 
-      {hasProfile && (
-        <div className="mb-6 p-3 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-2">
-          <CheckCircle size={15} className="text-green-400 flex-shrink-0" />
-          <p className="text-green-300 text-sm">Perfil configurado — los agentes ya tienen contexto de tu marca.</p>
-        </div>
-      )}
-
-      <div className="space-y-5">
-
-        {/* Nombre */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
-            Nombre de la marca <span className="text-red-400">*</span>
-          </label>
-          <input type="text" value={profile.nombre}
-            onChange={(e) => handleChange("nombre", e.target.value)}
-            placeholder="Ej: MDF Agency"
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+        {/* Hero header */}
+        <div
+          className="relative flex flex-col justify-between p-8 rounded-2xl overflow-hidden mb-8"
+          style={{ background: "#1c1b1b" }}
+        >
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              top: "-30%", right: "-5%", width: "350px", height: "320px",
+              background: "rgba(203,190,255,0.07)", filter: "blur(60px)",
+            }}
           />
-        </div>
-
-        {/* Descripción */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
-            Descripción del negocio <span className="text-red-400">*</span>
-          </label>
-          <textarea value={profile.descripcion}
-            onChange={(e) => handleChange("descripcion", e.target.value)}
-            placeholder="¿Qué hace tu empresa? ¿Qué problema resuelve?"
-            rows={3}
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition resize-none"
-          />
-        </div>
-
-        {/* Industria */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
-            Industria / Sector <span className="text-red-400">*</span>
-          </label>
-          <input type="text" value={profile.industria}
-            onChange={(e) => handleChange("industria", e.target.value)}
-            placeholder="Ej: Marketing digital, E-commerce, SaaS..."
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition"
-          />
-        </div>
-
-        {/* Tono */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
-            Tono de comunicación <span className="text-red-400">*</span>
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {TONOS.map((tono) => (
-              <button key={tono} type="button" onClick={() => handleChange("tono", tono)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium border transition text-left ${
-                  profile.tono === tono
-                    ? "bg-indigo-600 border-indigo-500 text-white"
-                    : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white"
-                }`}
-              >{tono}</button>
-            ))}
-          </div>
-          <input type="text"
-            value={!TONOS.includes(profile.tono) ? profile.tono : ""}
-            onChange={(e) => handleChange("tono", e.target.value)}
-            placeholder="O escribe tu propio tono..."
-            className="mt-2 w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition"
-          />
-        </div>
-
-        {/* Público objetivo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
-            Público objetivo <span className="text-red-400">*</span>
-          </label>
-          <textarea value={profile.publicoObjetivo}
-            onChange={(e) => handleChange("publicoObjetivo", e.target.value)}
-            placeholder="¿A quién va dirigido? Edad, intereses, dolores..."
-            rows={2}
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition resize-none"
-          />
-        </div>
-
-        {/* Diferenciadores */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">Diferenciadores clave</label>
-          <textarea value={profile.diferenciadores}
-            onChange={(e) => handleChange("diferenciadores", e.target.value)}
-            placeholder="¿Por qué elegiría alguien tu marca?"
-            rows={2}
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition resize-none"
-          />
-        </div>
-
-        {/* Web */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">URL de la web</label>
-          <input type="url" value={profile.webUrl}
-            onChange={(e) => handleChange("webUrl", e.target.value)}
-            placeholder="https://tuempresa.com"
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition"
-          />
-        </div>
-
-        {/* Redes sociales */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">Redes sociales activas</label>
-          <input type="text" value={profile.redesSociales}
-            onChange={(e) => handleChange("redesSociales", e.target.value)}
-            placeholder="Ej: @marca en Instagram y TikTok"
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition"
-          />
-        </div>
-
-        {/* ── API Key ──────────────────────────────────────────────── */}
-        <div className="pt-2 border-t border-gray-800">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Key size={14} className="text-indigo-400" />
-            <label className="block text-sm font-medium text-gray-300">API Key de Anthropic</label>
-            {hasApiKey && !keySaved && (
-              <span className="ml-auto flex items-center gap-1 text-xs text-green-400">
-                <CheckCircle size={11} /> Configurada
-              </span>
-            )}
-            {keySaved && (
-              <span className="ml-auto flex items-center gap-1 text-xs text-green-400">
-                <CheckCircle size={11} /> ¡Key guardada!
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: "rgba(203,190,255,0.1)", border: "1px solid rgba(203,190,255,0.2)" }}
+              >
+                <User className="w-5 h-5" style={{ color: "#cbbeff" }} />
+              </div>
+              <div>
+                <h1 className="font-extrabold text-[26px] text-white tracking-tight leading-tight">
+                  Perfil de <span style={{ color: "#cbbeff" }}>Marca</span>
+                </h1>
+                <p className="text-[13px]" style={{ color: "#938e9e" }}>
+                  Configura el contexto base que todos los agentes IA utilizan automáticamente
+                </p>
+              </div>
+            </div>
+            {hasProfile && (
+              <span
+                className="text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                style={{
+                  background: "rgba(74,222,128,0.1)",
+                  color: "#4ade80",
+                  border: "1px solid rgba(74,222,128,0.2)",
+                }}
+              >
+                ✓ Configurado
               </span>
             )}
           </div>
-
-          {!hasApiKey && (
-            <p className="text-xs text-amber-400 mb-2 flex items-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400" />
-              Requerida para usar los agentes de IA.{" "}
-              <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer"
-                className="underline hover:text-amber-200 flex items-center gap-0.5">
-                Obtener key <ExternalLink size={10} />
-              </a>
-            </p>
-          )}
-          {hasApiKey && (
-            <p className="text-xs text-gray-500 mb-2">Ya tienes una key configurada. Ingresa una nueva para reemplazarla.</p>
-          )}
-
-          <div className="relative">
-            <input
-              type={showApiKey ? "text" : "password"}
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              placeholder={hasApiKey ? "sk-ant-... (vacío = mantener la actual)" : "sk-ant-api03-..."}
-              className="w-full px-4 py-2.5 pr-10 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500 transition font-mono"
-            />
-            <button type="button" onClick={() => setShowApiKey((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition">
-              {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-          </div>
         </div>
 
-        {/* ── API Key Gemini ───────────────────────────────────────── */}
-        <div className="pt-2 border-t border-gray-800">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Key size={14} className="text-blue-400" />
-              <h3 className="text-sm font-medium text-gray-300">Google Gemini API Key</h3>
-              {hasGeminiKey && (
-                <span className="flex items-center gap-1 text-xs text-blue-400">
+        <div className="space-y-5">
+
+          {/* ── Card: Información básica ──────────────────────────── */}
+          <div
+            className="p-5 rounded-2xl space-y-5"
+            style={{ background: "#1c1b1b" }}
+          >
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Nombre de la marca <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={profile.nombre}
+                onChange={(e) => handleChange("nombre", e.target.value)}
+                placeholder="Ej: MDF Agency"
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Descripción */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Descripción del negocio <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                value={profile.descripcion}
+                onChange={(e) => handleChange("descripcion", e.target.value)}
+                placeholder="¿Qué hace tu empresa? ¿Qué problema resuelve?"
+                rows={3}
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition resize-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Industria */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Industria / Sector <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={profile.industria}
+                onChange={(e) => handleChange("industria", e.target.value)}
+                placeholder="Ej: Marketing digital, E-commerce, SaaS..."
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* ── Card: Comunicación ───────────────────────────────── */}
+          <div
+            className="p-5 rounded-2xl space-y-5"
+            style={{ background: "#1c1b1b" }}
+          >
+            {/* Tono */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Tono de comunicación <span className="text-red-400">*</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {TONOS.map((tono) => (
+                  <button
+                    key={tono}
+                    type="button"
+                    onClick={() => handleChange("tono", tono)}
+                    className="px-3 py-2 rounded-lg text-xs font-medium border transition text-left"
+                    style={
+                      profile.tono === tono
+                        ? { background: "#cbbeff", color: "#1e0061", border: "1px solid #cbbeff" }
+                        : { background: "#201f1f", color: "#938e9e", border: "1px solid rgba(255,255,255,0.08)" }
+                    }
+                  >
+                    {tono}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={!TONOS.includes(profile.tono) ? profile.tono : ""}
+                onChange={(e) => handleChange("tono", e.target.value)}
+                placeholder="O escribe tu propio tono..."
+                className="mt-2 w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Público objetivo */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Público objetivo <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                value={profile.publicoObjetivo}
+                onChange={(e) => handleChange("publicoObjetivo", e.target.value)}
+                placeholder="¿A quién va dirigido? Edad, intereses, dolores..."
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition resize-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Web */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                URL de la web
+              </label>
+              <input
+                type="url"
+                value={profile.webUrl}
+                onChange={(e) => handleChange("webUrl", e.target.value)}
+                placeholder="https://tuempresa.com"
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Redes sociales */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Redes sociales activas
+              </label>
+              <input
+                type="text"
+                value={profile.redesSociales}
+                onChange={(e) => handleChange("redesSociales", e.target.value)}
+                placeholder="Ej: @marca en Instagram y TikTok"
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* ── Card: Estrategia ─────────────────────────────────── */}
+          <div
+            className="p-5 rounded-2xl space-y-5"
+            style={{ background: "#1c1b1b" }}
+          >
+            {/* Diferenciadores */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={labelStyle}>
+                Diferenciadores clave
+              </label>
+              <textarea
+                value={profile.diferenciadores}
+                onChange={(e) => handleChange("diferenciadores", e.target.value)}
+                placeholder="¿Por qué elegiría alguien tu marca?"
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition resize-none"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* ── Card: API Key Anthropic ──────────────────────────── */}
+          <div
+            className="p-5 rounded-2xl"
+            style={{ background: "#1c1b1b" }}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <Key size={14} style={{ color: "#cbbeff" }} />
+              <label className="block text-sm font-medium" style={labelStyle}>
+                API Key de Anthropic
+              </label>
+              {hasApiKey && !keySaved && (
+                <span
+                  className="ml-auto flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg"
+                  style={{ background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+                >
                   <CheckCircle size={11} /> Configurada
                 </span>
               )}
+              {keySaved && (
+                <span
+                  className="ml-auto flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg"
+                  style={{ background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+                >
+                  <CheckCircle size={11} /> ¡Key guardada!
+                </span>
+              )}
             </div>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
-              className="text-xs text-blue-400 underline hover:text-blue-200 flex items-center gap-0.5">
-              Obtener key <ExternalLink size={10} />
-            </a>
+
+            {!hasApiKey && (
+              <p className="text-xs text-amber-400 mb-2 flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400" />
+                Requerida para usar los agentes de IA.{" "}
+                <a
+                  href="https://console.anthropic.com/settings/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-amber-200 flex items-center gap-0.5"
+                >
+                  Obtener key <ExternalLink size={10} />
+                </a>
+              </p>
+            )}
+            {hasApiKey && (
+              <p className="text-xs mb-2" style={sublabelStyle}>
+                Ya tienes una key configurada. Ingresa una nueva para reemplazarla.
+              </p>
+            )}
+
+            <div className="relative">
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder={hasApiKey ? "sk-ant-... (vacío = mantener la actual)" : "sk-ant-api03-..."}
+                className="w-full px-4 py-2.5 pr-10 rounded-xl text-white text-sm outline-none transition font-mono"
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition"
+                style={{ color: "#938e9e" }}
+              >
+                {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
           </div>
 
-          {!hasGeminiKey && (
-            <p className="text-xs text-blue-400/70 mb-2 flex items-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400" />
-              Alternativa económica a Claude. Flash 2.0 cuesta ~10x menos que Haiku.
-            </p>
-          )}
-          {hasGeminiKey && (
-            <p className="text-xs text-gray-500 mb-2">Ya tienes una key configurada. Ingresa una nueva para reemplazarla.</p>
-          )}
+          {/* ── Card: API Key Gemini ─────────────────────────────── */}
+          <div
+            className="p-5 rounded-2xl"
+            style={{ background: "#1c1b1b" }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Key size={14} className="text-blue-400" />
+                <h3 className="text-sm font-medium" style={labelStyle}>
+                  Google Gemini API Key
+                </h3>
+                {hasGeminiKey && (
+                  <span
+                    className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg"
+                    style={{ background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}
+                  >
+                    <CheckCircle size={11} /> Configurada
+                  </span>
+                )}
+              </div>
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-400 underline hover:text-blue-200 flex items-center gap-0.5"
+              >
+                Obtener key <ExternalLink size={10} />
+              </a>
+            </div>
 
-          <div className="relative">
-            <input
-              type={showGeminiKey ? "text" : "password"}
-              value={geminiKeyInput}
-              onChange={(e) => setGeminiKeyInput(e.target.value)}
-              placeholder={hasGeminiKey ? "AIza... (vacío = mantener la actual)" : "AIzaSy..."}
-              className="w-full px-4 py-2.5 pr-10 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 transition font-mono"
-            />
-            <button type="button" onClick={() => setShowGeminiKey((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition">
-              {showGeminiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+            {!hasGeminiKey && (
+              <p className="text-xs text-blue-400/70 mb-2 flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400" />
+                Alternativa económica a Claude. Flash 2.0 cuesta ~10x menos que Haiku.
+              </p>
+            )}
+            {hasGeminiKey && (
+              <p className="text-xs mb-2" style={sublabelStyle}>
+                Ya tienes una key configurada. Ingresa una nueva para reemplazarla.
+              </p>
+            )}
+
+            <div className="relative">
+              <input
+                type={showGeminiKey ? "text" : "password"}
+                value={geminiKeyInput}
+                onChange={(e) => setGeminiKeyInput(e.target.value)}
+                placeholder={hasGeminiKey ? "AIza... (vacío = mantener la actual)" : "AIzaSy..."}
+                className="w-full px-4 py-2.5 pr-10 rounded-xl text-white text-sm outline-none transition font-mono"
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => setShowGeminiKey((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition"
+                style={{ color: "#938e9e" }}
+              >
+                {showGeminiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {/* ── Card: Modelos de IA ───────────────────────────────── */}
+          <div
+            className="p-5 rounded-2xl"
+            style={{ background: "#1c1b1b" }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Cpu size={14} style={{ color: "#cbbeff" }} />
+              <h3 className="text-sm font-medium" style={labelStyle}>
+                Modelo de IA por sección
+              </h3>
+              <span className="text-xs" style={{ color: "rgba(147,142,158,0.6)" }}>
+                — elige el proveedor y modelo para cada función
+              </span>
+            </div>
+
+            <div className="space-y-6">
+              {MODEL_SECTIONS.map((section) => {
+                const current = modelState[section.key].get;
+                const setCurrent = modelState[section.key].set;
+                return (
+                  <div key={section.key}>
+                    <div className="text-sm font-medium mb-0.5" style={labelStyle}>
+                      {section.label}
+                    </div>
+                    <div className="text-xs mb-3" style={sublabelStyle}>
+                      {section.description}
+                    </div>
+
+                    {/* Claude models */}
+                    <div className="mb-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: "rgba(147,142,158,0.6)" }}>
+                        <span className="w-3 h-3 rounded-sm bg-orange-500/20 inline-flex items-center justify-center text-orange-400 text-[8px] font-bold">A</span>
+                        Anthropic / Claude
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {CLAUDE_MODELS.map((m) => {
+                          const isSelected = current === m.id;
+                          const needsKey = !hasApiKey;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => setCurrent(m.id)}
+                              className="p-3 rounded-xl border text-left transition"
+                              style={
+                                isSelected
+                                  ? { background: "rgba(203,190,255,0.08)", border: "1px solid rgba(203,190,255,0.3)", boxShadow: "0 0 0 1px rgba(203,190,255,0.2)" }
+                                  : needsKey
+                                  ? { background: "#201f1f", border: "1px solid rgba(255,255,255,0.06)", opacity: 0.5, cursor: "not-allowed" }
+                                  : { background: "#201f1f", border: "1px solid rgba(255,255,255,0.06)" }
+                              }
+                            >
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-xs font-semibold text-white">{m.label}</span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>{m.badge}</span>
+                              </div>
+                              <div className="text-[11px] leading-snug" style={sublabelStyle}>{m.description}</div>
+                              {isSelected && (
+                                <div className="mt-2 flex items-center gap-1 text-[10px]" style={{ color: "#cbbeff" }}>
+                                  <CheckCircle size={10} /> Activo
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Gemini models */}
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: "rgba(147,142,158,0.6)" }}>
+                        <span className="w-3 h-3 rounded-sm bg-blue-500/20 inline-flex items-center justify-center text-blue-400 text-[8px] font-bold">G</span>
+                        Google / Gemini
+                        {!hasGeminiKey && (
+                          <span className="normal-case tracking-normal font-normal" style={{ color: "rgba(147,142,158,0.4)" }}>
+                            — configura tu key para activar
+                          </span>
+                        )}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {GEMINI_MODELS.map((m) => {
+                          const isSelected = current === m.id;
+                          const needsKey = !hasGeminiKey;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => !needsKey && setCurrent(m.id)}
+                              disabled={needsKey}
+                              className="p-3 rounded-xl border text-left transition"
+                              style={
+                                isSelected
+                                  ? { background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.3)", boxShadow: "0 0 0 1px rgba(96,165,250,0.2)" }
+                                  : needsKey
+                                  ? { background: "#201f1f", border: "1px solid rgba(255,255,255,0.06)", opacity: 0.4, cursor: "not-allowed" }
+                                  : { background: "#201f1f", border: "1px solid rgba(255,255,255,0.06)" }
+                              }
+                            >
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-xs font-semibold text-white">{m.label}</span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>{m.badge}</span>
+                              </div>
+                              <div className="text-[11px] leading-snug" style={sublabelStyle}>{m.description}</div>
+                              {isSelected && (
+                                <div className="mt-2 flex items-center gap-1 text-[10px] text-blue-400">
+                                  <CheckCircle size={10} /> Activo
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Save button */}
+          <div className="pt-2 pb-8">
+            <button
+              onClick={handleSave}
+              disabled={saving || !profile.nombre || !profile.descripcion || !profile.tono || !profile.publicoObjetivo}
+              className="flex items-center gap-2 px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition"
+              style={{ background: "linear-gradient(90deg, #cbbeff 0%, #9d85ff 100%)", color: "#1e0061" }}
+            >
+              {saved ? (
+                <><CheckCircle size={15} /> Guardado</>
+              ) : saving ? (
+                <><Loader2 size={15} className="animate-spin" /> Guardando...</>
+              ) : (
+                <><Save size={15} /> Guardar perfil</>
+              )}
             </button>
           </div>
-        </div>
-
-        {/* ── Modelos de IA ────────────────────────────────────────── */}
-        <div className="pt-2 border-t border-gray-800">
-          <div className="flex items-center gap-2 mb-4">
-            <Cpu size={14} className="text-indigo-400" />
-            <h3 className="text-sm font-medium text-gray-300">Modelo de IA por sección</h3>
-            <span className="text-xs text-gray-600">— elige el proveedor y modelo para cada función</span>
-          </div>
-
-          <div className="space-y-6">
-            {MODEL_SECTIONS.map((section) => {
-              const current = modelState[section.key].get;
-              const setCurrent = modelState[section.key].set;
-              return (
-                <div key={section.key}>
-                  <div className="text-sm font-medium text-gray-300 mb-0.5">{section.label}</div>
-                  <div className="text-xs text-gray-500 mb-3">{section.description}</div>
-
-                  {/* Claude models */}
-                  <div className="mb-2">
-                    <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-orange-500/20 inline-flex items-center justify-center text-orange-400 text-[8px] font-bold">A</span>
-                      Anthropic / Claude
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {CLAUDE_MODELS.map((m) => {
-                        const isSelected = current === m.id;
-                        const needsKey = !hasApiKey;
-                        return (
-                          <button key={m.id} type="button" onClick={() => setCurrent(m.id)}
-                            className={`p-3 rounded-xl border text-left transition ${
-                              isSelected ? "bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50"
-                                : needsKey ? "bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed"
-                                : "bg-gray-900 border-gray-700 hover:border-gray-600"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-xs font-semibold text-white">{m.label}</span>
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>{m.badge}</span>
-                            </div>
-                            <div className="text-[11px] text-gray-400 leading-snug">{m.description}</div>
-                            {isSelected && <div className="mt-2 flex items-center gap-1 text-[10px] text-indigo-400"><CheckCircle size={10} /> Activo</div>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Gemini models */}
-                  <div>
-                    <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-blue-500/20 inline-flex items-center justify-center text-blue-400 text-[8px] font-bold">G</span>
-                      Google / Gemini
-                      {!hasGeminiKey && <span className="text-gray-700 normal-case tracking-normal font-normal">— configura tu key para activar</span>}
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {GEMINI_MODELS.map((m) => {
-                        const isSelected = current === m.id;
-                        const needsKey = !hasGeminiKey;
-                        return (
-                          <button key={m.id} type="button"
-                            onClick={() => !needsKey && setCurrent(m.id)}
-                            disabled={needsKey}
-                            className={`p-3 rounded-xl border text-left transition ${
-                              isSelected ? "bg-blue-600/20 border-blue-500 ring-1 ring-blue-500/50"
-                                : needsKey ? "bg-gray-900 border-gray-800 opacity-40 cursor-not-allowed"
-                                : "bg-gray-900 border-gray-700 hover:border-gray-600"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-xs font-semibold text-white">{m.label}</span>
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${MODEL_BADGE_COLORS[m.color]}`}>{m.badge}</span>
-                            </div>
-                            <div className="text-[11px] text-gray-400 leading-snug">{m.description}</div>
-                            {isSelected && <div className="mt-2 flex items-center gap-1 text-[10px] text-blue-400"><CheckCircle size={10} /> Activo</div>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Save button */}
-        <div className="pt-2">
-          <button
-            onClick={handleSave}
-            disabled={saving || !profile.nombre || !profile.descripcion || !profile.tono || !profile.publicoObjetivo}
-            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition"
-          >
-            {saved ? (
-              <><CheckCircle size={15} /> Guardado</>
-            ) : saving ? (
-              <><Loader2 size={15} className="animate-spin" /> Guardando...</>
-            ) : (
-              <><Save size={15} /> Guardar perfil</>
-            )}
-          </button>
         </div>
       </div>
     </div>

@@ -1,22 +1,20 @@
+"use client";
+
 import ChatInterface from "@/components/ChatInterface";
-import AgentBrain from "@/components/AgentBrain";
+import AgentPageHeader from "@/components/AgentPageHeader";
 import { Search } from "lucide-react";
 
 export default function SeoPage() {
   return (
-    <div className="flex flex-col h-screen">
-      <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-            <Search size={15} className="text-green-400" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-white">SEO Rápido</h1>
-            <p className="text-xs text-gray-500">Keywords, meta tags y análisis on-page</p>
-          </div>
-        </div>
-        <AgentBrain agentId="seo" />
-      </div>
+    <div className="flex flex-col h-screen" style={{ background: "#131313" }}>
+      <AgentPageHeader
+        title="SEO Rápido"
+        description="Keywords, meta tags y análisis on-page"
+        icon={<Search size={16} />}
+        iconBg="rgba(52,211,153,0.15)"
+        iconColor="#34d399"
+        agentId="seo"
+      />
       <div className="flex-1 overflow-hidden">
         <ChatInterface
           agentId="seo"

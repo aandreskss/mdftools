@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Palette, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, Eye,
   Download, RefreshCw, Mail, MessageCircle,
-  FileDown, Link2,
+  FileDown, Link2, FileText, Pencil,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -148,6 +149,7 @@ const textareaCls = `${inputCls} resize-none min-h-[100px]`;
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DisenoPropuestasPage() {
+  const router = useRouter();
   const [view, setView]           = useState<"list" | "form" | "result">("list");
   const [step, setStep]           = useState(0);
   const [form, setForm]           = useState<DesignForm>(defaultForm);
@@ -168,6 +170,8 @@ export default function DisenoPropuestasPage() {
   const [htmlExpiresAt, setHtmlExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft]   = useState<string | null>(null);
   const [htmlIframeKey, setHtmlIframeKey] = useState(0);
+  const [editMode,     setEditMode]      = useState(false);
+  const [editHtmlMode, setEditHtmlMode]  = useState(false);
 
   useEffect(() => { fetchProposals(); }, []);
 
@@ -502,6 +506,36 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     }
   }
 
+  async function saveEditedContent() {
+    const id = savedProposalId ?? viewingProposal?.id;
+    if (!id) return;
+    setStructuredContent(null);
+    await fetch("/api/design-proposals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, generated_content: generatedContent }),
+    });
+    setEditMode(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
+  async function saveEditedHtml() {
+    const id = savedProposalId ?? viewingProposal?.id;
+    if (!id) return;
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await fetch("/api/design-proposals", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, html_content: htmlContent, html_expires_at: expires }),
+    });
+    setHtmlExpiresAt(expires);
+    setHtmlIframeKey(k => k + 1);
+    setEditHtmlMode(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
   async function deleteProposal(id: string) {
     await fetch("/api/design-proposals", {
       method: "DELETE",
@@ -704,6 +738,16 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       {new Date(p.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
                     </span>
                     <div className="flex items-center gap-1.5 ml-auto" onClick={e => e.stopPropagation()}>
+                      {p.status === "closed_won" && (
+                        <button
+                          onClick={e => { e.stopPropagation(); router.push(`/dashboard/propuestas/diseno/${p.id}`); }}
+                          className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-all"
+                          style={{ background: "rgba(167,139,250,0.12)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.2)" }}
+                          title="Gestionar Brief y Calendario"
+                        >
+                          <FileText className="w-3 h-3" /> Brief
+                        </button>
+                      )}
                       <select
                         value={p.status}
                         onChange={e => updateProposalStatus(p.id, e.target.value)}
@@ -1173,48 +1217,135 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-1 rounded-xl p-1 border border-white/[0.06] mb-5 w-fit" style={{ background: "rgba(32,31,31,0.5)" }}>
-              <button
-                onClick={() => setResultTab("propuesta")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "propuesta" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
-              >
-                Propuesta
-              </button>
-              <button
-                onClick={() => { setResultTab("html"); if (!htmlContent && generatedContent) generateHtml(generatedContent); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "html" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
-              >
-                <Eye className="w-3.5 h-3.5" /> Vista Web
-              </button>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-1 rounded-xl p-1 border border-white/[0.06]" style={{ background: "rgba(32,31,31,0.5)" }}>
+                <button
+                  onClick={() => { setResultTab("propuesta"); setEditMode(false); setEditHtmlMode(false); }}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "propuesta" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
+                >
+                  Propuesta
+                </button>
+                <button
+                  onClick={() => { setResultTab("html"); setEditMode(false); setEditHtmlMode(false); if (!htmlContent && generatedContent) generateHtml(generatedContent); }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "html" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
+                >
+                  <Eye className="w-3.5 h-3.5" /> Vista Web
+                </button>
+              </div>
+              {/* Edit toggle */}
+              {resultTab === "propuesta" && markdownContent && (
+                <button
+                  onClick={() => setEditMode(m => !m)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${editMode ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-white/[0.04] text-slate-400 border-white/[0.08] hover:text-white hover:border-white/20"}`}
+                >
+                  <Pencil className="w-3.5 h-3.5" /> {editMode ? "Ver propuesta" : "Editar contenido"}
+                </button>
+              )}
+              {resultTab === "html" && htmlContent && !generatingHtml && (
+                <button
+                  onClick={() => setEditHtmlMode(m => !m)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${editHtmlMode ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-white/[0.04] text-slate-400 border-white/[0.08] hover:text-white hover:border-white/20"}`}
+                >
+                  <Pencil className="w-3.5 h-3.5" /> {editHtmlMode ? "Ver HTML" : "Editar HTML"}
+                </button>
+              )}
             </div>
 
             {/* Propuesta tab */}
             {resultTab === "propuesta" && (
               <div className="rounded-2xl overflow-hidden" style={{ background: "#1c1b1b" }}>
-                <div className="overflow-y-auto max-h-[72vh] p-8 custom-scrollbar">
-                  {generating && !generatedContent ? (
-                    <div className="flex items-center gap-3 text-sm" style={{ color: "#a78bfa" }}>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Generando propuesta creativa...
+                {editMode ? (
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Pencil className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-xs font-semibold text-amber-400">Modo edición</span>
+                      <span className="text-xs text-slate-500 ml-1">— edita el texto libremente y guarda los cambios</span>
                     </div>
-                  ) : (
-                    <div className="prose prose-invert max-w-none">
-                      <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+                    <textarea
+                      className="w-full px-4 py-3 rounded-xl border border-amber-500/20 bg-[#0e0e0e] text-slate-200 text-sm font-mono resize-none focus:outline-none focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/10 transition-all"
+                      style={{ minHeight: "60vh" }}
+                      value={generatedContent}
+                      onChange={e => setGeneratedContent(e.target.value)}
+                      spellCheck={false}
+                    />
+                    <div className="flex items-center gap-2 justify-end pt-1">
+                      <button
+                        onClick={() => setEditMode(false)}
+                        className="px-4 py-2 rounded-xl border border-white/[0.08] text-slate-400 hover:text-white text-xs font-bold transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={saveEditedContent}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 text-xs font-bold transition-all"
+                      >
+                        <Save className="w-3.5 h-3.5" /> Guardar cambios
+                      </button>
+                      <button
+                        onClick={async () => { await saveEditedContent(); setResultTab("html"); generateHtml(generatedContent); }}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff" }}
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" /> Guardar y regenerar Vista Web
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="overflow-y-auto max-h-[72vh] p-8 custom-scrollbar">
+                    {generating && !generatedContent ? (
+                      <div className="flex items-center gap-3 text-sm" style={{ color: "#a78bfa" }}>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Generando propuesta creativa...
+                      </div>
+                    ) : (
+                      <div className="prose prose-invert max-w-none">
+                        <ReactMarkdown components={mdComponents}>{markdownContent}</ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
             {/* HTML tab */}
             {resultTab === "html" && (
-              <div className="rounded-2xl overflow-hidden h-[750px] relative" style={{ background: "#1c1b1b" }}>
+              <div className="rounded-2xl overflow-hidden relative" style={{ background: "#1c1b1b", height: editHtmlMode ? "auto" : "750px" }}>
                 {generatingHtml && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm z-20" style={{ background: "rgba(19,19,19,0.7)" }}>
                     <Loader2 className="w-9 h-9 animate-spin mb-4" style={{ color: "#a78bfa" }} />
                     <p className="text-white font-bold">Generando experiencia interactiva...</p>
                   </div>
                 )}
-                {!generatingHtml && htmlContent ? (
+                {editHtmlMode ? (
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Pencil className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-xs font-semibold text-amber-400">Editando HTML</span>
+                      <span className="text-xs text-slate-500 ml-1">— edita el código directamente y guarda para actualizar la vista</span>
+                    </div>
+                    <textarea
+                      className="w-full px-4 py-3 rounded-xl border border-amber-500/20 bg-[#0e0e0e] text-slate-200 text-xs font-mono resize-none focus:outline-none focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/10 transition-all"
+                      style={{ minHeight: "65vh" }}
+                      value={htmlContent}
+                      onChange={e => setHtmlContent(e.target.value)}
+                      spellCheck={false}
+                    />
+                    <div className="flex items-center gap-2 justify-end pt-1">
+                      <button
+                        onClick={() => setEditHtmlMode(false)}
+                        className="px-4 py-2 rounded-xl border border-white/[0.08] text-slate-400 hover:text-white text-xs font-bold transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={saveEditedHtml}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff" }}
+                      >
+                        <Save className="w-3.5 h-3.5" /> Guardar y actualizar vista
+                      </button>
+                    </div>
+                  </div>
+                ) : !generatingHtml && htmlContent ? (
                   <iframe
                     key={htmlIframeKey}
                     srcDoc={htmlContent.replace("</head>", '<style>#accept-btn,.floating-cta{display:none!important}</style></head>')}
