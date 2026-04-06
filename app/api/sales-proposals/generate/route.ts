@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
 

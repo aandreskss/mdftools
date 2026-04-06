@@ -16,6 +16,14 @@ CREATE TABLE IF NOT EXISTS brand_profiles (
   differentiators text DEFAULT '',
   web_url text DEFAULT '',
   social_media text DEFAULT '',
+  -- API keys del usuario (cada usuario trae las suyas)
+  anthropic_api_key text DEFAULT '',
+  gemini_api_key text DEFAULT '',
+  -- Modelo preferido por slot (ver lib/user-settings.ts para defaults)
+  model_agents text DEFAULT '',
+  model_seo text DEFAULT '',
+  model_proposals text DEFAULT '',
+  model_workflows text DEFAULT '',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );

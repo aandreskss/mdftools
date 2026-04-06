@@ -27,7 +27,7 @@ interface Props {
 
 function getCompetitors(brandName: string, industry: string): Competitor[] {
   // Generate contextual mock competitors based on brand profile
-  const base = industry?.toLowerCase() || "marketing";
+  const _base = industry?.toLowerCase() || "marketing";
   return [
     {
       name: "ContentPeak Agency",

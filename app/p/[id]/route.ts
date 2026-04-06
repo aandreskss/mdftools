@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = createServiceClient();
 
   const { data } = await supabase
     .from("proposals")
     .select("html_content, client_name, html_expires_at")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   const expiredHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Propuesta expirada</title>
@@ -49,7 +50,7 @@ export async function GET(
     cta.style.cursor = 'pointer';
     cta.addEventListener('click', function(e) {
       e.preventDefault();
-      acceptProposal('${params.id}');
+      acceptProposal('${id}');
     });
   });
   async function acceptProposal(id) {

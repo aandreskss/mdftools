@@ -1,0 +1,127 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+```bash
+npm run dev           # Start dev server (localhost:3000)
+npm run build         # Production build
+npm run lint          # ESLint (flat config, typescript-eslint)
+npm run type-check    # tsc --noEmit
+npm run test:e2e      # Playwright E2E tests (requires .env.test.local)
+npm run test:e2e:ui   # Playwright UI mode
+```
+
+## Testing
+
+**E2E tests** use Playwright against a separate Supabase test project. Before running tests locally, create `.env.test.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<test-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+TEST_USER_EMAIL=test@mdftools.test
+TEST_USER_PASSWORD=TestPassword123!
+```
+
+Test files live in `e2e/`. Structure:
+- `auth.setup.ts` — logs in once and saves session to `e2e/.auth/user.json`
+- `auth.spec.ts` — auth flows (no stored session)
+- `dashboard.spec.ts` — dashboard smoke tests (uses stored session)
+
+**CI** runs on every PR via `.github/workflows/ci.yml`: npm audit → lint → type-check → build → E2E. The GitHub repo needs 4 secrets: `TEST_SUPABASE_URL`, `TEST_SUPABASE_ANON_KEY`, `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`.
+
+**Dependabot** opens weekly PRs for dependency updates (major Next.js/React bumps are excluded and must be reviewed manually).
+
+**Pre-commit hook** (Husky + lint-staged) runs ESLint on staged `.ts/.tsx` files before every commit.
+
+**Roadmap**: see `docs/ROADMAP.md` for the full quality/robustness plan and what's been completed.
+
+## Architecture Overview
+
+**MDF Tools** is a Next.js 16 / React 19 (App Router) SaaS dashboard that exposes AI-powered marketing tools. Each user brings their own API keys (Anthropic and/or Google Gemini), stored in the `brand_profiles` Supabase table.
+
+### Route structure
+
+- `app/(auth)/` — Login / Register pages
+- `app/(dashboard)/dashboard/` — All protected tool pages (social, blog, seo, propuestas, workflows, crm, seo-suite, etc.)
+- `app/api/` — API routes consumed by the dashboard
+- `app/p/[id]/`, `app/view/[id]/`, `app/view/design/[id]/`, `app/view/sales/[id]/` — Public proposal viewing (no auth, served via service role client)
+
+### Key libraries
+
+| File | Purpose |
+|------|---------|
+| `lib/user-settings.ts` | Central AI config: `getUserSettings()` fetches user's API keys + model preferences from Supabase; `callAIJson()` routes non-streaming calls to Anthropic or Gemini; `noApiKeyResponse()` returns a 402 used by every API route when no key is configured |
+| `lib/supabase/server.ts` | **async** `createClient()` (cookie-based, for Server Components/Route Handlers — always `await`) and `createServiceClient()` (service role, synchronous, bypasses RLS) |
+| `lib/supabase/client.ts` | Synchronous `createClient()` for Client Components only |
+| `lib/prompts.ts` | `getSystemPrompt(agentId, brandProfile)` — returns the system prompt for each AI agent |
+| `lib/env.ts` | Zod schema that validates required env vars at server startup — throws with a clear message if any are missing |
+| `lib/anthropic.ts` | Module-level `anthropic` singleton (legacy — prefer `getUserSettings` in new routes) |
+| `types/index.ts` | `BrandProfile`, `Message`, `AgentId` |
+
+### Two API route patterns
+
+**CRUD routes** (no AI calls) — use only auth, no `getUserSettings`:
+
+```ts
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+// INSERT must include user_id: user.id explicitly — RLS can't inject it
+// SELECT/DELETE are filtered automatically by RLS
+```
+
+**AI routes** (streaming or non-streaming) — require `getUserSettings`:
+
+```ts
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return noApiKeyResponse();
+
+let settings: Awaited<ReturnType<typeof getUserSettings>>;
+try { settings = await getUserSettings(supabase, user.id); }
+catch { return noApiKeyResponse(); }
+
+const model = settings.modelAgents; // or modelSeo / modelProposals / modelWorkflows
+if (isGemini(model)) { /* fetch Gemini SSE */ }
+else { /* anthropic.messages.stream(...) */ }
+```
+
+`app/api/chat/route.ts` is the main streaming endpoint for all dashboard agents. It assembles a system prompt from: brand profile + agent brain context + uploaded files + ad library, then streams via Anthropic or Gemini.
+
+### Model selection
+
+Four configurable slots per user in `brand_profiles`: `model_agents`, `model_seo`, `model_proposals`, `model_workflows`. Defaults live in `lib/user-settings.ts` (`DEFAULT_MODEL_*`). Provider is inferred by `isGemini(model)` — Anthropic for `claude-*`, Gemini for `gemini-*`.
+
+### Supabase tables (all RLS-protected per `user_id`)
+
+`brand_profiles` · `agent_contexts` · `agent_files` · `chat_history` · `proposals` · `design_proposals` · `sales_proposals` · `competitor_ads` · `ad_library` · `gsc_properties` · `workflows`
+
+Full schema in `supabase/schema.sql`. Migrations in `supabase/migrations/`.
+
+### Dashboard layout
+
+`app/(dashboard)/layout.tsx` wraps all pages with `<Sidebar>` and `<ApiKeyBanner>`. Exports `dynamic = "force-dynamic"`. The sidebar is collapsible; its width is passed as a CSS variable `--sidebar-width` to offset `<main>`.
+
+### Environment variables
+
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+ANTHROPIC_API_KEY          # fallback only; users provide their own keys via the UI
+```
+
+## Security
+
+HTTP security headers are configured in `next.config.js` (applied to all routes): `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
+
+Env var validation runs at server startup via `instrumentation.ts` → `lib/env.ts`. If `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` are missing, the server fails immediately with a descriptive error.
+
+## Next.js 16 patterns (breaking vs. 14)
+
+- **`createClient()` in `lib/supabase/server.ts` is async** — `await` it everywhere in server-side code.
+- **`params` in dynamic route handlers is a `Promise`** — `const { id } = await params` before use.
+- **Both `(dashboard)` and `(auth)` layouts export `dynamic = "force-dynamic"`** — prevents static prerender at build time without env vars.
+- `middleware.ts` is deprecated; future rename is `proxy.ts` (still works).

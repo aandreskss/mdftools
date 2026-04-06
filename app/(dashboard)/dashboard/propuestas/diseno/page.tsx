@@ -6,7 +6,7 @@ import {
   Palette, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, Eye,
   Download, RefreshCw, Mail, MessageCircle,
-  FileDown, Link2, X, DollarSign, FileText, Pencil,
+  FileDown, Link2, FileText, Pencil,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 

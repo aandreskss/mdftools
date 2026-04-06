@@ -37,14 +37,6 @@ const CRM_COLUMNS = [
   { key: "closed_lost",  label: "Perdida",    color: "border-red-700",     hdr: "bg-red-500/10 text-red-400" },
 ];
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  draft:        { label: "Borrador",    color: "bg-slate-500/10 text-slate-400 border border-slate-500/20" },
-  generada:     { label: "Generada",   color: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
-  sent:         { label: "Enviada",    color: "bg-blue-500/10 text-blue-400 border border-blue-500/20" },
-  negotiating:  { label: "Negociando", color: "bg-amber-500/10 text-amber-400 border border-amber-500/20" },
-  closed_won:   { label: "Ganada ✓",   color: "bg-green-500/10 text-green-400 border border-green-500/20" },
-  closed_lost:  { label: "Perdida ✗",  color: "bg-red-500/10 text-red-400 border border-red-500/20" },
-};
 
 const MODULE_BADGE: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   Marketing: { label: "Marketing", color: "bg-violet-500/15 text-violet-300 border border-violet-500/25",   icon: Megaphone },

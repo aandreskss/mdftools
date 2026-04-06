@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ views: [], total: 0 });
 
@@ -13,7 +14,7 @@ export async function GET(
   const { data: proposal } = await supabase
     .from("proposals")
     .select("id")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
     .single();
 
@@ -22,7 +23,7 @@ export async function GET(
   const { data: views } = await supabase
     .from("proposal_views")
     .select("viewed_at, device, ip_hash")
-    .eq("proposal_id", params.id)
+    .eq("proposal_id", id)
     .order("viewed_at", { ascending: false })
     .limit(20);
 

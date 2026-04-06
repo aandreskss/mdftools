@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json([]);
 
@@ -13,7 +13,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   const ids = (data ?? []).map(p => p.id);
-  let viewsMap: Record<string, { total: number; lastViewed: string | null }> = {};
+  const viewsMap: Record<string, { total: number; lastViewed: string | null }> = {};
 
   if (ids.length > 0) {
     const { data: views } = await supabase
@@ -41,7 +41,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 

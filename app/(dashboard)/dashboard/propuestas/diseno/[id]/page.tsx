@@ -96,14 +96,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-2xl border border-white/[0.07] p-6 ${className}`} style={{ background: "#1a1a1a" }}>
-      {children}
-    </div>
-  );
-}
-
 function BriefStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
     none:     { label: "Sin brief",         cls: "bg-white/5 text-slate-500" },
@@ -139,7 +131,7 @@ export default function BriefPage() {
   const [briefSaved,    setBriefSaved]    = useState(false);
   const [calSaved,      setCalSaved]      = useState(false);
   const [briefStatus,   setBriefStatus]   = useState<Proposal["brief_status"]>("none");
-  const [briefToken,    setBriefToken]    = useState<string | null>(null);
+  const [_briefToken,   setBriefToken]    = useState<string | null>(null);
   const [briefLink,     setBriefLink]     = useState<string | null>(null);
   const [copiedLink,    setCopiedLink]    = useState(false);
   const [projectDuration, setProjectDuration] = useState(30);

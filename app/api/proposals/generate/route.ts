@@ -28,7 +28,7 @@ const JSON_SCHEMA = `{
 }`;
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return noApiKeyResponse();
 
@@ -41,14 +41,6 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const { form } = body;
-
-  let agencyName = "Nuestra Agencia";
-  const { data: profile } = await supabase
-    .from("brand_profiles")
-    .select("brand_name")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (profile?.brand_name) agencyName = profile.brand_name;
 
   // Construcción de contexto para el prompt
   const scopeLabels = (form.serviceScope ?? []).join(", ") || form.serviceType || "Marketing digital";
@@ -98,7 +90,7 @@ IMPORTANTE: No incluyas explicaciones, ni bloques de código markdown, solo el o
 
     if (!aiText) throw new Error("La IA devolvió una respuesta vacía. Puede ser un filtro de seguridad o cuota agotada.");
 
-    let rawJson = aiText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    const rawJson = aiText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     JSON.parse(rawJson); // valida que sea JSON válido
 

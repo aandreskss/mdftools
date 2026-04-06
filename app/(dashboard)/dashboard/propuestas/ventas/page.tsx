@@ -5,7 +5,7 @@ import {
   TrendingUp, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, FileText, Calendar,
   Code, Download, RefreshCw, Pencil,
-  MessageCircle, Building2, X, FileDown, Link2,
+  MessageCircle, Building2, FileDown, Link2,
   DollarSign, Award, Mail,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -143,7 +143,7 @@ export default function PropuestasVentasPage() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [htmlContent, setHtmlContent]     = useState("");
 
-  const [previewId, setPreviewId]         = useState<string | null>(null);
+  const [_previewId, setPreviewId]         = useState<string | null>(null);
   const [htmlIframeKey, setHtmlIframeKey] = useState(0);
   const [resultTab, setResultTab] = useState<"propuesta" | "html">("propuesta");
   const [editMode,     setEditMode]      = useState(false);
@@ -572,7 +572,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       : printCss + htmlContent;
     const htmlWithPrint = withPrintCss.replace(
       "</body>",
-      `<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script></body>`
+      `<script>window.onload=function(){setTimeout(function(){window.print();},600);}</script></body>`
     );
     win.document.open();
     win.document.write(htmlWithPrint);
