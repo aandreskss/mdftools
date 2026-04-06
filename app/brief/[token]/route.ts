@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
+  const { token } = await params;
   const supabase = createServiceClient();
 
   const { data } = await supabase
     .from("proposals")
     .select("id, client_name, industry, brief_data, calendar_data, brief_status, brief_token, form_data")
-    .eq("brief_token", params.token)
+    .eq("brief_token", token)
     .single();
 
   if (!data?.brief_data) {
@@ -20,7 +21,7 @@ export async function GET(
     });
   }
 
-  const html = renderBriefHtml(data, params.token);
+  const html = renderBriefHtml(data, token);
   return new NextResponse(html, {
     status: 200,
     headers: {
