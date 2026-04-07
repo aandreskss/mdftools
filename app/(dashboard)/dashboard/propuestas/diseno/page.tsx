@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Palette, Plus, ArrowLeft, ArrowRight, Sparkles,
@@ -623,7 +623,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   function toggleQId(id: string) {
     setSelectedQIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
