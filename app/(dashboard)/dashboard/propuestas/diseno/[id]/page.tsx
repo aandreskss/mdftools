@@ -380,7 +380,10 @@ export default function BriefPage() {
         >
           <ArrowLeft className="w-4 h-4" /> Mis propuestas de diseño
         </button>
-        <BriefStatusBadge status={briefStatus} />
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#a78bfa" }}>Entregables y fechas</span>
+          <BriefStatusBadge status={briefStatus} />
+        </div>
       </div>
 
       {/* Proposal info banner */}

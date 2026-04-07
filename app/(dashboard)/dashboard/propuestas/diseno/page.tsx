@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Palette, Plus, ArrowLeft, ArrowRight, Sparkles,
   Copy, Check, Save, Loader2, Trash2, ChevronRight, Eye,
   Download, RefreshCw, Mail, MessageCircle,
   FileDown, Link2, FileText, Pencil,
+  ClipboardList, X, Send, ExternalLink, Clock, CheckCircle2,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { PRELOADED_QUESTIONS, BRIEF_CATEGORIES, type BriefQuestion } from "@/lib/client-brief-questions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,6 +115,18 @@ const CRM_COLUMNS = [
 
 const STEPS = ["Proyecto", "Cliente", "Brief", "Alcance", "Inversión", "Finalizar"];
 
+interface ClientBriefSummary {
+  id: string;
+  client_name: string;
+  client_email: string;
+  project_name: string;
+  token: string;
+  status: "pending" | "submitted";
+  submitted_at: string | null;
+  proposal_id: string | null;
+  created_at: string;
+}
+
 // ─── Markdown components ──────────────────────────────────────────────────────
 
 const mdComponents = {
@@ -150,7 +164,7 @@ const textareaCls = `${inputCls} resize-none min-h-[100px]`;
 
 export default function DisenoPropuestasPage() {
   const router = useRouter();
-  const [view, setView]           = useState<"list" | "form" | "result">("list");
+  const [view, setView]           = useState<"list" | "form" | "result" | "briefs">("list");
   const [step, setStep]           = useState(0);
   const [form, setForm]           = useState<DesignForm>(defaultForm);
   const [proposals, setProposals] = useState<DesignProposal[]>([]);
@@ -172,6 +186,21 @@ export default function DisenoPropuestasPage() {
   const [htmlIframeKey, setHtmlIframeKey] = useState(0);
   const [editMode,     setEditMode]      = useState(false);
   const [editHtmlMode, setEditHtmlMode]  = useState(false);
+
+  // ── Client briefs state ────────────────────────────────────────────────────
+  const [clientBriefs, setClientBriefs]         = useState<ClientBriefSummary[]>([]);
+  const [loadingBriefs, setLoadingBriefs]        = useState(false);
+  const [showBriefModal, setShowBriefModal]      = useState(false);
+  const [briefModalStep, setBriefModalStep]      = useState<"config" | "link">("config");
+  const [briefClientName, setBriefClientName]    = useState("");
+  const [briefClientEmail, setBriefClientEmail]  = useState("");
+  const [briefProjectName, setBriefProjectName]  = useState("");
+  const [selectedQIds, setSelectedQIds]          = useState<Set<string>>(new Set(PRELOADED_QUESTIONS.map(q => q.id)));
+  const [customQuestions, setCustomQuestions]    = useState<BriefQuestion[]>([]);
+  const [newCustomQ, setNewCustomQ]              = useState("");
+  const [creatingBrief, setCreatingBrief]        = useState(false);
+  const [createdBriefToken, setCreatedBriefToken] = useState<string | null>(null);
+  const [copiedBriefLink, setCopiedBriefLink]    = useState(false);
 
   useEffect(() => { fetchProposals(); }, []);
 
@@ -570,6 +599,116 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setHtmlExpiresAt(expires);
   }
 
+  // ── Client briefs functions ────────────────────────────────────────────────
+
+  async function fetchClientBriefs() {
+    setLoadingBriefs(true);
+    const res = await fetch("/api/client-briefs");
+    if (res.ok) setClientBriefs(await res.json());
+    setLoadingBriefs(false);
+  }
+
+  function openBriefModal() {
+    setBriefModalStep("config");
+    setBriefClientName("");
+    setBriefClientEmail("");
+    setBriefProjectName("");
+    setSelectedQIds(new Set(PRELOADED_QUESTIONS.map(q => q.id)));
+    setCustomQuestions([]);
+    setNewCustomQ("");
+    setCreatedBriefToken(null);
+    setShowBriefModal(true);
+  }
+
+  function toggleQId(id: string) {
+    setSelectedQIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function addCustomQuestion() {
+    if (!newCustomQ.trim()) return;
+    const q: BriefQuestion = {
+      id: `custom_${Date.now()}`,
+      category: "Preguntas Personalizadas",
+      question: newCustomQ.trim(),
+      type: "textarea",
+      required: false,
+    };
+    setCustomQuestions(prev => [...prev, q]);
+    setNewCustomQ("");
+    setSelectedQIds(prev => new Set([...prev, q.id]));
+  }
+
+  async function createClientBrief() {
+    if (!briefClientName.trim()) { alert("Ingresa el nombre del cliente"); return; }
+    const questions = [
+      ...PRELOADED_QUESTIONS.filter(q => selectedQIds.has(q.id)),
+      ...customQuestions.filter(q => selectedQIds.has(q.id)),
+    ];
+    if (questions.length === 0) { alert("Selecciona al menos una pregunta"); return; }
+    setCreatingBrief(true);
+    try {
+      const res = await fetch("/api/client-briefs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_name: briefClientName.trim(),
+          client_email: briefClientEmail.trim(),
+          project_name: briefProjectName.trim(),
+          questions,
+        }),
+      });
+      if (!res.ok) { const d = await res.json(); alert(d.error); return; }
+      const data = await res.json();
+      setCreatedBriefToken(data.token);
+      setBriefModalStep("link");
+      fetchClientBriefs();
+    } finally {
+      setCreatingBrief(false);
+    }
+  }
+
+  function getBriefLink(token: string) {
+    return `${window.location.origin}/client-brief/${token}`;
+  }
+
+  function copyBriefLink(token: string) {
+    navigator.clipboard.writeText(getBriefLink(token));
+    setCopiedBriefLink(true);
+    setTimeout(() => setCopiedBriefLink(false), 2500);
+  }
+
+  function startNewFromBrief(brief: ClientBriefSummary & { responses?: Record<string, string> }) {
+    const r = brief.responses ?? {};
+    const prefilled: Partial<DesignForm> = {
+      clientName: brief.client_name,
+      clientEmail: brief.client_email,
+      clientCompany: r["emp_1"] ?? "",
+      clientIndustry: r["emp_2"] ?? "",
+      briefDescription: [
+        r["adn_1"] ?? "",
+        r["adn_2"] ?? "",
+        r["obj_1"] ?? "",
+        r["obj_2"] ?? "",
+      ].filter(Boolean).join("\n\n"),
+      competidores: r["mkt_2"] ?? "",
+      colorPalette: r["est_2"] ?? "",
+      visualReferences: [r["est_1"] ?? "", r["emp_3"] ?? ""].filter(Boolean).join("\n"),
+    };
+    setForm({ ...defaultForm, ...prefilled });
+    setStep(0);
+    setGeneratedContent("");
+    setHtmlContent("");
+    setStructuredContent(null);
+    setSavedProposalId(null);
+    setViewingProposal(null);
+    setHtmlExpiresAt(null);
+    setView("form");
+  }
+
   function startNew() {
     setForm(defaultForm);
     setStep(0);
@@ -628,13 +767,22 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                 Genera propuestas creativas y profesionales para tus clientes
               </p>
             </div>
-            <button
-              onClick={startNew}
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all flex-shrink-0"
-              style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}
-            >
-              <Plus className="w-4 h-4" /> Nueva Propuesta
-            </button>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <button
+                onClick={() => { fetchClientBriefs(); setView("briefs"); }}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border border-white/[0.1] text-slate-300 hover:text-white hover:border-violet-500/40 transition-all"
+                style={{ background: "rgba(167,139,250,0.07)" }}
+              >
+                <ClipboardList className="w-4 h-4" style={{ color: "#a78bfa" }} /> Briefs de Exploración
+              </button>
+              <button
+                onClick={startNew}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
+                style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}
+              >
+                <Plus className="w-4 h-4" /> Nueva Propuesta
+              </button>
+            </div>
           </div>
         </div>
 
@@ -743,9 +891,9 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                           onClick={e => { e.stopPropagation(); router.push(`/dashboard/propuestas/diseno/${p.id}`); }}
                           className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-all"
                           style={{ background: "rgba(167,139,250,0.12)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.2)" }}
-                          title="Gestionar Brief y Calendario"
+                          title="Entregables y fechas"
                         >
-                          <FileText className="w-3 h-3" /> Brief
+                          <FileText className="w-3 h-3" /> Entregables y fechas
                         </button>
                       )}
                       <select
@@ -760,6 +908,325 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Render: Client Briefs view ────────────────────────────────────────────
+
+  if (view === "briefs") {
+    return (
+      <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+
+        {/* Header */}
+        <div className="relative flex flex-col p-8 rounded-2xl overflow-hidden mb-6" style={{ background: "#1c1b1b" }}>
+          <div className="absolute rounded-full pointer-events-none" style={{ top: "-30%", right: "-5%", width: "380px", height: "340px", background: "rgba(167,139,250,0.07)", filter: "blur(60px)" }} />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setView("list")} className="flex items-center gap-2 text-slate-500 hover:text-white text-sm transition-colors">
+                <ArrowLeft className="w-4 h-4" /> Propuestas
+              </button>
+              <div>
+                <h1 className="font-extrabold text-[28px] text-white tracking-tight leading-tight mb-1">
+                  Briefs de <span style={{ color: "#a78bfa" }}>Exploración</span>
+                </h1>
+                <p className="text-[13px]" style={{ color: "#938e9e" }}>
+                  Envía un cuestionario al cliente antes de crear la propuesta
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openBriefModal}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all flex-shrink-0"
+              style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}
+            >
+              <Plus className="w-4 h-4" /> Nuevo Brief
+            </button>
+          </div>
+        </div>
+
+        {/* Info banner */}
+        <div className="flex items-start gap-3 px-5 py-4 rounded-xl mb-6 text-sm" style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)" }}>
+          <ClipboardList className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#a78bfa" }} />
+          <div>
+            <p className="text-white font-semibold mb-0.5">Flujo del proceso</p>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              <span style={{ color: "#a78bfa" }} className="font-bold">1. Brief de exploración</span> → El cliente llena el cuestionario · <span style={{ color: "#a78bfa" }} className="font-bold">2. Propuesta</span> → Generamos la propuesta con sus respuestas · <span style={{ color: "#a78bfa" }} className="font-bold">3. Entregables y fechas</span> → Una vez aceptada, definimos el calendario
+            </p>
+          </div>
+        </div>
+
+        {/* List */}
+        {loadingBriefs ? (
+          <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a78bfa" }} /> Cargando briefs...
+          </div>
+        ) : clientBriefs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/[0.05] py-20" style={{ background: "rgba(167,139,250,0.03)" }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ background: "rgba(167,139,250,0.1)" }}>
+              <ClipboardList className="w-7 h-7" style={{ color: "#a78bfa" }} />
+            </div>
+            <p className="text-white font-bold text-lg mb-2">Sin briefs enviados</p>
+            <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
+              Crea un brief de exploración para enviarle al cliente antes de preparar la propuesta.
+            </p>
+            <button onClick={openBriefModal} className="px-6 py-3 text-white text-sm font-bold rounded-xl transition-all" style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}>
+              Crear Primer Brief
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {clientBriefs.map(brief => (
+              <div key={brief.id} className="relative overflow-hidden rounded-xl border border-white/[0.08] p-6 transition-all duration-200" style={{ background: "#1c1b1b" }}>
+                {/* Status */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: brief.status === "submitted" ? "rgba(52,211,153,0.1)" : "rgba(167,139,250,0.1)" }}>
+                      {brief.status === "submitted" ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      ) : (
+                        <Clock className="w-5 h-5" style={{ color: "#a78bfa" }} />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-white truncate leading-snug">{brief.client_name}</h3>
+                      {brief.project_name && <p className="text-xs text-slate-400 truncate">{brief.project_name}</p>}
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
+                    brief.status === "submitted"
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      : "bg-violet-500/10 text-violet-400 border border-violet-500/20"
+                  }`}>
+                    {brief.status === "submitted" ? "✓ Respondido" : "Pendiente"}
+                  </span>
+                </div>
+
+                {/* Meta */}
+                <div className="flex items-center gap-3 text-xs text-slate-500 mb-4">
+                  {brief.client_email && <span>{brief.client_email}</span>}
+                  <span className="ml-auto">{new Date(brief.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => copyBriefLink(brief.token)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-400 hover:text-white hover:border-violet-500/30 transition-all"
+                  >
+                    {copiedBriefLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Link2 className="w-3 h-3" />}
+                    Copiar enlace
+                  </button>
+                  <a
+                    href={getBriefLink(brief.token)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-400 hover:text-white transition-all"
+                  >
+                    <ExternalLink className="w-3 h-3" /> Ver
+                  </a>
+                  {brief.status === "submitted" && !brief.proposal_id && (
+                    <button
+                      onClick={async () => {
+                        const res = await fetch(`/api/client-briefs/${brief.id}`);
+                        if (res.ok) {
+                          const full = await res.json();
+                          startNewFromBrief({ ...brief, responses: full.responses ?? {} });
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ml-auto transition-all"
+                      style={{ background: "rgba(167,139,250,0.15)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.3)" }}
+                    >
+                      <Sparkles className="w-3 h-3" /> Crear Propuesta
+                    </button>
+                  )}
+                  {brief.proposal_id && (
+                    <span className="flex items-center gap-1 ml-auto text-[10px] text-emerald-400 font-bold">
+                      <CheckCircle2 className="w-3 h-3" /> Propuesta creada
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Modal crear brief ─────────────────────────────────────────────── */}
+        {showBriefModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
+            <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.1]" style={{ background: "#161616" }}>
+
+              {/* Modal header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-5 border-b border-white/[0.06]" style={{ background: "#161616" }}>
+                <div>
+                  <h2 className="text-white font-bold text-lg">
+                    {briefModalStep === "config" ? "Nuevo Brief de Exploración" : "¡Brief creado!"}
+                  </h2>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    {briefModalStep === "config" ? "Selecciona las preguntas y genera el enlace" : "Copia el enlace y envíaselo al cliente"}
+                  </p>
+                </div>
+                <button onClick={() => setShowBriefModal(false)} className="p-2 text-slate-500 hover:text-white rounded-xl transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {briefModalStep === "config" ? (
+                  <>
+                    {/* Client info */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-300">Nombre del cliente <span className="text-violet-400">*</span></label>
+                        <input
+                          value={briefClientName}
+                          onChange={e => setBriefClientName(e.target.value)}
+                          placeholder="Nombre o empresa"
+                          className="w-full px-4 py-3 bg-[#0e0e0e] border border-white/[0.08] rounded-xl text-white placeholder-slate-600 text-sm focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-300">Email del cliente</label>
+                        <input
+                          type="email"
+                          value={briefClientEmail}
+                          onChange={e => setBriefClientEmail(e.target.value)}
+                          placeholder="cliente@email.com"
+                          className="w-full px-4 py-3 bg-[#0e0e0e] border border-white/[0.08] rounded-xl text-white placeholder-slate-600 text-sm focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10 transition-all"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Nombre del proyecto</label>
+                      <input
+                        value={briefProjectName}
+                        onChange={e => setBriefProjectName(e.target.value)}
+                        placeholder="Ej: Branding para Cafetería Luna"
+                        className="w-full px-4 py-3 bg-[#0e0e0e] border border-white/[0.08] rounded-xl text-white placeholder-slate-600 text-sm focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/10 transition-all"
+                      />
+                    </div>
+
+                    {/* Question selector */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: "#a78bfa" }}>Preguntas a incluir</h3>
+                        <div className="flex gap-2">
+                          <button onClick={() => setSelectedQIds(new Set(PRELOADED_QUESTIONS.map(q => q.id)))} className="text-[10px] text-slate-500 hover:text-violet-400 transition-colors">Todas</button>
+                          <span className="text-slate-700">·</span>
+                          <button onClick={() => setSelectedQIds(new Set())} className="text-[10px] text-slate-500 hover:text-violet-400 transition-colors">Ninguna</button>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        {BRIEF_CATEGORIES.map(cat => {
+                          const qs = PRELOADED_QUESTIONS.filter(q => q.category === cat);
+                          return (
+                            <div key={cat}>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">{cat}</p>
+                              <div className="space-y-2">
+                                {qs.map(q => (
+                                  <label key={q.id} className="flex items-start gap-3 cursor-pointer group">
+                                    <div
+                                      onClick={() => toggleQId(q.id)}
+                                      className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                                        selectedQIds.has(q.id)
+                                          ? "border-violet-500 bg-violet-500"
+                                          : "border-white/20 bg-transparent"
+                                      }`}
+                                    >
+                                      {selectedQIds.has(q.id) && <Check className="w-2.5 h-2.5 text-white" />}
+                                    </div>
+                                    <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors leading-relaxed" onClick={() => toggleQId(q.id)}>
+                                      {q.question}
+                                      {q.required && <span className="text-violet-400 ml-1">*</span>}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Custom questions */}
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#a78bfa" }}>Preguntas personalizadas</h3>
+                      {customQuestions.map(q => (
+                        <div key={q.id} className="flex items-center gap-2 mb-2">
+                          <div
+                            onClick={() => toggleQId(q.id)}
+                            className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all cursor-pointer ${
+                              selectedQIds.has(q.id) ? "border-violet-500 bg-violet-500" : "border-white/20"
+                            }`}
+                          >
+                            {selectedQIds.has(q.id) && <Check className="w-2.5 h-2.5 text-white" />}
+                          </div>
+                          <span className="text-xs text-slate-300 flex-1">{q.question}</span>
+                          <button onClick={() => { setCustomQuestions(p => p.filter(x => x.id !== q.id)); setSelectedQIds(p => { const n = new Set(p); n.delete(q.id); return n; }); }} className="text-slate-600 hover:text-red-400">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="flex gap-2 mt-2">
+                        <input
+                          value={newCustomQ}
+                          onChange={e => setNewCustomQ(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && addCustomQuestion()}
+                          placeholder="Escribe tu pregunta personalizada…"
+                          className="flex-1 px-3 py-2.5 bg-[#0e0e0e] border border-white/[0.08] rounded-xl text-white placeholder-slate-600 text-sm focus:outline-none focus:border-violet-500/50 transition-all"
+                        />
+                        <button onClick={addCustomQuestion} className="px-3 py-2 rounded-xl bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 border border-violet-500/30 transition-all text-xs font-bold">
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.12)" }}>
+                      <span className="text-xs text-slate-400">{selectedQIds.size + customQuestions.filter(q => selectedQIds.has(q.id)).length} preguntas seleccionadas</span>
+                      <button
+                        onClick={createClientBrief}
+                        disabled={creatingBrief || !briefClientName.trim()}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-40"
+                        style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}
+                      >
+                        {creatingBrief ? <><Loader2 className="w-4 h-4 animate-spin" /> Generando…</> : <><Send className="w-4 h-4" /> Generar Enlace</>}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* Link generated */
+                  <div className="flex flex-col items-center text-center py-6 gap-6">
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "rgba(167,139,250,0.1)" }}>
+                      <Link2 className="w-8 h-8" style={{ color: "#a78bfa" }} />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-xl mb-2">Enlace listo</h3>
+                      <p className="text-slate-400 text-sm max-w-sm">
+                        Copia este enlace y envíaselo a <strong className="text-white">{briefClientName}</strong> por WhatsApp, email o donde prefieras.
+                      </p>
+                    </div>
+                    <div className="w-full px-4 py-3 rounded-xl border border-violet-500/30 text-violet-300 text-sm break-all" style={{ background: "rgba(167,139,250,0.06)" }}>
+                      {createdBriefToken && getBriefLink(createdBriefToken)}
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => createdBriefToken && copyBriefLink(createdBriefToken)}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                        style={{ background: copiedBriefLink ? "rgba(52,211,153,0.15)" : "linear-gradient(90deg,#a78bfa,#7c3aed)" }}
+                      >
+                        {copiedBriefLink ? <><Check className="w-4 h-4 text-emerald-400" /> Copiado</> : <><Copy className="w-4 h-4" /> Copiar enlace</>}
+                      </button>
+                      <button onClick={() => setShowBriefModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 border border-white/[0.1] hover:text-white transition-all">
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
