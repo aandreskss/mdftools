@@ -116,7 +116,7 @@ export function renderDataTemplate(
           'on-primary-fixed': '#250059',
           'tertiary-container': '#910056',
           'surface-dim': '#d9dadb',
-          'primary-container': '${p}cc',
+          'primary-container': '#5b21b6',
           'primary-fixed': '#ebddff',
           'secondary-fixed': '#f0dbff',
           'on-error': '#ffffff',
@@ -192,28 +192,28 @@ export function renderDataTemplate(
 </header>
 
 <!-- Sidebar -->
-<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/10 backdrop-blur-2xl flex flex-col pt-24 space-y-8 px-4">
-  <div class="px-4">
-    <p class="text-sm font-medium uppercase tracking-widest text-slate-900 mb-8">Navegación</p>
-    <nav class="space-y-6">
-      <a class="flex items-center gap-3 border-l-[3px] font-bold pl-4 transition-all" style="border-color:${s};color:${p};" href="#vision">
-        <span class="material-symbols-outlined">visibility</span>
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-white border-r border-gray-100 flex flex-col pt-20 px-4 overflow-y-auto">
+  <div class="px-4 pt-8">
+    <p class="text-sm font-medium uppercase tracking-widest text-slate-400 mb-6">Navegación</p>
+    <nav class="space-y-1">
+      <a class="flex items-center gap-3 py-2 px-3 border-l-[3px] font-bold rounded-r-lg transition-all" style="border-color:${s};color:${p};background:rgba(66,0,147,0.05);" href="#vision">
+        <span class="material-symbols-outlined text-[20px]">visibility</span>
         <span class="text-sm">Visión General</span>
       </a>
-      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#contexto">
-        <span class="material-symbols-outlined">analytics</span>
+      <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#contexto">
+        <span class="material-symbols-outlined text-[20px]">analytics</span>
         <span class="text-sm">Contexto</span>
       </a>
-      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#cronograma">
-        <span class="material-symbols-outlined">event</span>
+      <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#cronograma">
+        <span class="material-symbols-outlined text-[20px]">event</span>
         <span class="text-sm">Cronograma</span>
       </a>
-      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#inversion">
-        <span class="material-symbols-outlined">payments</span>
+      <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#inversion">
+        <span class="material-symbols-outlined text-[20px]">payments</span>
         <span class="text-sm">Inversión</span>
       </a>
-      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#pasos">
-        <span class="material-symbols-outlined">arrow_forward</span>
+      <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#pasos">
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
         <span class="text-sm">Siguientes Pasos</span>
       </a>
     </nav>
@@ -237,10 +237,8 @@ export function renderDataTemplate(
     <div class="relative overflow-hidden rounded-[2rem] bg-surface-container-low min-h-[500px] flex items-center p-16">
       <div class="relative z-10 max-w-2xl">
         <span class="inline-block px-4 py-1 rounded-full text-on-primary-fixed text-xs font-bold tracking-widest uppercase mb-6" style="background:${p}22;color:${p};">${esc(c.tipoProyecto)}</span>
-        <h1 class="text-6xl font-extrabold text-on-surface tracking-tight leading-[1.1] mb-8">
-          ${esc(c.resumenCreativo).replace(/(\w[\w\s]{0,30})(.+)/, (_, a, b) =>
-            `${a}<span class="text-transparent bg-clip-text" style="background-image:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;">${b}</span>`
-          )}
+        <h1 class="text-6xl font-extrabold tracking-tight leading-[1.1] mb-8" style="color:#191c1d;">
+          ${esc(c.resumenCreativo)}
         </h1>
         <p class="text-lg text-on-surface-variant leading-relaxed mb-10 max-w-lg">${esc(c.entendimientoDelCliente)}</p>
         <div class="flex gap-4">
