@@ -15,401 +15,390 @@ export function renderDataTemplate(
 ): string {
   const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
-  const p = brand.primaryColor || "#7c3aed";
-  const s = brand.secondaryColor || "#c026d3";
+  const p = brand.primaryColor || "#420093";
+  const s = brand.secondaryColor || "#8127cf";
+  const acceptUrl = proposalId ? `/api/proposals/accept?id=${proposalId}` : "#";
 
   const logoHtml = brand.logoUrl
-    ? `<img src="${esc(brand.logoUrl)}" class="sidebar-logo" alt="logo"/>`
-    : `<div class="sidebar-avatar">${esc(brand.agencyName).slice(0, 2).toUpperCase()}</div>`;
+    ? `<img src="${esc(brand.logoUrl)}" alt="logo" style="max-height:28px;max-width:110px;object-fit:contain;"/>`
+    : `<span class="material-symbols-outlined" style="color:${p};">menu_book</span>`;
 
-  // Nav icons (inline SVG minimal)
-  const navItems = [
-    { href: "#intro",      label: "Intro",      icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` },
-    { href: "#estrategia", label: "Strategy",   icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>` },
-    { href: "#enfoque",    label: "Approach",   icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>` },
-    { href: "#cronograma", label: "Timeline",   icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>` },
-    { href: "#inversion",  label: "Investment", icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>` },
-  ];
-  const navHtml = navItems.map((n, i) => `
-    <a href="${n.href}" class="nav-link${i === 1 ? " nav-active" : ""}">
-      <span class="nav-icon">${n.icon}</span>${n.label}
-    </a>`).join("");
-
-  // KPI metrics from resultadosEsperados / inversion
-  const kpi1 = c.resultadosEsperados?.[0] || "+45%";
-  const kpi2 = c.resultadosEsperados?.[1] || "12.5k";
-  const kpi1Label = "ROI Proyectado";
-  const kpi2Label = "Lead Gen / Mes";
-
-  // Retos — left panel
-  const retosHtml = (c.retosDetectados || []).slice(0, 2).map((r, i) => `
-    <div class="reto-card">
-      <div class="reto-badge" style="color:${i === 0 ? "#ef4444" : p};border-color:${i === 0 ? "#fee2e2" : "color-mix(in srgb," + p + " 20%,transparent)"};background:${i === 0 ? "#fef2f2" : "color-mix(in srgb," + p + " 8%,transparent)"};">
-        <span>${i === 0 ? "⊘" : "⊞"}</span>
-        ${esc(r.titulo.toUpperCase())}
+  // E-E-A-T pillars from enfoqueCreativo.pilares (4 items)
+  const pillarIcons = ["psychology", "workspace_premium", "verified_user", "shield"];
+  const pillarBgs = ["bg-primary-fixed", "bg-secondary-fixed", "bg-tertiary-fixed", "bg-primary-fixed/20"];
+  const pillarColors = ["text-primary", "text-secondary", "text-tertiary", "text-on-primary-container"];
+  const pillarHoverBgs = ["group-hover:bg-primary", "group-hover:bg-secondary", "group-hover:bg-tertiary", "group-hover:bg-on-primary-container"];
+  const pillarHoverColors = ["group-hover:text-on-primary", "group-hover:text-on-secondary", "group-hover:text-on-tertiary", "group-hover:text-primary"];
+  const defaultPillars = ["Experiencia", "Experticia", "Autoridad", "Confianza"];
+  const pilaresHtml = (c.enfoqueCreativo?.pilares || defaultPillars).slice(0, 4).map((pl, i) => `
+    <div class="group cursor-default">
+      <div class="w-16 h-16 rounded-2xl ${pillarBgs[i]} flex items-center justify-center mb-6 ${pillarHoverBgs[i]} transition-colors">
+        <span class="material-symbols-outlined ${pillarColors[i]} ${pillarHoverColors[i]}">${pillarIcons[i]}</span>
       </div>
-      <h3 class="reto-title">${esc(r.titulo)}</h3>
-      <p class="reto-desc">${esc(r.descripcion)}</p>
-      <div class="reto-footer">
-        <span class="reto-footer-label">Impacto Mensual</span>
-        <span class="reto-footer-val">${i === 0 ? "-$14,200 USD" : "22% Gasto Ad"}</span>
-      </div>
+      <h3 class="font-bold text-xl mb-3">${esc(pl)}</h3>
+      <p class="text-sm text-on-surface-variant leading-relaxed">${i === 0 ? esc(c.enfoqueCreativo?.descripcion?.split(".")[0] || "") : (c.porQueNosotros?.[i] ? esc(c.porQueNosotros[i].descripcion) : "")}</p>
     </div>`).join("");
 
-  // ROI progress bars from inversion incluye
-  const progressItems = [
-    { label: "Adquisición", val: "+24%", pct: 60 },
-    { label: "Retención (LTV)", val: "+38%", pct: 78 },
-    { label: "Conversión Directa", val: "+15%", pct: 40 },
-  ];
-  const progressHtml = progressItems.map(pr => `
-    <div class="progress-row">
-      <div class="progress-top">
-        <span class="progress-label">${pr.label}</span>
-        <span class="progress-val">${pr.val}</span>
+  // Fases
+  const fasesHtml = (c.fases || []).slice(0, 3).map((f, i) => {
+    const hoverColors = ["group-hover:text-primary", "group-hover:text-secondary", "group-hover:text-tertiary-container"];
+    const entregablesSlice = (c.entregables || []).slice(i * 2, i * 2 + 2);
+    const bullets = entregablesSlice.length
+      ? entregablesSlice.map(e => `
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-xs">check_circle</span>
+            ${esc(e)}
+          </li>`).join("")
+      : `<li class="flex items-center gap-3"><span class="material-symbols-outlined text-xs">check_circle</span>${esc(f.descripcion)}</li>`;
+    return `
+    <div class="flex gap-8 group">
+      <div class="text-5xl font-black text-outline-variant/40 ${hoverColors[i] || "group-hover:text-primary"} transition-colors">${String(f.numero).padStart(2, "0")}</div>
+      <div class="pt-2">
+        <h4 class="text-2xl font-bold mb-4">${esc(f.titulo)}</h4>
+        ${f.duracion ? `<p class="text-xs font-bold text-secondary uppercase tracking-widest mb-3">${esc(f.duracion)}</p>` : ""}
+        <ul class="space-y-4 text-on-surface-variant">${bullets}</ul>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${pr.pct}%;background:${p};"></div></div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 
-  // Method steps
-  const fasesHtml = (c.fases || []).map((f) => `
-    <div class="method-step">
-      <div class="method-num">${String(f.numero).padStart(2, "0")}</div>
-      <div class="method-body">
-        <div class="method-title">${esc(f.titulo)}</div>
-        <div class="method-desc">${esc(f.descripcion)}</div>
+  // KPI glass cards from resultadosEsperados
+  const kpiLabels = ["Resultado Clave", "Impacto Proyectado", "Métrica Principal"];
+  const kpiHtml = (c.resultadosEsperados || []).slice(0, 3).map((r, i) => {
+    const parts = r.match(/^([+\-~]?\d[\d,.%xk]*(?:\/\w+)?|[+\-~]?\d+pp)\s*(.*)?$/i);
+    const val = parts ? parts[1] : r.slice(0, 12);
+    const desc = parts && parts[2] ? parts[2] : r;
+    return `
+    <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-tertiary-fixed" style="font-variation-settings:'FILL' 1;">star</span>
+        <span class="text-xs font-bold uppercase tracking-widest">${kpiLabels[i]}</span>
       </div>
-    </div>`).join("");
+      <p class="text-5xl font-black mb-2">${esc(val)}</p>
+      <p class="text-sm opacity-70">${esc(desc)}</p>
+    </div>`;
+  }).join("");
 
-  const acceptBtn = proposalId
-    ? `<a href="/api/proposals/accept?id=${proposalId}" class="cta-btn" style="background:${p};">Aprobar Estrategia</a>`
-    : `<a href="#inversion" class="cta-btn" style="background:${p};">Aprobar Estrategia</a>`;
+  // Retos for bento small cards
+  const reto0 = c.retosDetectados?.[0];
+  const reto1 = c.retosDetectados?.[1];
+
+  // Investment: 3 column adapted
+  const incluye = c.inversion?.incluye || [];
+  const col1 = incluye.slice(0, Math.ceil(incluye.length / 2));
+  const col2 = incluye.slice(Math.ceil(incluye.length / 2));
+  const inv1Html = col1.map(it => `<li class="flex gap-3"><span class="material-symbols-outlined text-primary text-lg">done</span>${esc(it)}</li>`).join("");
+  const inv2Html = col2.map(it => `<li class="flex gap-3"><span class="material-symbols-outlined text-primary text-lg">done</span>${esc(it)}</li>`).join("");
 
   const termsHtml = brand.termsConditions ? `
-    <section class="main-section">
-      <h2 class="section-title">Términos y Condiciones</h2>
-      <div class="card" style="padding:28px;font-size:13px;line-height:1.8;color:#6b7280;white-space:pre-wrap;">${esc(brand.termsConditions)}</div>
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold text-on-surface mb-6">Términos y Condiciones</h2>
+      <div class="bg-surface-container-low p-8 rounded-2xl text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap">${esc(brand.termsConditions)}</div>
     </section>` : "";
 
-  const senderHtml = brand.senderName
-    ? `<span style="font-size:13px;color:#9ca3af;">Presentado por <strong style="color:#6b7280;">${esc(brand.senderName)}</strong></span>` : "";
-
-  // Bar chart SVG (decorative)
-  const barChart = `<svg width="100%" height="60" viewBox="0 0 180 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0"  y="30" width="22" height="30" rx="5" fill="rgba(255,255,255,0.35)"/>
-    <rect x="28" y="15" width="22" height="45" rx="5" fill="rgba(255,255,255,0.5)"/>
-    <rect x="56" y="5"  width="22" height="55" rx="5" fill="rgba(255,255,255,0.9)"/>
-    <rect x="84" y="20" width="22" height="40" rx="5" fill="rgba(255,255,255,0.4)"/>
-    <rect x="112" y="35" width="22" height="25" rx="5" fill="rgba(255,255,255,0.3)"/>
-    <rect x="140" y="10" width="22" height="50" rx="5" fill="rgba(255,255,255,0.55)"/>
-  </svg>`;
-
   return `<!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Propuesta — ${esc(clientName)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          'tertiary-fixed-dim': '#ffb0cd',
+          'on-secondary-container': '#fffbff',
+          'surface-tint': '#713dcc',
+          'on-primary-fixed': '#250059',
+          'tertiary-container': '#910056',
+          'surface-dim': '#d9dadb',
+          'primary-container': '${p}cc',
+          'primary-fixed': '#ebddff',
+          'secondary-fixed': '#f0dbff',
+          'on-error': '#ffffff',
+          'outline': '#7b7485',
+          'surface-bright': '#f8f9fa',
+          'inverse-surface': '#2e3132',
+          'on-primary-fixed-variant': '#581db3',
+          'on-tertiary-container': '#ff9ac2',
+          'on-primary': '#ffffff',
+          'on-tertiary-fixed-variant': '#8c0053',
+          'on-primary-container': '#c7aaff',
+          'surface-container': '#edeeef',
+          'surface-variant': '#e1e3e4',
+          'on-surface-variant': '#4a4453',
+          'on-secondary-fixed': '#2c0051',
+          'error-container': '#ffdad6',
+          'tertiary-fixed': '#ffd9e4',
+          'surface-container-lowest': '#ffffff',
+          'surface-container-high': '#e7e8e9',
+          'surface-container-low': '#f3f4f5',
+          'on-secondary-fixed-variant': '#6900b3',
+          'tertiary': '#68003c',
+          'inverse-on-surface': '#f0f1f2',
+          'on-error-container': '#93000a',
+          'error': '#ba1a1a',
+          'primary-fixed-dim': '#d3bbff',
+          'inverse-primary': '#d3bbff',
+          'primary': '${p}',
+          'secondary-fixed-dim': '#ddb7ff',
+          'on-surface': '#191c1d',
+          'on-background': '#191c1d',
+          'surface-container-highest': '#e1e3e4',
+          'on-tertiary': '#ffffff',
+          'surface': '#f8f9fa',
+          'secondary-container': '#9c48ea',
+          'on-tertiary-fixed': '#3e0022',
+          'outline-variant': '#ccc3d6',
+          'secondary': '${s}',
+          'on-secondary': '#ffffff',
+          'background': '#f8f9fa'
+        },
+        borderRadius: { DEFAULT: '0.125rem', lg: '0.25rem', xl: '0.5rem', full: '0.75rem' },
+        fontFamily: { headline: ['Inter'], body: ['Inter'], label: ['Inter'] }
+      }
+    }
+  }
+</script>
 <style>
-  :root {
-    --primary: ${p};
-    --secondary: ${s};
-    --bg: #f3f4f8;
-    --sidebar-bg: #ffffff;
-    --sidebar-w: 210px;
-    --text: #111827;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --card-bg: #ffffff;
-    --radius: 16px;
-    --hero-bg: #0b1120;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
-
-  /* ── Sidebar ── */
-  .sidebar {
-    position: fixed; left: 0; top: 0; height: 100vh; width: var(--sidebar-w);
-    background: var(--sidebar-bg); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; padding: 24px 16px 20px; z-index: 100; overflow-y: auto;
-  }
-  .sidebar-logo { max-height: 28px; max-width: 110px; object-fit: contain; margin-bottom: 6px; }
-  .sidebar-avatar {
-    width: 36px; height: 36px; border-radius: 10px; margin-bottom: 8px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800; color: #fff;
-  }
-  .sidebar-agency { font-size: 15px; font-weight: 800; color: var(--primary); }
-  .sidebar-sub { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: capitalize; margin-top: 1px; }
-  .sidebar-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 24px; flex: 1; }
-  .nav-link {
-    display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 10px;
-    font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all .15s;
-  }
-  .nav-link:hover { background: color-mix(in srgb,var(--primary) 8%,transparent); color: var(--primary); }
-  .nav-active { background: color-mix(in srgb,var(--primary) 10%,transparent) !important; color: var(--primary) !important; font-weight: 600; }
-  .nav-icon { display: flex; align-items: center; opacity: .7; }
-  .nav-active .nav-icon { opacity: 1; }
-  .sidebar-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-  .sidebar-footer-avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg,var(--primary),var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; flex-shrink: 0; }
-  .sidebar-footer-text { font-size: 11px; }
-  .sidebar-footer-name { font-weight: 700; color: var(--text); }
-  .sidebar-footer-meta { color: var(--muted); }
-
-  /* ── Main ── */
-  .main { margin-left: var(--sidebar-w); padding: 28px 32px 80px; max-width: 1000px; }
-  .main-section { margin-bottom: 24px; }
-  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 6px; }
-  .section-title { font-size: 22px; font-weight: 800; letter-spacing: -.4px; color: var(--text); margin-bottom: 16px; }
-  .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 1px 12px rgba(0,0,0,.06); }
-
-  /* ── Hero ── */
-  .hero {
-    border-radius: 20px; overflow: hidden; position: relative; min-height: 220px;
-    background: var(--hero-bg); padding: 40px 44px 40px; margin-bottom: 24px;
-    background-image:
-      radial-gradient(ellipse 70% 60% at 80% 20%, rgba(20,80,100,.55) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 80% at 10% 80%, rgba(30,20,80,.4) 0%, transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Ccircle cx='400' cy='200' r='180' fill='none' stroke='rgba(255,255,255,.04)' stroke-width='1'/%3E%3Ccircle cx='400' cy='200' r='140' fill='none' stroke='rgba(255,255,255,.03)' stroke-width='1'/%3E%3Ccircle cx='400' cy='200' r='100' fill='none' stroke='rgba(255,255,255,.04)' stroke-width='1'/%3E%3C/svg%3E");
-    background-size: cover, cover, cover;
-  }
-  .hero-dots {
-    position: absolute; top: 0; right: 0; width: 55%; height: 100%; pointer-events: none; opacity: .4;
-    background-image: radial-gradient(circle, rgba(255,255,255,.15) 1px, transparent 1px);
-    background-size: 24px 24px;
-    -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,.8) 0%, transparent 100%);
-    mask-image: linear-gradient(to left, rgba(0,0,0,.8) 0%, transparent 100%);
-  }
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--primary); color: #fff;
-    font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-    padding: 5px 14px; border-radius: 100px; margin-bottom: 20px;
-  }
-  .hero-title { font-size: clamp(28px, 4vw, 46px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.08; color: #fff; margin-bottom: 18px; max-width: 560px; }
-  .hero-sub { font-size: 14px; color: rgba(255,255,255,.65); max-width: 440px; line-height: 1.65; }
-
-  /* ── KPI row ── */
-  .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 14px; margin-bottom: 24px; }
-  .kpi-card { padding: 22px 24px; border-radius: var(--radius); background: #1a1f35; color: #fff; }
-  .kpi-icon { font-size: 18px; margin-bottom: 14px; }
-  .kpi-val { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: #fff; }
-  .kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.45); margin-top: 4px; }
-  .kpi-chart-card {
-    padding: 20px 22px; border-radius: var(--radius);
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    display: flex; flex-direction: column;
-  }
-  .kpi-chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .kpi-chart-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.75); }
-  .kpi-chart-icon { color: rgba(255,255,255,.75); font-size: 16px; }
-  .kpi-chart-bars { flex: 1; display: flex; align-items: flex-end; }
-
-  /* ── Diagnosis section ── */
-  .diagnosis-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
-  .retos-list { display: flex; flex-direction: column; gap: 12px; }
-  .reto-card { background: var(--card-bg); border-radius: var(--radius); padding: 22px 24px; box-shadow: 0 1px 10px rgba(0,0,0,.06); }
-  .reto-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; border: 1px solid; margin-bottom: 10px; }
-  .reto-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
-  .reto-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 14px; }
-  .reto-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
-  .reto-footer-label { font-size: 11px; color: var(--muted); }
-  .reto-footer-val { font-size: 13px; font-weight: 700; color: var(--text); }
-
-  /* ── ROI sidebar card ── */
-  .roi-card { background: var(--card-bg); border-radius: var(--radius); padding: 24px; box-shadow: 0 1px 10px rgba(0,0,0,.06); }
-  .roi-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 18px; line-height: 1.3; }
-  .progress-row { margin-bottom: 14px; }
-  .progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .progress-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .progress-val { font-size: 11px; font-weight: 700; color: var(--text); }
-  .progress-track { height: 5px; background: #f0f1f5; border-radius: 100px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 100px; }
-  .roi-growth { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
-  .roi-growth-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--primary); margin-bottom: 4px; }
-  .roi-growth-val { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; color: var(--text); }
-  .roi-growth-sub { font-size: 11px; color: var(--muted); }
-  .cta-btn { display: block; text-align: center; padding: 13px; border-radius: 12px; font-weight: 700; font-size: 13px; color: #fff; text-decoration: none; margin-top: 16px; transition: opacity .2s; }
-  .cta-btn:hover { opacity: .88; }
-
-  /* ── Method dark section ── */
-  .method-section { background: #0b1120; border-radius: 20px; padding: 40px 44px; margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-  .method-title { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -.5px; margin-bottom: 28px; }
-  .method-steps { display: flex; flex-direction: column; gap: 22px; }
-  .method-step { display: flex; gap: 16px; }
-  .method-num { font-size: 20px; font-weight: 900; color: rgba(255,255,255,.2); flex-shrink: 0; width: 32px; }
-  .method-body { border-left: 1px solid rgba(255,255,255,.1); padding-left: 16px; }
-  .method-title-step { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-  .method-desc { font-size: 13px; color: rgba(255,255,255,.5); line-height: 1.55; }
-  .method-img { border-radius: 16px; background: linear-gradient(135deg, rgba(124,58,237,.3), rgba(192,38,211,.2)); height: 220px; display: flex; align-items: center; justify-content: center; }
-  .method-img-inner { font-size: 48px; opacity: .4; }
-
-  /* ── Investment ── */
-  .inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .inv-card { padding: 28px; }
-  .inv-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
-  .inv-price { font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; letter-spacing: -1.5px; color: var(--text); margin-bottom: 16px; }
-  .inv-terms { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
-  .inv-incluye { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-  .inv-incluye li { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .inv-incluye li::before { content: "✓"; color: var(--primary); font-weight: 700; flex-shrink: 0; }
-  .inv-cta { margin-top: 20px; }
-  .inv-confirm { display: block; text-align: center; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; color: #fff; text-decoration: none; background: var(--primary); transition: opacity .2s; }
-  .inv-confirm:hover { opacity: .88; }
-
-  /* ── Footer ── */
-  .footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 24px; border-top: 1px solid var(--border); }
-  .footer-left { font-size: 11px; color: var(--muted); }
-
-  /* ── Mobile ── */
-  .mobile-bar { display: none; position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 12px 20px; align-items: center; justify-content: space-between; }
-  .mobile-bar-name { font-size: 14px; font-weight: 800; color: var(--primary); }
-  .mobile-cta { padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #fff; text-decoration: none; }
-
-  @media (max-width: 768px) {
-    .sidebar { display: none; }
-    .mobile-bar { display: flex; }
-    .main { margin-left: 0; padding: 20px 16px 60px; }
-    .kpi-row { grid-template-columns: 1fr 1fr; }
-    .kpi-chart-card { grid-column: span 2; }
-    .diagnosis-grid { grid-template-columns: 1fr; }
-    .method-section { grid-template-columns: 1fr; padding: 28px 24px; }
-    .method-img { display: none; }
-    .inv-grid { grid-template-columns: 1fr; }
-    .hero { padding: 28px 24px; }
-  }
-  @media (max-width: 480px) {
-    .kpi-row { grid-template-columns: 1fr; }
-    .kpi-chart-card { grid-column: span 1; }
-  }
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc3d6; border-radius: 10px; }
 </style>
 </head>
-<body>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
 
-<!-- Mobile bar -->
-<div class="mobile-bar">
-  <span class="mobile-bar-name">${esc(brand.agencyName)}</span>
-  ${proposalId ? `<a href="/api/proposals/accept?id=${proposalId}" class="mobile-cta" style="background:${p};">Aprobar</a>` : ""}
-</div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl shadow-[0_10px_30px_-5px_rgba(66,0,147,0.08)] flex items-center justify-between px-6 py-4">
+  <div class="flex items-center gap-3">
+    ${logoHtml}
+    <span class="text-lg font-extrabold text-slate-900 tracking-tight">${esc(brand.agencyName)}</span>
+  </div>
+  <div class="flex items-center gap-6">
+    <nav class="hidden md:flex gap-8">
+      <a class="font-bold transition-colors" style="color:${p};" href="#vision">Visión General</a>
+      <a class="text-slate-500 hover:text-slate-800 transition-colors px-2 rounded-lg" href="#contexto">Estrategia</a>
+      <a class="text-slate-500 hover:text-slate-800 transition-colors px-2 rounded-lg" href="#inversion">Inversión</a>
+    </nav>
+    <a href="${acceptUrl}" class="text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition-transform active:scale-95" style="background:linear-gradient(135deg,${p},${s});">
+      Aceptar Propuesta
+    </a>
+  </div>
+</header>
 
 <!-- Sidebar -->
-<aside class="sidebar">
-  ${logoHtml}
-  <div class="sidebar-agency">${esc(brand.agencyName)}</div>
-  <div class="sidebar-sub">Bespoke Proposal</div>
-  <nav class="sidebar-nav">${navHtml}</nav>
-  <div class="sidebar-footer">
-    <div class="sidebar-footer-avatar">${esc(brand.agencyName).slice(0,2).toUpperCase()}</div>
-    <div class="sidebar-footer-text">
-      <div class="sidebar-footer-name">${proposalId ? `Propuesta #${proposalId.slice(0,4)}` : "Propuesta"}</div>
-      <div class="sidebar-footer-meta">Ver. 2.1 Final</div>
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/10 backdrop-blur-2xl flex flex-col pt-24 space-y-8 px-4">
+  <div class="px-4">
+    <p class="text-sm font-medium uppercase tracking-widest text-slate-900 mb-8">Navegación</p>
+    <nav class="space-y-6">
+      <a class="flex items-center gap-3 border-l-[3px] font-bold pl-4 transition-all" style="border-color:${s};color:${p};" href="#vision">
+        <span class="material-symbols-outlined">visibility</span>
+        <span class="text-sm">Visión General</span>
+      </a>
+      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#contexto">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm">Contexto</span>
+      </a>
+      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#cronograma">
+        <span class="material-symbols-outlined">event</span>
+        <span class="text-sm">Cronograma</span>
+      </a>
+      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#inversion">
+        <span class="material-symbols-outlined">payments</span>
+        <span class="text-sm">Inversión</span>
+      </a>
+      <a class="flex items-center gap-3 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#pasos">
+        <span class="material-symbols-outlined">arrow_forward</span>
+        <span class="text-sm">Siguientes Pasos</span>
+      </a>
+    </nav>
+  </div>
+  <div class="mt-auto pb-10 px-4">
+    <div class="p-4 rounded-xl bg-primary-fixed/30 border border-outline-variant/20">
+      <p class="text-xs font-bold mb-2" style="color:${p};">PROPUESTA</p>
+      <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+        <div class="h-full w-1/3 shadow-[0_0_8px_rgba(129,39,207,0.4)]" style="background:linear-gradient(to right,${p},${s});"></div>
+      </div>
+      <p class="text-[10px] text-on-surface-variant mt-2 uppercase tracking-tighter">${clientLabel} · ${fecha}</p>
     </div>
   </div>
 </aside>
 
-<div class="main">
+<!-- Main -->
+<main class="ml-64 pt-24 pb-20 px-12 min-h-screen">
 
   <!-- Hero -->
-  <section class="main-section" id="intro">
-    <div class="hero">
-      <div class="hero-dots"></div>
-      <div class="hero-badge">Estrategia Basada en Datos</div>
-      <h1 class="hero-title">${esc(c.resumenCreativo)}</h1>
-      <p class="hero-sub">${esc(c.entendimientoDelCliente)}</p>
-    </div>
-  </section>
-
-  <!-- KPI Row -->
-  <section class="main-section" id="estrategia">
-    <div class="kpi-row">
-      <div class="kpi-card">
-        <div class="kpi-icon">📈</div>
-        <div class="kpi-val">${esc(kpi1)}</div>
-        <div class="kpi-label">${kpi1Label}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon">👥</div>
-        <div class="kpi-val">${esc(kpi2)}</div>
-        <div class="kpi-label">${kpi2Label}</div>
-      </div>
-      <div class="kpi-chart-card">
-        <div class="kpi-chart-header">
-          <span class="kpi-chart-label">Eficacia de Canales</span>
-          <span class="kpi-chart-icon">↗</span>
+  <section class="mb-24" id="vision">
+    <div class="relative overflow-hidden rounded-[2rem] bg-surface-container-low min-h-[500px] flex items-center p-16">
+      <div class="relative z-10 max-w-2xl">
+        <span class="inline-block px-4 py-1 rounded-full text-on-primary-fixed text-xs font-bold tracking-widest uppercase mb-6" style="background:${p}22;color:${p};">${esc(c.tipoProyecto)}</span>
+        <h1 class="text-6xl font-extrabold text-on-surface tracking-tight leading-[1.1] mb-8">
+          ${esc(c.resumenCreativo).replace(/(\w[\w\s]{0,30})(.+)/, (_, a, b) =>
+            `${a}<span class="text-transparent bg-clip-text" style="background-image:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;">${b}</span>`
+          )}
+        </h1>
+        <p class="text-lg text-on-surface-variant leading-relaxed mb-10 max-w-lg">${esc(c.entendimientoDelCliente)}</p>
+        <div class="flex gap-4">
+          <a href="#contexto" class="text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl transition-all" style="background:${p};">Explorar Estrategia</a>
+          <a href="${acceptUrl}" class="bg-surface-container-high text-on-surface px-8 py-4 rounded-xl font-bold hover:bg-surface-container-highest transition-all">Aceptar Propuesta</a>
         </div>
-        <div class="kpi-chart-bars">${barChart}</div>
+      </div>
+      <div class="absolute right-0 top-0 h-full w-1/2 overflow-hidden pointer-events-none">
+        <div class="h-full w-full opacity-30" style="background:radial-gradient(ellipse 80% 70% at 70% 30%,${p}40 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 30% 80%,${s}30 0%,transparent 55%);"></div>
+        <div class="absolute inset-0" style="background:linear-gradient(to left,transparent,${p}08 100%);"></div>
       </div>
     </div>
   </section>
 
-  <!-- Diagnóstico de Retos -->
-  <section class="main-section">
-    <div class="section-label">Diagnóstico de Retos</div>
-    <h2 class="section-title">Puntos Críticos Detectados</h2>
-    <div class="diagnosis-grid">
-      <div class="retos-list">${retosHtml}</div>
-      <div class="roi-card">
-        <div class="roi-title">ROI Proyectado (Q3-Q4)</div>
-        ${progressHtml}
-        <div class="roi-growth">
-          <div class="roi-growth-label">Net Growth Estimate</div>
-          <div class="roi-growth-val">${esc(c.inversion?.total || "$284,500")}<span style="font-size:14px;font-weight:600;opacity:.6;">/yr</span></div>
-          <div class="roi-growth-sub">${esc(c.inversion?.terminos || "Resultado estimado anualizado")}</div>
+  <!-- Contexto / KPIs -->
+  <section class="mb-32" id="contexto">
+    <div class="mb-12">
+      <h2 class="text-3xl font-bold text-on-surface tracking-tight mb-2">Entendimiento del Contexto</h2>
+      <div class="h-1 w-20 rounded-full" style="background:${s};"></div>
+    </div>
+    <div class="grid grid-cols-12 gap-6">
+      <!-- Main KPI Card -->
+      <div class="col-span-8 bg-surface-container-lowest p-10 rounded-[2rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] border-t-4" style="border-color:${p}33;">
+        <div class="flex justify-between items-start mb-12">
+          <div>
+            <h3 class="text-2xl font-bold text-on-surface mb-2">Diagnóstico de Rendimiento</h3>
+            <p class="text-on-surface-variant">Estado actual y oportunidades de mejora identificadas.</p>
+          </div>
+          <span class="material-symbols-outlined scale-150" style="color:${p};">trending_up</span>
         </div>
-        ${acceptBtn}
+        <div class="grid grid-cols-3 gap-12">
+          ${(c.retosDetectados || []).slice(0, 3).map((r, i) => `
+          <div class="space-y-2">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${esc(r.titulo)}</p>
+            <p class="text-2xl font-extrabold text-on-surface">${["⚠️", "🎯", "📈"][i]}</p>
+            <div class="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full rounded-full" style="width:${[75, 55, 35][i]}%;background:${[p, s, "#910056"][i]};"></div>
+            </div>
+            <p class="text-xs text-on-surface-variant leading-snug">${esc(r.descripcion.slice(0, 80))}${r.descripcion.length > 80 ? "…" : ""}</p>
+          </div>`).join("")}
+        </div>
+      </div>
+      <!-- Small challenge cards -->
+      <div class="col-span-4 space-y-6">
+        ${reto0 ? `
+        <div class="text-on-tertiary-container p-8 rounded-[2rem] relative overflow-hidden group" style="background:#910056;">
+          <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl opacity-10 rotate-12 transition-transform group-hover:rotate-0">warning</span>
+          <h4 class="text-xl font-bold mb-4 text-white">${esc(reto0.titulo)}</h4>
+          <p class="text-sm opacity-80 leading-relaxed text-white">${esc(reto0.descripcion)}</p>
+        </div>` : ""}
+        ${reto1 ? `
+        <div class="bg-surface-container-high p-8 rounded-[2rem]">
+          <h4 class="text-xl font-bold text-on-surface mb-4">${esc(reto1.titulo)}</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">${esc(reto1.descripcion)}</p>
+        </div>` : ""}
       </div>
     </div>
   </section>
 
-  <!-- El Método -->
-  <section class="main-section" id="enfoque">
-    <div class="method-section">
-      <div>
-        <div class="method-title">El Método: ${esc(c.tipoProyecto || "Precision Labs")}™</div>
-        <div class="method-steps">${fasesHtml}</div>
+  <!-- E-E-A-T / Pilares -->
+  <section class="mb-32">
+    <div class="flex items-end justify-between mb-16">
+      <div class="max-w-xl">
+        <h2 class="text-4xl font-extrabold text-on-surface tracking-tight mb-4">${esc(c.enfoqueCreativo?.descripcion?.split(".")[0] || "Enfoque Estratégico")}</h2>
+        <p class="text-on-surface-variant text-lg">${esc((c.enfoqueCreativo?.descripcion?.split(".").slice(1).join(".").trim()) || "Nuestra metodología se basa en pilares de calidad probados.")}</p>
       </div>
-      <div class="method-img">
-        <div class="method-img-inner">🎯</div>
+      <div class="hidden lg:block text-right">
+        <p class="text-5xl font-black text-outline-variant/30">02. STRATEGY</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-4 gap-8">${pilaresHtml}</div>
+  </section>
+
+  <!-- Fases -->
+  <section class="mb-32" id="cronograma">
+    <div class="flex gap-20">
+      <div class="w-1/3 sticky top-32 h-fit">
+        <h2 class="text-4xl font-extrabold text-on-surface tracking-tight mb-6">Fases del Proyecto</h2>
+        <p class="text-on-surface-variant mb-12">Un despliegue estratégico diseñado para revertir la tendencia negativa y sentar las bases del crecimiento.</p>
+        ${c.fases?.[0] ? `
+        <div class="p-6 bg-surface-container-high rounded-2xl border-l-4" style="border-color:${s};">
+          <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:${s};">Hito Crítico</p>
+          <p class="text-sm font-semibold">${esc(c.fases[Math.floor(c.fases.length / 2)]?.titulo || c.fases[0].titulo)}: ${esc(c.fases[Math.floor(c.fases.length / 2)]?.descripcion?.slice(0, 100) || "")}${(c.fases[Math.floor(c.fases.length / 2)]?.descripcion?.length || 0) > 100 ? "…" : ""}</p>
+        </div>` : ""}
+      </div>
+      <div class="w-2/3 space-y-12">${fasesHtml}</div>
+    </div>
+  </section>
+
+  <!-- KPIs Proyectados -->
+  <section class="mb-32">
+    <div class="p-16 rounded-[3rem] shadow-2xl relative overflow-hidden" style="background:linear-gradient(135deg,${p},${p}cc);">
+      <div class="absolute top-0 right-0 p-12 opacity-10">
+        <span class="material-symbols-outlined" style="font-size:20rem;">auto_graph</span>
+      </div>
+      <div class="relative z-10 text-white">
+        <h2 class="text-4xl font-extrabold mb-12">KPIs y Resultados Proyectados</h2>
+        <div class="grid grid-cols-3 gap-8">${kpiHtml}</div>
       </div>
     </div>
   </section>
 
   <!-- Inversión -->
-  <section class="main-section" id="inversion">
-    <div class="section-label">Value Structure</div>
-    <h2 class="section-title">Desglose de Inversión</h2>
-    <div class="card">
-      <div class="inv-grid">
-        <div class="inv-card">
-          <div class="inv-label">Inversión Total</div>
-          <div class="inv-price">${esc(c.inversion?.total || "")}</div>
-          <p class="inv-terms">${esc(c.inversion?.terminos || "")}</p>
-          <ul class="inv-incluye">
-            ${(c.inversion?.incluye || []).map(item => `<li>${esc(item)}</li>`).join("")}
-          </ul>
+  <section class="mb-32" id="inversion">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-extrabold text-on-surface mb-4">Plan de Inversión</h2>
+      <p class="text-on-surface-variant max-w-2xl mx-auto">Estructura de costos transparente diseñada para maximizar el ROI.</p>
+    </div>
+    <div class="grid grid-cols-3 gap-8">
+      <!-- Alcance -->
+      <div class="bg-surface-container-low p-10 rounded-[2.5rem] border border-outline-variant/30 flex flex-col">
+        <div class="mb-8">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Alcance del Proyecto</p>
+          <h4 class="text-3xl font-bold mb-2">${esc(c.tipoProyecto || "Estrategia Digital")}</h4>
         </div>
-        <div class="inv-card inv-cta" style="display:flex;flex-direction:column;justify-content:flex-end;">
-          <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">${esc(c.enfoqueCreativo?.descripcion || "Una inversión estratégica con retorno medible.")}</p>
-          ${proposalId
-            ? `<a href="/api/proposals/accept?id=${proposalId}" class="inv-confirm">Confirmar Inversión</a>`
-            : `<a href="#" class="inv-confirm">Confirmar Inversión</a>`}
+        <ul class="space-y-4 mb-12 flex-grow text-sm text-on-surface-variant">${inv1Html}</ul>
+        <a href="#inversion" class="w-full py-4 rounded-xl font-bold bg-surface-container-high hover:bg-surface-container-highest transition-all text-center block">Ver Detalles</a>
+      </div>
+      <!-- Plan Recomendado -->
+      <div class="bg-surface-container-lowest p-10 rounded-[2.5rem] shadow-2xl border-2 relative flex flex-col scale-105 z-10" style="border-color:${p};">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full tracking-widest" style="background:${p};">Recomendado</div>
+        <div class="mb-8">
+          <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:${p};">Propuesta Completa</p>
+          <h4 class="text-3xl font-bold mb-2">Proyecto</h4>
+          <div class="flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold">${esc(c.inversion?.total || "")}</span>
+          </div>
         </div>
+        <ul class="space-y-4 mb-12 flex-grow text-sm text-on-surface-variant">${inv2Html || inv1Html}</ul>
+        <a href="${acceptUrl}" class="w-full py-4 rounded-xl font-bold text-white shadow-lg text-center block" style="background:${p};">Aceptar Propuesta</a>
+      </div>
+      <!-- Condiciones -->
+      <div class="bg-surface-container-low p-10 rounded-[2.5rem] border border-outline-variant/30 flex flex-col">
+        <div class="mb-8">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Condiciones</p>
+          <h4 class="text-3xl font-bold mb-2">Términos</h4>
+        </div>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-12 flex-grow">${esc(c.inversion?.terminos || "Consultar condiciones de pago y plazos de entrega con el equipo comercial.")}</p>
+        <a href="#pasos" class="w-full py-4 rounded-xl font-bold bg-surface-container-high hover:bg-surface-container-highest transition-all text-center block">Siguientes Pasos</a>
       </div>
     </div>
   </section>
 
   ${termsHtml}
 
-  <footer class="footer">
-    <div class="footer-left">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · ${clientLabel} · Confidencial</div>
-    ${senderHtml}
-    <div style="font-size:11px;color:#9ca3af;">${fecha}</div>
+  <!-- Footer CTA -->
+  <footer class="flex items-center justify-between py-12 border-t border-outline-variant/20" id="pasos">
+    <div>
+      <p class="text-sm text-on-surface-variant">Vigencia de la propuesta: 15 días hábiles.</p>
+      <p class="text-xs text-outline font-medium mt-1">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · ${clientLabel}</p>
+      ${brand.senderName ? `<p class="text-xs text-outline mt-1">Presentado por <strong>${esc(brand.senderName)}</strong></p>` : ""}
+    </div>
+    <div class="flex gap-4">
+      <a href="${acceptUrl}" class="text-white px-12 py-4 rounded-xl font-bold shadow-xl hover:scale-105 active:scale-95 transition-all" style="background:linear-gradient(135deg,${s},#910056);">Aceptar y Firmar Propuesta</a>
+    </div>
   </footer>
 
-</div>
+</main>
 </body>
 </html>`;
 }

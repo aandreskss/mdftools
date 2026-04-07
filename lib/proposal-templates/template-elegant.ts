@@ -15,352 +15,317 @@ export function renderElegantTemplate(
 ): string {
   const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
-  const p = brand.primaryColor || "#7c3aed";
-  const s = brand.secondaryColor || "#c026d3";
+  const p = brand.primaryColor || "#420093";
+  const s = brand.secondaryColor || "#8127cf";
+  const acceptUrl = proposalId ? `/api/proposals/accept?id=${proposalId}` : "#";
 
   const logoHtml = brand.logoUrl
-    ? `<img src="${esc(brand.logoUrl)}" class="sidebar-logo" alt="logo"/>`
-    : `<div class="sidebar-icon">🚀</div>`;
+    ? `<img src="${esc(brand.logoUrl)}" alt="logo" style="max-height:24px;max-width:100px;object-fit:contain;"/>`
+    : `<span class="material-symbols-outlined" style="color:${p};">diamond</span>`;
 
-  const navItems = [
-    { href: "#intro",      label: "Intro" },
-    { href: "#estrategia", label: "Strategy" },
-    { href: "#enfoque",    label: "Approach" },
-    { href: "#cronograma", label: "Timeline" },
-    { href: "#inversion",  label: "Investment" },
+  // Hero title — split resumenCreativo: first line plain, second line gradient
+  const heroWords = (c.resumenCreativo || "").split(" ");
+  const split = Math.ceil(heroWords.length / 2);
+  const heroLine1 = heroWords.slice(0, split).join(" ");
+  const heroLine2 = heroWords.slice(split).join(" ");
+
+  // Challenge cards (2 items)
+  const challengeIcons = ["report_problem", "speed"];
+  const challengesHtml = (c.retosDetectados || []).slice(0, 2).map((r, i) => `
+    <div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${i === 0 ? "border-t-4" : ""}" style="${i === 0 ? `border-color:${p};` : ""}">
+      <span class="material-symbols-outlined mb-4 text-4xl" style="color:${s};">${challengeIcons[i] || "warning"}</span>
+      <h4 class="text-xl font-bold mb-2">${esc(r.titulo)}</h4>
+      <p class="text-sm text-on-surface-variant leading-relaxed">${esc(r.descripcion)}</p>
+    </div>`).join("");
+
+  // Approach tags
+  const tagsHtml = (c.enfoqueCreativo?.pilares || []).map(pl =>
+    `<span class="px-4 py-1.5 rounded-full bg-surface-container-high text-sm font-semibold" style="color:${p};">#${esc(pl.replace(/\s+/g, ""))}</span>`
+  ).join("");
+
+  // Deliverable cards — 3 tall gradient cards
+  const delivGradients = [
+    `linear-gradient(135deg,${p},${p}aa)`,
+    `linear-gradient(135deg,${s},${s}aa)`,
+    `linear-gradient(135deg,#910056,#910056aa)`,
   ];
-  const navHtml = navItems.map((n, i) => `
-    <a href="${n.href}" class="nav-link${i === 0 ? " nav-active" : ""}">${n.label}</a>`).join("");
-
-  const acceptBtn = proposalId
-    ? `<a href="/api/proposals/accept?id=${proposalId}" class="accept-btn" style="background:${p};">Aceptar Propuesta →</a>`
-    : `<a href="#inversion" class="accept-btn" style="background:${p};">Aceptar Propuesta →</a>`;
-
-  // Philosophy cards — left big white card + right purple card
-
-  // Timeline — horizontal steps
-  const fasesHtml = (c.fases || []).map((f, i) => `
-    <div class="timeline-step">
-      <div class="timeline-bubble${i === 1 ? " timeline-active" : ""}" style="${i === 1 ? `background:${p};color:#fff;border-color:${p};` : ""}">
-        ${String(f.numero).padStart(2, "0")}
-      </div>
-      <div class="timeline-content">
-        <div class="timeline-title">${esc(f.titulo)}</div>
-        <div class="timeline-desc">${esc(f.descripcion)}</div>
-        ${f.duracion ? `<div class="timeline-dur" style="color:${p};">${esc(f.duracion)}</div>` : ""}
+  const delivIcons = ["🎨", "👥", "📊"];
+  const delivHtml = (c.entregables || []).slice(0, 3).map((e, i) => `
+    <div class="group relative overflow-hidden rounded-xl bg-surface-container-low aspect-[4/5]" style="background:${delivGradients[i]};">
+      <div class="absolute inset-0 flex items-center justify-center text-8xl opacity-10 group-hover:opacity-5 transition-opacity">${delivIcons[i]}</div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-8 text-white">
+        <h5 class="text-2xl font-bold">${esc(e.split(" ").slice(0, 3).join(" "))}</h5>
+        <p class="text-sm opacity-80 mt-2">${esc(e)}</p>
       </div>
     </div>`).join("");
 
-  // Investment packages — split incluye into 3 groups
-  const incluye = c.inversion?.incluye || [];
-  const third = Math.ceil(incluye.length / 3);
-  const pkg1 = incluye.slice(0, third);
-  const pkg2 = incluye.slice(third, third * 2);
-  const pkg3 = incluye.slice(third * 2);
-
-  const pkgTitle = (items: string[], idx: number) => {
-    const defaults = ["Identidad Visual", "Experiencia Digital", "Content Strategy"];
-    return items[0] ? items[0].split(":")[0] : defaults[idx];
-  };
-
-  const invPackagesHtml = [pkg1, pkg2, pkg3].map((items, i) => `
-    <div class="inv-pkg ${i === 1 ? "inv-pkg-highlight" : ""}">
-      <div class="inv-pkg-icon" style="${i === 1 ? "background:rgba(255,255,255,.15);" : `background:color-mix(in srgb,${p} 10%,transparent);`}">
-        ${["🎨","💻","📝"][i]}
+  // Timeline phases
+  const fasesHtml = (c.fases || []).map((f) => `
+    <div class="flex items-start gap-8 group">
+      <div class="flex-none w-24 pt-2">
+        <span class="text-sm font-bold uppercase tracking-tighter" style="color:${s};">Fase ${String(f.numero).padStart(2, "0")}</span>
+        ${f.duracion ? `<p class="text-xs text-on-surface-variant font-medium">${esc(f.duracion)}</p>` : ""}
       </div>
-      <div class="inv-pkg-title" style="${i === 1 ? "color:#fff;" : `color:${p};`}">${pkgTitle(items, i)}</div>
-      <ul class="inv-pkg-list">
-        ${items.map(item => `<li style="${i === 1 ? "color:rgba(255,255,255,.8);" : "color:var(--muted);"}">${esc(item)}</li>`).join("")}
-      </ul>
+      <div class="relative pl-8 border-l-2 border-outline-variant group-hover:border-primary transition-colors" style="--hover-color:${p};">
+        <div class="absolute -left-[9px] top-2 w-4 h-4 rounded-full bg-surface-container-lowest border-2 border-outline-variant group-hover:bg-primary transition-all" style=""></div>
+        <h4 class="text-2xl font-bold text-on-surface">${esc(f.titulo)}</h4>
+        <p class="text-on-surface-variant mt-2 leading-relaxed">${esc(f.descripcion)}</p>
+      </div>
+    </div>`).join("");
+
+  // Investment includes
+  const invIncludeHtml = (c.inversion?.incluye || []).map(it => `
+    <li class="flex items-center gap-3">
+      <span class="material-symbols-outlined" style="color:${p};font-variation-settings:'FILL' 1;">check_circle</span>
+      <span class="font-medium">${esc(it)}</span>
+    </li>`).join("");
+
+  // Next steps (4 items)
+  const defaultSteps = [
+    { n: "01", title: "Aceptación Online", desc: `Haga clic en "Aceptar Propuesta" en la parte superior.` },
+    { n: "02", title: "Facturación Inicial", desc: "Recibirá el comprobante para el pago inicial." },
+    { n: "03", title: "Kick-off Meeting", desc: "Sesión estratégica con el equipo creativo." },
+    { n: "04", title: "Inicio Fase 01", desc: "Comenzamos la auditoría de activos digitales." },
+  ];
+  const steps = c.proximosPasos && c.proximosPasos.length >= 4
+    ? c.proximosPasos.slice(0, 4).map((paso, i) => ({ n: String(i + 1).padStart(2, "0"), title: paso.split(":")[0] || paso.slice(0, 30), desc: paso.split(":").slice(1).join(":").trim() || paso }))
+    : defaultSteps;
+  const stepsHtml = steps.map(st => `
+    <div class="space-y-4">
+      <div class="w-12 h-12 rounded-lg flex items-center justify-center font-bold" style="background:${p}22;color:${p};">${st.n}</div>
+      <h5 class="font-bold">${esc(st.title)}</h5>
+      <p class="text-sm text-on-surface-variant">${esc(st.desc)}</p>
     </div>`).join("");
 
   const termsHtml = brand.termsConditions ? `
-    <section class="main-section">
-      <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;">Términos y Condiciones</h2>
-      <div class="card" style="padding:28px;font-size:13px;line-height:1.8;color:var(--muted);white-space:pre-wrap;">${esc(brand.termsConditions)}</div>
+    <section class="px-12 lg:px-24 py-16">
+      <h3 class="text-2xl font-bold text-on-surface mb-6">Términos y Condiciones</h3>
+      <div class="bg-surface-container-low p-8 rounded-2xl text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap">${esc(brand.termsConditions)}</div>
     </section>` : "";
 
-  const senderHtml = brand.senderName
-    ? `<span style="font-size:13px;color:var(--muted);">Presentado por <strong>${esc(brand.senderName)}</strong></span>` : "";
-
   return `<!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Propuesta — ${esc(clientName)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          'tertiary-fixed-dim': '#ffb0cd',
+          'on-secondary-container': '#fffbff',
+          'surface-tint': '#713dcc',
+          'on-primary-fixed': '#250059',
+          'tertiary-container': '#910056',
+          'surface-dim': '#d9dadb',
+          'primary-container': '${p}cc',
+          'primary-fixed': '#ebddff',
+          'secondary-fixed': '#f0dbff',
+          'on-error': '#ffffff',
+          'outline': '#7b7485',
+          'surface-bright': '#f8f9fa',
+          'inverse-surface': '#2e3132',
+          'on-primary-fixed-variant': '#581db3',
+          'on-tertiary-container': '#ff9ac2',
+          'on-primary': '#ffffff',
+          'on-tertiary-fixed-variant': '#8c0053',
+          'on-primary-container': '#c7aaff',
+          'surface-container': '#edeeef',
+          'surface-variant': '#e1e3e4',
+          'on-surface-variant': '#4a4453',
+          'on-secondary-fixed': '#2c0051',
+          'error-container': '#ffdad6',
+          'tertiary-fixed': '#ffd9e4',
+          'surface-container-lowest': '#ffffff',
+          'surface-container-high': '#e7e8e9',
+          'surface-container-low': '#f3f4f5',
+          'on-secondary-fixed-variant': '#6900b3',
+          'tertiary': '#68003c',
+          'inverse-on-surface': '#f0f1f2',
+          'on-error-container': '#93000a',
+          'error': '#ba1a1a',
+          'primary-fixed-dim': '#d3bbff',
+          'inverse-primary': '#d3bbff',
+          'primary': '${p}',
+          'secondary-fixed-dim': '#ddb7ff',
+          'on-surface': '#191c1d',
+          'on-background': '#191c1d',
+          'surface-container-highest': '#e1e3e4',
+          'on-tertiary': '#ffffff',
+          'surface': '#f8f9fa',
+          'secondary-container': '#9c48ea',
+          'on-tertiary-fixed': '#3e0022',
+          'outline-variant': '#ccc3d6',
+          'secondary': '${s}',
+          'on-secondary': '#ffffff',
+          'background': '#f8f9fa'
+        },
+        borderRadius: { DEFAULT: '0.125rem', lg: '0.25rem', xl: '0.5rem', full: '0.75rem' },
+        fontFamily: { headline: ['Inter'], body: ['Inter'], label: ['Inter'] }
+      }
+    }
+  }
+</script>
 <style>
-  :root {
-    --primary: ${p};
-    --secondary: ${s};
-    --bg: #f5f5fb;
-    --sidebar-w: 210px;
-    --text: #111827;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --card-bg: #ffffff;
-    --radius: 18px;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
-
-  /* ── Sidebar ── */
-  .sidebar {
-    position: fixed; left: 0; top: 0; height: 100vh; width: var(--sidebar-w);
-    background: #fff; border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; padding: 24px 18px 20px; z-index: 100; overflow-y: auto;
-  }
-  .sidebar-logo { max-height: 28px; max-width: 110px; object-fit: contain; margin-bottom: 8px; }
-  .sidebar-icon { font-size: 26px; margin-bottom: 8px; }
-  .sidebar-agency { font-size: 15px; font-weight: 800; color: var(--primary); }
-  .sidebar-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
-  .sidebar-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 22px; flex: 1; }
-  .nav-link {
-    display: block; padding: 9px 12px; border-radius: 10px;
-    font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all .15s;
-  }
-  .nav-link:hover { background: color-mix(in srgb,var(--primary) 8%,transparent); color: var(--primary); }
-  .nav-active { background: color-mix(in srgb,var(--primary) 10%,transparent) !important; color: var(--primary) !important; font-weight: 600; }
-  .sidebar-bottom { margin-top: 20px; }
-  .accept-btn {
-    display: block; text-align: center; padding: 12px; border-radius: 14px;
-    font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; transition: opacity .2s;
-  }
-  .accept-btn:hover { opacity: .88; }
-
-  /* ── Bottom bar (fixed, mobile) ── */
-  .bottom-bar {
-    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-    padding: 14px 20px; background: rgba(255,255,255,.96); backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border); align-items: center; justify-content: space-between; gap: 12px;
-  }
-  .bottom-bar-name { font-size: 14px; font-weight: 800; color: var(--primary); }
-
-  /* ── Main ── */
-  .main { margin-left: var(--sidebar-w); padding: 0 0 100px; }
-  .main-inner { padding: 28px 36px; max-width: 960px; }
-  .main-section { margin-bottom: 32px; }
-  .section-overline { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 8px; }
-  .section-title { font-size: 24px; font-weight: 900; letter-spacing: -.5px; color: var(--text); margin-bottom: 20px; }
-  .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 16px rgba(0,0,0,.06); }
-
-  /* ── Hero ── */
-  .hero-wrap { position: relative; min-height: 260px; overflow: hidden; border-radius: 0 0 0 0; margin-bottom: 0; }
-  .hero-image {
-    width: 100%; min-height: 260px;
-    background:
-      radial-gradient(ellipse 80% 60% at 70% 30%, color-mix(in srgb, ${s} 60%, transparent) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 80% at 30% 70%, color-mix(in srgb, ${p} 50%, transparent) 0%, transparent 55%),
-      linear-gradient(135deg, #e8e0ff 0%, #f0d4f8 50%, #fce4e4 100%);
-    display: flex; align-items: center; justify-content: center; font-size: 80px;
-    padding: 40px;
-  }
-  .hero-content { padding: 32px 36px 28px; background: var(--card-bg); }
-  .hero-badge {
-    display: inline-block; background: var(--primary); color: #fff;
-    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-    padding: 5px 14px; border-radius: 100px; margin-bottom: 16px;
-  }
-  .hero-title { font-size: clamp(26px, 4vw, 42px); font-weight: 900; letter-spacing: -1.2px; line-height: 1.1; color: var(--text); margin-bottom: 12px; }
-  .hero-title-accent { color: var(--primary); }
-  .hero-sub { font-size: 14px; color: var(--muted); max-width: 520px; line-height: 1.65; }
-  .hero-client { margin-top: 14px; font-size: 13px; color: var(--muted); }
-  .hero-client strong { color: var(--text); }
-
-  /* ── Philosophy ── */
-  .philosophy-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
-  .philo-left { padding: 28px; display: flex; flex-direction: column; }
-  .philo-icon { font-size: 22px; margin-bottom: 16px; }
-  .philo-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
-  .philo-desc { font-size: 13px; color: var(--muted); line-height: 1.65; flex: 1; }
-  .philo-metrics { display: flex; gap: 20px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
-  .philo-metric-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; color: var(--primary); }
-  .philo-metric-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
-  .philo-right {
-    border-radius: var(--radius); padding: 28px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    display: flex; flex-direction: column; justify-content: center; gap: 14px;
-  }
-  .philo-right-icon { width: 52px; height: 52px; background: rgba(255,255,255,.18); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-  .philo-right-title { font-size: 20px; font-weight: 800; color: #fff; line-height: 1.2; }
-  .philo-right-desc { font-size: 13px; color: rgba(255,255,255,.75); line-height: 1.6; }
-
-  /* ── Timeline ── */
-  .timeline-wrap { background: #fff; border-radius: var(--radius); padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,.06); }
-  .timeline-row { display: flex; gap: 0; position: relative; }
-  .timeline-row::before {
-    content: ""; position: absolute; top: 20px; left: 20px; right: 20px; height: 1px;
-    background: var(--border); z-index: 0;
-  }
-  .timeline-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
-  .timeline-bubble {
-    width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 2px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 14px;
-    box-shadow: 0 0 0 4px var(--bg);
-  }
-  .timeline-active { font-weight: 900; }
-  .timeline-content { padding: 0 8px; }
-  .timeline-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
-  .timeline-desc { font-size: 12px; color: var(--muted); line-height: 1.45; }
-  .timeline-dur { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
-
-  /* ── Investment ── */
-  .inv-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-  .inv-total-badge { background: #fff; border-radius: 12px; padding: 12px 20px; box-shadow: 0 2px 12px rgba(0,0,0,.08); text-align: right; }
-  .inv-total-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
-  .inv-total-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; color: var(--text); }
-  .inv-packages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .inv-pkg { padding: 22px; border-radius: var(--radius); background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.05); display: flex; flex-direction: column; gap: 10px; }
-  .inv-pkg-highlight { background: linear-gradient(135deg, var(--primary), var(--secondary)); }
-  .inv-pkg-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-  .inv-pkg-title { font-size: 14px; font-weight: 700; color: var(--text); }
-  .inv-pkg-highlight .inv-pkg-title { color: #fff; }
-  .inv-pkg-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-  .inv-pkg-list li { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-  .inv-pkg-list li::before { content: "◎"; font-size: 8px; flex-shrink: 0; color: var(--primary); }
-  .inv-pkg-highlight .inv-pkg-list li::before { color: rgba(255,255,255,.7); }
-
-  /* ── CTA ── */
-  .cta-section { text-align: center; padding: 52px 40px; }
-  .cta-title { font-size: clamp(20px, 3vw, 28px); font-weight: 900; letter-spacing: -.5px; color: var(--text); margin-bottom: 10px; }
-  .cta-sub { font-size: 14px; color: var(--muted); max-width: 380px; margin: 0 auto 28px; line-height: 1.55; }
-  .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .cta-btn-primary { padding: 15px 34px; border-radius: 16px; font-weight: 700; font-size: 14px; color: #fff; text-decoration: none; transition: opacity .2s; }
-  .cta-btn-primary:hover { opacity: .88; }
-  .cta-btn-secondary { padding: 15px 34px; border-radius: 16px; font-size: 14px; font-weight: 600; color: var(--primary); text-decoration: none; transition: color .2s; }
-  .cta-btn-secondary:hover { color: var(--secondary); }
-
-  /* ── Footer ── */
-  .footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 24px 36px; border-top: 1px solid var(--border); }
-  .footer-left { font-size: 11px; color: var(--muted); }
-
-  @media (max-width: 768px) {
-    .sidebar { display: none; }
-    .bottom-bar { display: flex; }
-    .main { margin-left: 0; }
-    .main-inner { padding: 20px 16px; }
-    .philosophy-grid { grid-template-columns: 1fr; }
-    .inv-packages { grid-template-columns: 1fr; }
-    .timeline-row { flex-direction: column; gap: 20px; }
-    .timeline-row::before { display: none; }
-    .timeline-step { flex-direction: row; text-align: left; gap: 16px; }
-    .timeline-bubble { margin-bottom: 0; flex-shrink: 0; }
-  }
+  body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 </style>
 </head>
-<body>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
 
-<!-- Bottom bar (shows on mobile / overlaps desktop accept) -->
-<div class="bottom-bar">
-  <span class="bottom-bar-name">${esc(brand.agencyName)}</span>
-  ${acceptBtn}
+<!-- Progress bar -->
+<div class="fixed top-0 left-0 w-full h-1 z-[60] bg-surface-container-highest">
+  <div class="h-full shadow-[0_0_10px_rgba(129,39,207,0.3)]" style="width:35%;background:linear-gradient(to right,${s},#910056);"></div>
 </div>
 
+<!-- Header -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl shadow-[0_10px_30px_-5px_rgba(66,0,147,0.08)] flex items-center justify-between px-6 py-4">
+  <div class="flex items-center gap-3">
+    ${logoHtml}
+    <h1 class="text-lg font-extrabold text-slate-900 tracking-tight">${esc(brand.agencyName)}</h1>
+  </div>
+  <a href="${acceptUrl}" class="text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all" style="background:linear-gradient(135deg,${p},${p}cc);">
+    Aceptar Propuesta
+  </a>
+</header>
+
 <!-- Sidebar -->
-<aside class="sidebar">
-  ${logoHtml}
-  <div class="sidebar-agency">${esc(brand.agencyName)}</div>
-  <div class="sidebar-sub">Bespoke Proposal</div>
-  <nav class="sidebar-nav">${navHtml}</nav>
-  <div class="sidebar-bottom">${acceptBtn}</div>
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/10 backdrop-blur-2xl border-none">
+  <nav class="flex flex-col pt-24 space-y-8 px-4">
+    <div class="px-4 mb-4">
+      <span class="text-sm font-medium uppercase tracking-widest text-slate-900">Navegación</span>
+    </div>
+    <a class="group flex items-center gap-4 py-2 border-l-[3px] font-bold pl-4 transition-all" style="border-color:${s};color:${p};" href="#vision">
+      <span class="material-symbols-outlined">visibility</span>
+      <span class="text-sm">Visión General</span>
+    </a>
+    <a class="group flex items-center gap-4 py-2 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#cronograma">
+      <span class="material-symbols-outlined">event</span>
+      <span class="text-sm">Cronograma</span>
+    </a>
+    <a class="group flex items-center gap-4 py-2 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#inversion">
+      <span class="material-symbols-outlined">payments</span>
+      <span class="text-sm">Inversión</span>
+    </a>
+    <a class="group flex items-center gap-4 py-2 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#siguientes">
+      <span class="material-symbols-outlined">arrow_forward</span>
+      <span class="text-sm">Siguientes Pasos</span>
+    </a>
+  </nav>
 </aside>
 
-<div class="main">
+<!-- Main -->
+<main class="ml-64 pt-20 pb-32">
 
   <!-- Hero -->
-  <section id="intro">
-    <div class="hero-image">🎨</div>
-    <div class="hero-content">
-      <div class="hero-badge">Proposal ${new Date().getFullYear()}</div>
-      <h1 class="hero-title">${esc(c.resumenCreativo).replace(/(\w+)\s*$/, '<span class="hero-title-accent">$1</span>')}</h1>
-      <p class="hero-sub">${esc(c.entendimientoDelCliente)}</p>
-      <p class="hero-client">Preparado para <strong>${clientLabel}</strong></p>
+  <section class="min-h-screen flex flex-col justify-center px-12 lg:px-24 bg-surface" id="vision">
+    <div class="max-w-4xl space-y-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-on-primary-fixed text-xs font-bold tracking-widest uppercase" style="background:${p}22;color:${p};">
+        Propuesta Exclusiva · ${new Date().getFullYear()}
+      </div>
+      <h2 class="text-7xl font-extrabold text-on-surface tracking-tight leading-[1.1]">
+        ${esc(heroLine1)}<br/>
+        <span class="text-transparent bg-clip-text" style="background-image:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;">${esc(heroLine2)}</span>
+      </h2>
+      <p class="text-xl text-on-surface-variant leading-relaxed max-w-2xl">
+        ${esc(c.enfoqueCreativo?.descripcion || c.entendimientoDelCliente || "")}
+      </p>
+      <div class="pt-8 flex gap-4">
+        <div class="h-16 w-16 rounded-full bg-surface-container-high flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl" style="color:${p};">auto_awesome</span>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-on-surface">Preparado para:</p>
+          <p class="text-lg text-on-surface-variant">${clientLabel}</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <div class="main-inner">
-
-    <!-- Philosophy -->
-    <section class="main-section" id="estrategia">
-      <div class="section-overline">Our Philosophy</div>
-      <h2 class="section-title">Estrategia &amp; Visión</h2>
-      <div class="philosophy-grid">
-        <div class="card philo-left">
-          <div class="philo-icon">📈</div>
-          <div class="philo-title">${esc(c.enfoqueCreativo?.pilares?.[0] || "Análisis del Ecosistema")}</div>
-          <p class="philo-desc">${esc(c.enfoqueCreativo?.descripcion || "")}</p>
-          <div class="philo-metrics">
-            <div>
-              <div class="philo-metric-val">92%</div>
-              <div class="philo-metric-label">Retención Visual</div>
-            </div>
-            <div>
-              <div class="philo-metric-val">4.5x</div>
-              <div class="philo-metric-label">Engagement</div>
-            </div>
-            <div>
-              <div class="philo-metric-val">100%</div>
-              <div class="philo-metric-label">Bespoke Quality</div>
-            </div>
-          </div>
-        </div>
-        <div class="philo-right">
-          <div class="philo-right-icon">✦</div>
-          <div class="philo-right-title">${esc(c.enfoqueCreativo?.pilares?.[1] || "Innovación sin Límites")}</div>
-          <p class="philo-right-desc">${esc(c.enfoqueCreativo?.pilares?.[2] || "Fusionamos tecnología de vanguardia con instinto artístico para crear soluciones que inspiren.")}</p>
-        </div>
+  <!-- Visión y Desafíos -->
+  <section class="px-12 lg:px-24 py-24 bg-surface-container-low">
+    <div class="grid grid-cols-12 gap-8">
+      <div class="col-span-12 lg:col-span-5 space-y-6">
+        <h3 class="text-4xl font-bold text-on-surface tracking-tight">Visión y Desafíos</h3>
+        <p class="text-lg text-on-surface-variant leading-relaxed">${esc(c.entendimientoDelCliente)}</p>
       </div>
-    </section>
+      <div class="col-span-12 lg:col-span-7 grid grid-cols-2 gap-6">${challengesHtml}</div>
+    </div>
+  </section>
 
-    <!-- Timeline -->
-    <section class="main-section" id="cronograma">
-      <div class="section-overline">Process Flow</div>
-      <h2 class="section-title">Timeline de Ejecución</h2>
-      <div class="timeline-wrap">
-        <div class="timeline-row">${fasesHtml}</div>
+  <!-- Enfoque Creativo + Entregables -->
+  <section class="px-12 lg:px-24 py-32 space-y-16">
+    <div class="text-center max-w-3xl mx-auto space-y-4">
+      <h3 class="text-4xl font-bold text-on-surface">Nuestro Enfoque Creativo</h3>
+      <div class="flex flex-wrap justify-center gap-3">${tagsHtml}</div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">${delivHtml}</div>
+  </section>
+
+  <!-- Cronograma -->
+  <section class="px-12 lg:px-24 py-32 bg-surface-container-low/50" id="cronograma">
+    <h3 class="text-4xl font-bold mb-16 text-on-surface">Cronograma de Ejecución</h3>
+    <div class="space-y-12">${fasesHtml}</div>
+  </section>
+
+  <!-- Inversión -->
+  <section class="px-12 lg:px-24 py-32" id="inversion">
+    <div class="bg-surface-container-lowest rounded-[2rem] p-12 shadow-[0_20px_50px_-20px_rgba(66,0,147,0.15)] flex flex-col lg:flex-row items-center gap-16 overflow-hidden relative">
+      <div class="absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-32" style="background:${p}0d;"></div>
+      <div class="flex-1 space-y-6 z-10">
+        <h3 class="text-5xl font-bold text-on-surface tracking-tight">Inversión del Proyecto</h3>
+        <p class="text-lg text-on-surface-variant">${esc(c.enfoqueCreativo?.descripcion?.split(".")[0] || "Un valor integral que cubre consultoría, diseño creativo y ejecución técnica.")}</p>
+        <ul class="space-y-4">${invIncludeHtml}</ul>
       </div>
-    </section>
-
-    <!-- Investment -->
-    <section class="main-section" id="inversion">
-      <div class="section-overline">Value Structure</div>
-      <div class="inv-header">
-        <h2 class="section-title" style="margin-bottom:0;">Desglose de Inversión</h2>
-        <div class="inv-total-badge">
-          <div class="inv-total-label">Total Estipulado</div>
-          <div class="inv-total-val">${esc(c.inversion?.total || "")} <span style="font-size:13px;font-weight:600;color:var(--muted);">USD</span></div>
-        </div>
+      <div class="w-full lg:w-80 p-8 rounded-2xl text-white text-center shadow-xl" style="background:linear-gradient(135deg,${p},${p}cc);">
+        <p class="text-sm font-bold uppercase tracking-widest opacity-80 mb-2">Total Inversión</p>
+        <p class="text-5xl font-extrabold mb-6">${esc(c.inversion?.total || "")}</p>
+        <div class="h-px bg-white/20 mb-6"></div>
+        <p class="text-xs opacity-80 leading-relaxed mb-8">${esc(c.inversion?.terminos || "Consultar condiciones y plazos de pago.")}</p>
+        <a href="${acceptUrl}" class="block w-full py-4 bg-white font-bold rounded-xl hover:bg-opacity-90 transition-all" style="color:${p};">Aprobar Inversión</a>
       </div>
-      <div class="inv-packages">${invPackagesHtml}</div>
-    </section>
+    </div>
+  </section>
 
-    <!-- CTA -->
-    <section class="main-section">
-      <div class="cta-section">
-        <h2 class="cta-title">¿Preparados para dar el siguiente paso?</h2>
-        <p class="cta-sub">Esta propuesta es válida por los próximos 15 días. Haga clic en el botón de abajo para formalizar la colaboración.</p>
-        <div class="cta-btns">
-          ${proposalId
-            ? `<a href="/api/proposals/accept?id=${proposalId}" class="cta-btn-primary" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>`
-            : `<a href="#" class="cta-btn-primary" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>`}
-          <a href="#" class="cta-btn-secondary">Descargar PDF</a>
-        </div>
+  <!-- Próximos Pasos -->
+  <section class="px-12 lg:px-24 py-32 space-y-12" id="siguientes">
+    <h3 class="text-4xl font-bold text-on-surface">Próximos Pasos</h3>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">${stepsHtml}</div>
+    <div class="pt-12 flex justify-center">
+      <div class="inline-flex items-center gap-8 p-6 bg-surface-container-high rounded-full px-12">
+        <p class="text-on-surface-variant font-medium italic">¿Preguntas sobre la propuesta?</p>
+        <a href="#" class="flex items-center gap-2 font-bold hover:gap-3 transition-all" style="color:${p};">
+          Hablar con un consultor
+          <span class="material-symbols-outlined">east</span>
+        </a>
       </div>
-    </section>
+    </div>
+  </section>
 
-    ${termsHtml}
+  ${termsHtml}
 
+</main>
+
+<!-- Footer -->
+<footer class="ml-64 bg-surface-container-highest py-12 px-12 lg:px-24">
+  <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+    <div class="flex items-center gap-3">
+      ${logoHtml}
+      <span class="font-bold text-on-surface tracking-tight">${esc(brand.agencyName)}</span>
+    </div>
+    <div class="text-on-surface-variant text-sm font-medium">${clientLabel} · ${fecha}</div>
+    <div class="flex gap-6">
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Privacidad</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Términos</a>
+    </div>
   </div>
-
-  <footer class="footer">
-    <div class="footer-left">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · Confidencial · ${fecha}</div>
-    ${senderHtml}
-  </footer>
-
-</div>
+</footer>
 </body>
 </html>`;
 }
