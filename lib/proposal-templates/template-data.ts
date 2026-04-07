@@ -22,7 +22,7 @@ export function renderDataTemplate(
     ? `<img src="${esc(brand.logoUrl)}" style="max-height:36px;max-width:130px;object-fit:contain;margin-bottom:6px;" alt="logo" />`
     : "";
 
-  const retosHtml = (c.retosDetectados || []).slice(0, 4).map((r, i) => `
+  const retosHtml = (c.retosDetectados || []).slice(0, 4).map((r) => `
     <div style="background:#fff;border-radius:16px;padding:20px 24px;display:flex;gap:16px;align-items:flex-start;box-shadow:0 1px 8px rgba(0,0,0,0.04);">
       <span style="color:#dc2626;font-size:22px;margin-top:2px;">⚡</span>
       <div>
@@ -39,7 +39,7 @@ export function renderDataTemplate(
       <div style="font-size:14px;color:#252f3d;line-height:1.5;padding-top:6px;">${esc(p_)}</div>
     </div>`).join("");
 
-  const fasesHtml = (c.fases || []).map((f, i) => `
+  const fasesHtml = (c.fases || []).map((f) => `
     <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 1px 8px rgba(0,0,0,0.04);">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${p};margin-bottom:12px;">${esc(f.duracion)}</div>
       <div style="font-weight:700;font-size:16px;color:#1a1a2e;margin-bottom:8px;">${esc(f.titulo)}</div>
