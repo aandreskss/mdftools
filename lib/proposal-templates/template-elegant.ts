@@ -37,9 +37,6 @@ export function renderElegantTemplate(
     : `<a href="#inversion" class="accept-btn" style="background:${p};">Aceptar Propuesta →</a>`;
 
   // Philosophy cards — left big white card + right purple card
-  const pilar1 = c.enfoqueCreativo?.pilares?.[0] || "";
-  const pilar2 = c.enfoqueCreativo?.pilares?.[1] || "";
-  const pilar3 = c.enfoqueCreativo?.pilares?.[2] || "";
 
   // Timeline — horizontal steps
   const fasesHtml = (c.fases || []).map((f, i) => `
