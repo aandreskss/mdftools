@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
+import TemplateSelector from "@/components/TemplateSelector";
+import type { TemplateId } from "@/lib/proposal-templates/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -179,6 +181,11 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   const [resultTab, setResultTab] = useState<"propuesta" | "html">("propuesta");
   const [editMode,     setEditMode]      = useState(false);
   const [editHtmlMode, setEditHtmlMode]  = useState(false);
+
+  // ── Template selector state ────────────────────────────────────────────────
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [pendingMarkdown, setPendingMarkdown]            = useState<string | null>(null);
+
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
@@ -388,7 +395,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       .trim();
   }
 
-  async function generateHtml(markdownContent: string) {
+  async function generateHtml(markdownContent: string, templateId?: TemplateId) {
     setGeneratingHtml(true);
     setHtmlContent("");
     setResultTab("html");
@@ -404,6 +411,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           price: `${form.currency} ${form.price}`,
           structuredContent,
           proposalId: savedProposalId ?? viewingProposal?.id,
+          templateId,
         }),
       });
 
@@ -1290,7 +1298,15 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                     Propuesta
                   </button>
                   <button
-                    onClick={() => { setResultTab("html"); setEditMode(false); setEditHtmlMode(false); if (!htmlContent) generateHtml(markdownContent); }}
+                    onClick={() => {
+                      setEditMode(false); setEditHtmlMode(false);
+                      if (!htmlContent && markdownContent) {
+                        setPendingMarkdown(markdownContent);
+                        setShowTemplateSelector(true);
+                      } else {
+                        setResultTab("html");
+                      }
+                    }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "html" ? "bg-white text-navy-950 shadow-md" : "text-slate-400 hover:text-white"}`}
                   >
                     <Code size={13} /> Vista Web
@@ -1345,7 +1361,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                           <Save className="w-3.5 h-3.5" /> Guardar cambios
                         </button>
                         <button
-                          onClick={async () => { await saveEditedContent(); setResultTab("html"); generateHtml(generatedContent); }}
+                          onClick={async () => { await saveEditedContent(); setPendingMarkdown(generatedContent); setShowTemplateSelector(true); }}
                           className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all brand-gradient text-white"
                         >
                           <RefreshCw className="w-3.5 h-3.5" /> Guardar y regenerar Vista Web
@@ -1414,7 +1430,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       </div>
                       <p className="text-slate-400 font-semibold mb-5">La versión web aún no ha sido generada</p>
                       <button
-                        onClick={() => generateHtml(markdownContent)}
+                        onClick={() => { setPendingMarkdown(markdownContent); setShowTemplateSelector(true); }}
                         className="px-5 py-2.5 brand-gradient text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 transition-all"
                       >
                         Generar Vista Web
@@ -1526,7 +1542,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                                 : <><Link2 size={13} /> Copiar enlace</>}
                             </button>
                             <button
-                              onClick={() => generateHtml(markdownContent)}
+                              onClick={() => { setPendingMarkdown(markdownContent); setShowTemplateSelector(true); }}
                               disabled={generatingHtml}
                               title="Regenerar enlace con el contenido actualizado"
                               className="flex items-center justify-center p-2.5 rounded-lg text-xs font-bold transition-all border bg-white/[0.04] text-slate-400 border-white/[0.05] hover:bg-brand-500/10 hover:text-brand-300 hover:border-brand-500/20 disabled:opacity-40"
@@ -1597,6 +1613,15 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   return (
     <div className="flex flex-col h-screen bg-navy-950">
+      <TemplateSelector
+        isOpen={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelect={(tid) => {
+          setShowTemplateSelector(false);
+          if (pendingMarkdown) generateHtml(pendingMarkdown, tid);
+        }}
+        isGenerating={generatingHtml}
+      />
       {/* Module header */}
       <div className="px-8 py-5 border-b border-white/[0.06] flex items-center justify-between flex-shrink-0 bg-navy-950/80 backdrop-blur-md z-30">
         <div className="flex items-center gap-4">

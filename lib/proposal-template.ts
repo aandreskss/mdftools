@@ -1,3 +1,5 @@
+import type { BrandConfig } from "./proposal-templates/types";
+
 // ─── Data schema that Claude returns (JSON only, cheap) ──────────────────────
 
 export interface ProposalContent {
@@ -78,9 +80,15 @@ export function renderProposalHtml(
   clientName: string,
   clientCompany?: string,
   proposalId?: string,
+  brandConfig?: BrandConfig,
 ): string {
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
   const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
+  const primaryColor = brandConfig?.primaryColor || "#6366F1";
+  const accentColor  = brandConfig?.secondaryColor || "#F43F5E";
+  const senderName   = brandConfig?.senderName || "";
+  const termsText    = brandConfig?.termsConditions || "";
+  const logoUrl      = brandConfig?.logoUrl || "";
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -93,10 +101,10 @@ export function renderProposalHtml(
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --primary: #6366F1;
+    --primary: ${primaryColor};
     --primary-light: #EEF2FF;
     --primary-dark: #4F46E5;
-    --accent: #F43F5E;
+    --accent: ${accentColor};
     --text-main: #1E293B;
     --text-muted: #64748B;
     --bg-main: #F8FAFC;
@@ -440,7 +448,7 @@ export function renderProposalHtml(
     <!-- Navegación lateral -->
     <aside class="sidebar">
       <div class="nav-logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        ${logoUrl ? `<img src="${esc(logoUrl)}" style="max-height:40px;max-width:150px;object-fit:contain;display:block;margin-bottom:6px;" alt="${esc(agencyName)}" />` : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`}
         ${esc(agencyName)}
       </div>
       <nav>
@@ -578,8 +586,16 @@ export function renderProposalHtml(
         </div>
       </section>
 
+      ${termsText ? `
+      <section style="padding:48px 60px;border-top:1px solid var(--border);background:#f8fafc;">
+        <div style="max-width:700px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--primary);margin-bottom:12px;">Términos y Condiciones</div>
+          <p style="font-size:13px;color:#64748b;line-height:1.7;white-space:pre-wrap;">${esc(termsText)}</p>
+        </div>
+      </section>` : ""}
       <footer class="footer">
         <p>Propuesta preparada por <b>${esc(agencyName)}</b> para <b>${clientLabel}</b></p>
+        ${senderName ? `<p style="margin-top:6px;font-size:13px;font-weight:600;">Presentado por: ${esc(senderName)}</p>` : ""}
         <p style="margin-top: 8px; font-size: 12px; opacity: 0.6;">Válida por 30 días naturales. Reservados todos los derechos.</p>
       </footer>
 
