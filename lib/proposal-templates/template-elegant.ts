@@ -124,7 +124,7 @@ export function renderElegantTemplate(
           'on-primary-fixed': '#250059',
           'tertiary-container': '#910056',
           'surface-dim': '#d9dadb',
-          'primary-container': '${p}cc',
+          'primary-container': '#5b21b6',
           'primary-fixed': '#ebddff',
           'secondary-fixed': '#f0dbff',
           'on-error': '#ffffff',
@@ -190,31 +190,31 @@ export function renderElegantTemplate(
     ${logoHtml}
     <h1 class="text-lg font-extrabold text-slate-900 tracking-tight">${esc(brand.agencyName)}</h1>
   </div>
-  <a href="${acceptUrl}" class="text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all" style="background:linear-gradient(135deg,${p},${p}cc);">
+  <a href="${acceptUrl}" class="text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg hover:scale-105 active:scale-95 transition-all" style="background:linear-gradient(135deg,${p},${s});">
     Aceptar Propuesta
   </a>
 </header>
 
 <!-- Sidebar -->
-<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-slate-50/10 backdrop-blur-2xl border-none">
-  <nav class="flex flex-col pt-24 space-y-8 px-4">
-    <div class="px-4 mb-4">
-      <span class="text-sm font-medium uppercase tracking-widest text-slate-900">Navegación</span>
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-white border-r border-gray-100 overflow-y-auto">
+  <nav class="flex flex-col pt-24 px-4">
+    <div class="px-4 mb-6">
+      <span class="text-sm font-medium uppercase tracking-widest text-slate-400">Navegación</span>
     </div>
-    <a class="group flex items-center gap-4 py-2 border-l-[3px] font-bold pl-4 transition-all" style="border-color:${s};color:${p};" href="#vision">
-      <span class="material-symbols-outlined">visibility</span>
+    <a class="flex items-center gap-3 py-2 px-3 border-l-[3px] font-bold transition-all rounded-r-lg" style="border-color:${s};color:${p};background:rgba(66,0,147,0.05);" href="#vision">
+      <span class="material-symbols-outlined text-[20px]">visibility</span>
       <span class="text-sm">Visión General</span>
     </a>
-    <a class="group flex items-center gap-4 py-2 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#cronograma">
-      <span class="material-symbols-outlined">event</span>
+    <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#cronograma">
+      <span class="material-symbols-outlined text-[20px]">event</span>
       <span class="text-sm">Cronograma</span>
     </a>
-    <a class="group flex items-center gap-4 py-2 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#inversion">
-      <span class="material-symbols-outlined">payments</span>
+    <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#inversion">
+      <span class="material-symbols-outlined text-[20px]">payments</span>
       <span class="text-sm">Inversión</span>
     </a>
-    <a class="group flex items-center gap-4 py-2 text-slate-500 pl-4 hover:text-violet-600 transition-all" href="#siguientes">
-      <span class="material-symbols-outlined">arrow_forward</span>
+    <a class="flex items-center gap-3 py-2 px-3 text-slate-500 border-l-[3px] border-transparent hover:border-gray-200 hover:text-slate-800 hover:bg-gray-50 rounded-r-lg transition-all" href="#siguientes">
+      <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
       <span class="text-sm">Siguientes Pasos</span>
     </a>
   </nav>
@@ -224,7 +224,7 @@ export function renderElegantTemplate(
 <main class="ml-64 pt-20 pb-32">
 
   <!-- Hero -->
-  <section class="min-h-screen flex flex-col justify-center px-12 lg:px-24 bg-surface" id="vision">
+  <section class="min-h-[600px] flex flex-col justify-center px-12 lg:px-24 bg-surface py-24" id="vision">
     <div class="max-w-4xl space-y-8">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-on-primary-fixed text-xs font-bold tracking-widest uppercase" style="background:${p}22;color:${p};">
         Propuesta Exclusiva · ${new Date().getFullYear()}
