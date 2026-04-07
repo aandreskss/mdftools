@@ -15,66 +15,88 @@ export function renderBoldTemplate(
 ): string {
   const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
-  const p = brand.primaryColor || "#6e3ac9";
-  const s = brand.secondaryColor || "#b00d6a";
-  const emojis = ["🚀","✨","📋","🔗","📊","🎯","💡","🎨"];
+  const p = brand.primaryColor || "#7c3aed";
+  const s = brand.secondaryColor || "#c026d3";
 
   const logoHtml = brand.logoUrl
-    ? `<img src="${esc(brand.logoUrl)}" class="sidebar-logo" alt="logo"/>` : "";
+    ? `<img src="${esc(brand.logoUrl)}" class="sidebar-logo" alt="logo"/>`
+    : `<div class="sidebar-icon">✦</div>`;
 
-  const retosHtml = (c.retosDetectados || []).slice(0, 3).map(r => `
-    <div class="reto-card">
-      <div class="reto-icon-wrap">⚡</div>
-      <h3 class="reto-title">${esc(r.titulo)}</h3>
-      <p class="reto-desc">${esc(r.descripcion)}</p>
-    </div>`).join("");
+  const navItems = [
+    { href: "#intro",      label: "Intro" },
+    { href: "#retos",      label: "Strategy" },
+    { href: "#enfoque",    label: "Approach" },
+    { href: "#cronograma", label: "Timeline" },
+    { href: "#inversion",  label: "Investment" },
+  ];
+  const navHtml = navItems.map((n, i) => `
+    <a href="${n.href}" class="nav-link${i === 0 ? " nav-active" : ""}">${n.label}</a>`).join("");
 
-  const pilaresHtml = (c.enfoqueCreativo?.pilares || []).map(p_ => `
-    <span class="pillar-tag" style="background:color-mix(in srgb,${p} 12%,transparent);color:${p};">${esc(p_)}</span>`).join("");
+  const acceptBtnSidebar = proposalId
+    ? `<a href="/api/proposals/accept?id=${proposalId}" class="sidebar-accept-btn" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>`
+    : `<a href="#inversion" class="sidebar-accept-btn" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>`;
 
-  const entregablesHtml = (c.entregables || []).slice(0, 6).map((e, i) => `
-    <div class="entregable-card" style="${i === 0 ? `background:linear-gradient(135deg,#14142b,#2a2660);color:#fff;` : `background:#fff;`}">
-      <span class="entregable-emoji">${emojis[i] || "✦"}</span>
-      <span class="entregable-name" style="${i === 0 ? "color:#fff;" : "color:#1e2235;"}">${esc(e)}</span>
-    </div>`).join("");
+  // Retos — 2x2 mixed grid
+  const retos = c.retosDetectados || [];
+  const cardStyles = [
+    { bg: "#fff",       color: "#111827", img: true,  accent: p },
+    { bg: "#dbeafe",    color: "#1e40af", img: false, accent: "#3b82f6" },
+    { bg: `color-mix(in srgb,${p} 15%,#f3e8ff)`, color: p, img: false, accent: p },
+    { bg: "#fff",       color: "#111827", img: true,  accent: s },
+  ];
+  const retoIcons = ["👁️‍🗨️","🔁","📱","⚡"];
+  const retosHtml = retos.slice(0, 4).map((r, i) => {
+    const st = cardStyles[i] || cardStyles[0];
+    const hasImage = st.img;
+    return `
+    <div class="reto-card" style="background:${st.bg};">
+      <div class="reto-icon-row">
+        <span class="reto-icon" style="background:color-mix(in srgb,${st.accent} 15%,transparent);color:${st.accent};">${retoIcons[i] || "⬡"}</span>
+      </div>
+      <div class="reto-title" style="color:${st.color};">${esc(r.titulo)}</div>
+      <div class="reto-desc" style="color:${i === 1 ? "#3b82f6" : i === 2 ? p : "#6b7280"};">${esc(r.descripcion)}</div>
+      ${hasImage ? `<div class="reto-img-placeholder" style="background:linear-gradient(135deg,color-mix(in srgb,${st.accent} 30%,#000) 0%,color-mix(in srgb,${st.accent} 10%,#1a1a2e) 100%);"></div>` : ""}
+    </div>`;
+  }).join("");
 
-  const fasesHtml = (c.fases || []).map((f, i) => `
-    <div class="fase-item">
-      <div class="fase-bubble" style="background:${i % 2 === 0 ? p : s};">${f.numero}</div>
-      <div class="fase-body">
-        <div class="fase-dur">${esc(f.duracion)}</div>
-        <h3 class="fase-title">${esc(f.titulo)}</h3>
-        <p class="fase-desc">${esc(f.descripcion)}</p>
+  // Enfoque — left dark card + right pillars
+  const pilaresHtml = (c.enfoqueCreativo?.pilares || []).map((pi, i) => `
+    <div class="pillar-row">
+      <div class="pillar-icon" style="background:color-mix(in srgb,${i === 0 ? p : s} 12%,transparent);color:${i === 0 ? p : s};">
+        ${i === 0 ? "🎯" : "❤️"}
+      </div>
+      <div>
+        <div class="pillar-name">${esc(pi)}</div>
+        <div class="pillar-desc">${i === 0 ? esc(c.enfoqueCreativo?.descripcion?.split(".")[0] || "") : esc(c.entendimientoDelCliente?.split(".")[0] || "")}</div>
       </div>
     </div>`).join("");
 
-  const incluyeHtml = (c.inversion?.incluye || []).map(item => `
-    <li class="incluye-item"><span style="color:${p};margin-right:10px;">✓</span>${esc(item)}</li>`).join("");
-
-  const porQueHtml = (c.porQueNosotros || []).map(q => `
-    <div class="porq-card">
-      <div class="porq-num" style="color:${p};">✦</div>
-      <h4 class="porq-title">${esc(q.titulo)}</h4>
-      <p class="porq-desc">${esc(q.descripcion)}</p>
+  // Cronograma — dark card with rows
+  const fasesHtml = (c.fases || []).map(f => `
+    <div class="fase-row">
+      <div class="fase-num">${String(f.numero).padStart(2, "0")}</div>
+      <div class="fase-body">
+        <div class="fase-title">${esc(f.titulo)}</div>
+        <div class="fase-desc">${esc(f.descripcion)}</div>
+      </div>
+      ${f.duracion ? `<div class="fase-dur">${esc(f.duracion)}</div>` : ""}
     </div>`).join("");
 
-  const pasosHtml = (c.proximosPasos || []).map((p_, i) => `
-    <div class="paso-row">
-      <span class="paso-num" style="${i === 0 ? `background:${p};color:#fff;` : `background:#f0f2fb;color:#5a6278;`}">${i + 1}</span>
-      <span class="paso-text">${esc(p_)}</span>
+  // Investment
+  const incluyeHtml = (c.inversion?.incluye || []).map(item => `
+    <div class="inv-item">
+      <span class="inv-check" style="color:${p};">✓</span>
+      ${esc(item)}
     </div>`).join("");
 
   const termsHtml = brand.termsConditions ? `
-    <section class="section">
-      <h2 class="section-title">Términos y Condiciones</h2>
-      <div class="card" style="padding:28px;font-size:13px;line-height:1.8;color:#5a6278;white-space:pre-wrap;">${esc(brand.termsConditions)}</div>
+    <section class="main-section">
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:14px;">Términos y Condiciones</h2>
+      <div class="card" style="padding:28px;font-size:13px;line-height:1.8;color:var(--muted);white-space:pre-wrap;">${esc(brand.termsConditions)}</div>
     </section>` : "";
 
   const senderHtml = brand.senderName
-    ? `<p class="footer-sender">Presentado por <strong>${esc(brand.senderName)}</strong></p>` : "";
-
-  const acceptBtn = proposalId
-    ? `<a href="/api/proposals/accept?id=${proposalId}" class="accept-btn" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>` : "";
+    ? `<span style="font-size:13px;color:var(--muted);">Presentado por <strong>${esc(brand.senderName)}</strong></span>` : "";
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -87,13 +109,15 @@ export function renderBoldTemplate(
   :root {
     --primary: ${p};
     --secondary: ${s};
-    --bg: #f0f2fb;
-    --card: #ffffff;
-    --text: #1e2235;
-    --muted: #5a6278;
-    --border: #e4e8f4;
-    --sidebar-w: 240px;
-    --radius: 20px;
+    --bg: #f0f0fa;
+    --sidebar-bg: linear-gradient(180deg, color-mix(in srgb,${p} 12%,#f5f3ff) 0%, color-mix(in srgb,${s} 8%,#fdf4ff) 100%);
+    --sidebar-w: 210px;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --card-bg: #ffffff;
+    --radius: 18px;
+    --dark-bg: #0f1623;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -102,301 +126,265 @@ export function renderBoldTemplate(
   /* ── Sidebar ── */
   .sidebar {
     position: fixed; left: 0; top: 0; height: 100vh; width: var(--sidebar-w);
-    background: #fff; border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; padding: 28px 20px; z-index: 100; overflow-y: auto;
+    background: var(--sidebar-bg);
+    border-right: 1px solid color-mix(in srgb,var(--primary) 15%,transparent);
+    display: flex; flex-direction: column; padding: 24px 18px 20px; z-index: 100; overflow-y: auto;
   }
-  .sidebar-logo { max-height: 32px; max-width: 120px; object-fit: contain; margin-bottom: 10px; }
-  .sidebar-name { font-size: 17px; font-weight: 800; background: linear-gradient(135deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  .sidebar-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px; color: #aab0c4; margin-top: 3px; }
-  .sidebar-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 28px; flex: 1; }
-  .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all .18s; }
-  .sidebar-nav a:hover { background: color-mix(in srgb,var(--primary) 10%,transparent); color: var(--primary); }
-  .sidebar-bottom { margin-top: 24px; }
-  .accept-btn { display: block; text-align: center; padding: 13px; border-radius: 14px; font-weight: 700; font-size: 14px; color: #fff; text-decoration: none; transition: opacity .2s; }
-  .accept-btn:hover { opacity: .88; }
+  .sidebar-logo { max-height: 28px; max-width: 110px; object-fit: contain; margin-bottom: 8px; }
+  .sidebar-icon { font-size: 24px; margin-bottom: 8px; }
+  .sidebar-agency { font-size: 15px; font-weight: 800; color: var(--primary); }
+  .sidebar-sub { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-top: 2px; }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 24px; flex: 1; }
+  .nav-link {
+    display: flex; align-items: center; padding: 9px 12px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all .15s;
+  }
+  .nav-link:hover { background: rgba(255,255,255,.6); color: var(--primary); }
+  .nav-active { background: rgba(255,255,255,.8) !important; color: var(--primary) !important; font-weight: 600; }
+  .sidebar-bottom { margin-top: 20px; }
+  .sidebar-accept-btn {
+    display: block; text-align: center; padding: 12px; border-radius: 14px;
+    font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; transition: opacity .2s;
+  }
+  .sidebar-accept-btn:hover { opacity: .88; }
 
-  /* ── Mobile top bar ── */
-  .mobile-bar { display: none; position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.93); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 14px 20px; align-items: center; justify-content: space-between; }
-  .mobile-bar-name { font-size: 15px; font-weight: 800; background: linear-gradient(135deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  /* ── Bottom bar (fixed) ── */
+  .bottom-bar {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    padding: 14px 20px; background: rgba(255,255,255,.96); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border); align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .bottom-bar-name { font-size: 14px; font-weight: 800; color: var(--primary); }
+  .bottom-bar-btn {
+    padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #fff;
+    text-decoration: none; transition: opacity .2s;
+  }
 
   /* ── Main ── */
-  .main { margin-left: var(--sidebar-w); padding: 32px 36px 80px; max-width: 960px; }
-  .section { margin-bottom: 28px; }
-  .section-title { font-size: 20px; font-weight: 800; margin-bottom: 18px; letter-spacing: -.3px; }
-  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #aab0c4; text-align: center; margin-bottom: 24px; }
-  .card { background: var(--card); border-radius: var(--radius); box-shadow: 0 2px 14px rgba(0,0,0,.05); }
+  .main { margin-left: var(--sidebar-w); padding: 28px 36px 100px; max-width: 960px; }
+  .main-section { margin-bottom: 28px; }
+  .section-title { font-size: 22px; font-weight: 900; letter-spacing: -.5px; color: var(--text); margin-bottom: 16px; }
+  .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 14px rgba(0,0,0,.06); }
 
-  /* ── Hero gradient ── */
-  .hero { background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 24px; padding: 52px 52px 48px; position: relative; overflow: hidden; margin-bottom: 28px; }
-  .hero-overlay { position: absolute; top: 0; right: -15%; width: 55%; height: 100%; background: radial-gradient(circle at center,rgba(255,255,255,.12),transparent 70%); pointer-events: none; }
-  .hero-pulse { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.15); backdrop-filter: blur(8px); padding: 6px 16px; border-radius: 100px; margin-bottom: 22px; }
-  .hero-pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,180,180,.9); }
-  .hero-pulse-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
-  .hero-title { font-size: clamp(26px, 4vw, 46px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.08; color: #fff; margin-bottom: 28px; }
-  .hero-meta { display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
-  .hero-divider { width: 1px; height: 32px; background: rgba(255,255,255,.2); }
-  .hero-meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.5); margin-bottom: 3px; }
-  .hero-meta-val { font-size: 14px; font-weight: 600; color: #fff; }
+  /* ── Hero ── */
+  .hero {
+    border-radius: 20px; padding: 44px 44px 36px;
+    background: linear-gradient(145deg, #ece8ff 0%, #f3ecff 40%, #e8eeff 100%);
+    margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--primary); color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 100px; margin-bottom: 18px;
+  }
+  .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.7); }
+  .hero-title { font-size: clamp(28px, 4.5vw, 48px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.08; color: var(--text); margin-bottom: 14px; }
+  .hero-title-accent { color: var(--primary); }
+  .hero-sub { font-size: 14px; color: var(--muted); max-width: 500px; line-height: 1.65; margin-bottom: 20px; }
+  .hero-meta { display: flex; gap: 32px; }
+  .hero-meta-item {}
+  .hero-meta-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 3px; }
+  .hero-meta-val { font-size: 13px; font-weight: 700; color: var(--text); }
 
-  /* ── Vision / quote ── */
-  .vision-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 20px; align-items: center; }
-  .vision-card { padding: 36px; }
-  .vision-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 16px; }
-  .vision-quote { font-size: clamp(16px, 2vw, 20px); font-weight: 700; line-height: 1.45; color: var(--text); }
-  .vision-stat { padding: 28px; }
-  .vision-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
-  .vision-stat-val { font-size: clamp(22px, 3vw, 34px); font-weight: 900; color: var(--primary); letter-spacing: -1px; }
-  .vision-stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+  /* ── Retos 2x2 grid ── */
+  .retos-title { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+  .retos-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+  .retos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .reto-card { border-radius: var(--radius); padding: 20px; min-height: 160px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; position: relative; }
+  .reto-icon-row {}
+  .reto-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; font-size: 16px; }
+  .reto-title { font-size: 15px; font-weight: 800; line-height: 1.25; }
+  .reto-desc { font-size: 13px; line-height: 1.5; flex: 1; }
+  .reto-img-placeholder { height: 80px; border-radius: 10px; margin-top: auto; }
 
-  /* ── Retos ── */
-  .retos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .reto-card { padding: 28px; border-radius: var(--radius); background: var(--bg); }
-  .reto-icon-wrap { width: 44px; height: 44px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-  .reto-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-  .reto-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  /* ── Enfoque split ── */
+  .enfoque-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px; align-items: center; }
+  .enfoque-left { background: var(--dark-bg); border-radius: var(--radius); padding: 32px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
+  .enfoque-left-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: rgba(255,255,255,.35); }
+  .enfoque-left-word1 { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: rgba(255,255,255,.9); }
+  .enfoque-left-word2 { font-size: 28px; font-weight: 400; letter-spacing: -1px; color: rgba(255,255,255,.4); }
+  .enfoque-quote { margin-top: 20px; border-top: 1px solid rgba(255,255,255,.1); padding-top: 16px; }
+  .enfoque-quote-text { font-size: 13px; font-style: italic; color: var(--primary); font-weight: 600; line-height: 1.5; }
+  .enfoque-quote-author { font-size: 10px; color: rgba(255,255,255,.35); margin-top: 6px; letter-spacing: 1px; }
+  .enfoque-right {}
+  .enfoque-right-title { font-size: 22px; font-weight: 900; color: var(--text); line-height: 1.2; margin-bottom: 10px; }
+  .enfoque-right-accent { color: var(--primary); }
+  .enfoque-right-desc { font-size: 13px; color: var(--muted); line-height: 1.65; margin-bottom: 20px; }
+  .pillar-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+  .pillar-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .pillar-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .pillar-desc { font-size: 12px; color: var(--muted); line-height: 1.45; }
 
-  /* ── Enfoque ── */
-  .enfoque-card { padding: 36px; }
-  .pillar-tag { display: inline-block; padding: 8px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; margin: 4px; }
-  .enfoque-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; }
-  .enfoque-col-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .enfoque-col-line { display: inline-block; width: 24px; height: 2px; }
-  .enfoque-col-text { font-size: 14px; color: var(--muted); line-height: 1.65; }
-
-  /* ── Entregables ── */
-  .entregables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-  .entregable-card { padding: 22px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 110px; justify-content: space-between; }
-  .entregable-emoji { font-size: 24px; }
-  .entregable-name { font-size: 13px; font-weight: 700; line-height: 1.3; }
-
-  /* ── Timeline fases ── */
-  .fases-list { display: flex; flex-direction: column; gap: 24px; }
-  .fase-item { display: flex; gap: 20px; align-items: flex-start; }
-  .fase-bubble { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
-  .fase-body { flex: 1; background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
-  .fase-dur { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-style: italic; margin-bottom: 4px; }
-  .fase-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-  .fase-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  /* ── Cronograma dark ── */
+  .cronograma-dark { background: var(--dark-bg); border-radius: 20px; padding: 36px 40px; }
+  .cronograma-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+  .cronograma-title { font-size: 20px; font-weight: 900; color: #fff; }
+  .cronograma-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 4px; max-width: 280px; line-height: 1.5; }
+  .cronograma-icon { font-size: 28px; opacity: .4; }
+  .fase-row { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .fase-row:first-child { border-top: none; }
+  .fase-num { font-size: 13px; font-weight: 800; color: rgba(255,255,255,.3); flex-shrink: 0; width: 24px; }
+  .fase-body { flex: 1; }
+  .fase-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .fase-desc { font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.5; }
+  .fase-dur { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.3); flex-shrink: 0; padding-top: 2px; }
 
   /* ── Inversión ── */
-  .inv-split { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
-  .inv-left { padding: 36px; }
-  .inv-title { font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; }
-  .inv-intro { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 24px; }
-  .incluye-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-  .incluye-item { font-size: 14px; font-weight: 500; display: flex; align-items: center; }
-  .inv-right-card { padding: 32px; }
-  .inv-package { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
-  .inv-price { font-size: clamp(28px, 4vw, 48px); font-weight: 900; letter-spacing: -2px; color: var(--text); margin-bottom: 20px; }
-  .inv-lines { border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-  .inv-line { display: flex; justify-content: space-between; font-size: 13px; }
-  .inv-line-label { color: var(--muted); }
-  .inv-line-val { font-weight: 700; }
-  .inv-confirm { display: block; text-align: center; padding: 14px; background: var(--primary); color: #fff; font-weight: 700; border-radius: 14px; text-decoration: none; font-size: 14px; transition: opacity .2s; }
-  .inv-confirm:hover { opacity: .88; }
-
-  /* ── Por qué / Why ── */
-  .porq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-  .porq-card { padding: 24px; border-radius: var(--radius); background: var(--card); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
-  .porq-num { font-size: 28px; margin-bottom: 10px; }
-  .porq-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-  .porq-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
-
-  /* ── Pasos CTA ── */
-  .cta-section { text-align: center; padding: 52px 40px; background: var(--bg); border-radius: 24px; }
-  .cta-title { font-size: clamp(22px, 3vw, 34px); font-weight: 900; letter-spacing: -1px; margin-bottom: 12px; }
-  .cta-sub { font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto 32px; line-height: 1.55; }
-  .pasos-list { display: flex; flex-direction: column; gap: 10px; max-width: 440px; margin: 0 auto 36px; }
-  .paso-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--card); border-radius: 12px; text-align: left; }
-  .paso-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
-  .paso-text { font-size: 14px; font-weight: 500; }
-  .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-  .cta-btn-primary { padding: 16px 36px; border-radius: 18px; font-weight: 700; font-size: 15px; color: #fff; text-decoration: none; transition: opacity .2s; }
-  .cta-btn-primary:hover { opacity: .88; }
-  .cta-btn-secondary { padding: 16px 36px; background: var(--card); color: var(--text); font-weight: 700; border-radius: 18px; font-size: 15px; border: 2px solid var(--border); text-decoration: none; transition: background .2s; }
-  .cta-btn-secondary:hover { background: var(--bg); }
+  .inv-section { text-align: center; padding: 20px 0 0; }
+  .inv-eyebrow { font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 6px; }
+  .inv-eyebrow-accent { color: var(--primary); }
+  .inv-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .inv-card-center { background: #fff; border-radius: 20px; padding: 36px; box-shadow: 0 4px 24px rgba(0,0,0,.08); max-width: 480px; margin: 0 auto; text-align: center; }
+  .inv-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; }
+  .inv-price { font-size: clamp(40px, 8vw, 64px); font-weight: 900; letter-spacing: -3px; color: var(--text); margin-bottom: 20px; }
+  .inv-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; text-align: left; }
+  .inv-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .inv-check { font-weight: 700; flex-shrink: 0; }
+  .inv-cta-btn {
+    display: block; text-align: center; padding: 16px; border-radius: 16px;
+    font-size: 15px; font-weight: 700; color: #fff; text-decoration: none; transition: opacity .2s;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+  }
+  .inv-cta-btn:hover { opacity: .88; }
 
   /* ── Footer ── */
-  .footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 32px; border-top: 1px solid var(--border); }
-  .footer-left { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #aab0c4; }
-  .footer-sender { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 24px; border-top: 1px solid var(--border); margin-top: 28px; }
+  .footer-left { font-size: 11px; color: var(--muted); }
 
-  /* ── Responsive ── */
   @media (max-width: 768px) {
     .sidebar { display: none; }
-    .mobile-bar { display: flex; }
-    .main { margin-left: 0; padding: 20px 16px 60px; max-width: 100%; }
-    .hero { padding: 32px 24px 28px; border-radius: 18px; }
-    .hero-meta { gap: 16px; }
-    .hero-divider { display: none; }
-    .vision-grid { grid-template-columns: 1fr; }
+    .bottom-bar { display: flex; }
+    .main { margin-left: 0; padding: 20px 16px 100px; }
+    .hero { padding: 28px 20px; border-radius: 16px; }
     .retos-grid { grid-template-columns: 1fr; }
-    .inv-split { grid-template-columns: 1fr; }
     .enfoque-grid { grid-template-columns: 1fr; }
-    .cta-section { padding: 36px 20px; }
-    .footer { flex-direction: column; align-items: flex-start; }
-  }
-  @media (max-width: 480px) {
-    .entregables-grid { grid-template-columns: 1fr 1fr; }
+    .cronograma-dark { padding: 24px 20px; }
+    .cronograma-header { flex-direction: column; gap: 8px; }
   }
 </style>
 </head>
 <body>
 
-<!-- Sidebar (desktop) -->
+<!-- Bottom bar -->
+<div class="bottom-bar">
+  <span class="bottom-bar-name">${esc(brand.agencyName)}</span>
+  ${proposalId
+    ? `<a href="/api/proposals/accept?id=${proposalId}" class="bottom-bar-btn" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>`
+    : `<a href="#inversion" class="bottom-bar-btn" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>`}
+</div>
+
+<!-- Sidebar -->
 <aside class="sidebar">
   ${logoHtml}
-  <div class="sidebar-name">${esc(brand.agencyName)}</div>
-  <div class="sidebar-tag">Propuesta Creativa</div>
-  <nav class="sidebar-nav">
-    <a href="#intro">Introducción</a>
-    <a href="#retos">Retos</a>
-    <a href="#enfoque">Enfoque</a>
-    <a href="#cronograma">Cronograma</a>
-    <a href="#inversion">Inversión</a>
-  </nav>
-  <div class="sidebar-bottom">${acceptBtn}</div>
+  <div class="sidebar-agency">${esc(brand.agencyName)}</div>
+  <div class="sidebar-sub">Bespoke Proposal</div>
+  <nav class="sidebar-nav">${navHtml}</nav>
+  <div class="sidebar-bottom">${acceptBtnSidebar}</div>
 </aside>
-
-<!-- Mobile bar -->
-<div class="mobile-bar">
-  <span class="mobile-bar-name">${esc(brand.agencyName)}</span>
-  ${acceptBtn}
-</div>
 
 <div class="main">
 
   <!-- Hero -->
-  <section class="section" id="intro">
+  <section class="main-section" id="intro">
     <div class="hero">
-      <div class="hero-overlay"></div>
-      <div class="hero-pulse">
-        <span class="hero-pulse-dot"></span>
-        <span class="hero-pulse-label">${esc(c.tipoProyecto)}</span>
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Propuesta Estratégica ${new Date().getFullYear()}
       </div>
-      <h1 class="hero-title">${esc(c.resumenCreativo)}</h1>
+      <h1 class="hero-title">
+        ${esc(c.resumenCreativo).replace(/(\w[\w\s]*)$/, (match) => {
+          const words = match.trim().split(" ");
+          if (words.length >= 2) {
+            const last2 = words.slice(-2).join(" ");
+            const rest = words.slice(0, -2).join(" ");
+            return (rest ? rest + " " : "") + `<span class="hero-title-accent">${last2}</span>`;
+          }
+          return `<span class="hero-title-accent">${match}</span>`;
+        })}
+      </h1>
+      <p class="hero-sub">${esc(c.entendimientoDelCliente)}</p>
       <div class="hero-meta">
-        <div>
-          <div class="hero-meta-label">Para</div>
+        <div class="hero-meta-item">
+          <div class="hero-meta-label">Preparado para</div>
           <div class="hero-meta-val">${clientLabel}</div>
         </div>
-        <div class="hero-divider"></div>
-        <div>
-          <div class="hero-meta-label">Fecha</div>
+        <div class="hero-meta-item">
+          <div class="hero-meta-label">Fecha de entrega</div>
           <div class="hero-meta-val">${fecha}</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Visión -->
-  <section class="section">
-    <div class="vision-grid">
-      <div class="card vision-card">
-        <div class="vision-label">La Visión</div>
-        <blockquote class="vision-quote">"${esc(c.entendimientoDelCliente)}"</blockquote>
-      </div>
-      <div class="card vision-stat">
-        <div class="vision-stat-label">Inversión Total</div>
-        <div class="vision-stat-val">${esc(c.inversion?.total || "")}</div>
-        <div class="vision-stat-sub">${esc(c.inversion?.terminos || "")}</div>
-      </div>
-    </div>
-  </section>
-
   <!-- Retos -->
-  <section class="section" id="retos">
-    <div class="section-label">Retos Identificados</div>
+  <section class="main-section" id="retos">
+    <h2 class="retos-title">Los Retos Actuales</h2>
+    <p class="retos-sub">Identificamos los puntos críticos que están frenando el crecimiento de su identidad digital actual.</p>
     <div class="retos-grid">${retosHtml}</div>
   </section>
 
   <!-- Enfoque -->
-  <section class="section" id="enfoque">
-    <div class="card enfoque-card">
-      <h2 class="section-title">Nuestro Enfoque</h2>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;">${pilaresHtml}</div>
-      <div class="enfoque-grid">
+  <section class="main-section" id="enfoque">
+    <div class="enfoque-grid">
+      <div class="enfoque-left">
         <div>
-          <div class="enfoque-col-title">
-            <span class="enfoque-col-line" style="background:${p};"></span>Fase Uno: Inmersión
-          </div>
-          <p class="enfoque-col-text">${esc(c.entendimientoDelCliente)}</p>
+          <div class="enfoque-left-label">Creative</div>
+          <div class="enfoque-left-word1">APPROACH</div>
+          <div class="enfoque-left-word2">${esc(c.tipoProyecto || "your brand")}</div>
         </div>
-        <div>
-          <div class="enfoque-col-title">
-            <span class="enfoque-col-line" style="background:${s};"></span>Fase Dos: Ejecución
-          </div>
-          <p class="enfoque-col-text">${esc(c.enfoqueCreativo?.descripcion || "")}</p>
+        <div class="enfoque-quote">
+          <div class="enfoque-quote-text">"El diseño no es lo que parece, es cómo funciona."</div>
+          <div class="enfoque-quote-author">— Steve Jobs</div>
         </div>
       </div>
+      <div class="enfoque-right">
+        <h2 class="enfoque-right-title">Nuestro Enfoque:<br/><span class="enfoque-right-accent">Estrategia Curada</span></h2>
+        <p class="enfoque-right-desc">${esc(c.enfoqueCreativo?.descripcion || "")}</p>
+        ${pilaresHtml}
+      </div>
     </div>
-  </section>
-
-  <!-- Entregables -->
-  <section class="section">
-    <div class="section-label">Entregables del Proyecto</div>
-    <div class="entregables-grid">${entregablesHtml}</div>
   </section>
 
   <!-- Cronograma -->
-  <section class="section" id="cronograma">
-    <div class="section-label">Cronograma de Implementación</div>
-    <div class="fases-list">${fasesHtml}</div>
-  </section>
-
-  <!-- Inversión -->
-  <section class="section" id="inversion">
-    <div class="card">
-      <div class="inv-split">
-        <div class="inv-left">
-          <h2 class="inv-title">Inversión Financiera</h2>
-          <p class="inv-intro">${esc(c.enfoqueCreativo?.descripcion || "Inversión estratégica en tu futuro digital con retorno medible.")}</p>
-          <ul class="incluye-list">${incluyeHtml}</ul>
+  <section class="main-section" id="cronograma">
+    <div class="cronograma-dark">
+      <div class="cronograma-header">
+        <div>
+          <div class="cronograma-title">Cronograma &amp; Entregables</div>
+          <div class="cronograma-sub">Un camino claro hacia la excelencia, dividido en fases críticas de ejecución.</div>
         </div>
-        <div class="inv-right-card">
-          <div class="inv-package">Paquete Total</div>
-          <div class="inv-price">${esc(c.inversion?.total || "")}</div>
-          <div class="inv-lines">
-            ${(c.inversion?.incluye || []).slice(0, 3).map(item => `
-            <div class="inv-line">
-              <span class="inv-line-label">${esc(item)}</span>
-              <span class="inv-line-val">Incluido</span>
-            </div>`).join("")}
-          </div>
-          <a href="#" class="inv-confirm" style="background:${p};">Confirmar Inversión</a>
-        </div>
+        <div class="cronograma-icon">✦</div>
       </div>
+      ${fasesHtml}
     </div>
   </section>
 
-  <!-- Por qué nosotros -->
-  <section class="section">
-    <div class="section-label">Por qué elegirnos</div>
-    <div class="porq-grid">${porQueHtml}</div>
-  </section>
-
-  <!-- CTA final -->
-  <section class="section cta-section">
-    <h2 class="cta-title">¿Listos para empezar?</h2>
-    <p class="cta-sub">Esta propuesta es válida por 15 días. Acepta para comenzar el proceso de onboarding.</p>
-    <div class="pasos-list">${pasosHtml}</div>
-    <div class="cta-btns">
-      ${proposalId ? `<a href="/api/proposals/accept?id=${proposalId}" class="cta-btn-primary" style="background:linear-gradient(135deg,${p},${s});">Aceptar &amp; Firmar</a>` : ""}
-      <a href="#intro" class="cta-btn-secondary">Agendar Llamada</a>
+  <!-- Inversión -->
+  <section class="main-section" id="inversion">
+    <div class="inv-section">
+      <h2 class="inv-eyebrow">Tu Inversión en <span class="inv-eyebrow-accent">Impacto</span></h2>
+      <p class="inv-sub">Sin tarifas ocultas, solo resultados medibles para su negocio.</p>
+      <div class="inv-card-center">
+        <div class="inv-label">Total de la Propuesta</div>
+        <div class="inv-price">${esc(c.inversion?.total || "")}</div>
+        <div class="inv-items">${incluyeHtml}</div>
+        ${proposalId
+          ? `<a href="/api/proposals/accept?id=${proposalId}" class="inv-cta-btn">Iniciar Proyecto Hoy</a>`
+          : `<a href="#" class="inv-cta-btn">Iniciar Proyecto Hoy</a>`}
+      </div>
     </div>
   </section>
 
   ${termsHtml}
 
   <footer class="footer">
-    <div>
-      <div class="footer-left">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · Confidencial</div>
-      ${senderHtml}
-    </div>
-    <div style="font-size:12px;color:#aab0c4;">${fecha}</div>
+    <div class="footer-left">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · ${clientLabel} · Confidencial</div>
+    ${senderHtml}
+    <div style="font-size:11px;color:#9ca3af;">${fecha}</div>
   </footer>
 
-</div><!-- /main -->
+</div>
 </body>
 </html>`;
 }
