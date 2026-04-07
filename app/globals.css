@@ -1,6 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Brand (purple) */
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-brand: #8b5cf6;
+
+  /* Navy */
+  --color-navy-50: #f0f2f5;
+  --color-navy-100: #e1e5eb;
+  --color-navy-200: #c3cbd7;
+  --color-navy-300: #a5b1c3;
+  --color-navy-400: #8797af;
+  --color-navy-500: #697d9b;
+  --color-navy-600: #54647c;
+  --color-navy-700: #3f4b5d;
+  --color-navy-800: #2a323e;
+  --color-navy-900: #15191f;
+  --color-navy-950: #0a0c10;
+
+  /* Surface */
+  --color-surface-50: #fafafa;
+  --color-surface-100: #f4f4f5;
+  --color-surface-200: #e4e4e7;
+  --color-surface-300: #d4d4d8;
+  --color-surface-400: #a1a1aa;
+  --color-surface-500: #71717a;
+  --color-surface-600: #52525b;
+  --color-surface-700: #3f3f46;
+  --color-surface-800: #27272a;
+  --color-surface-900: #18181b;
+  --color-surface-950: #09090b;
+
+  /* Background images */
+  --background-image-glass-gradient: linear-gradient(to bottom right, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+}
 
 :root {
   --sidebar-width: 256px;
