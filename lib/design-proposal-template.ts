@@ -1,3 +1,5 @@
+import type { BrandConfig } from "./proposal-templates/types";
+
 // ─── Data schema that Claude returns (JSON only) ──────────────────────────────
 
 export interface DesignProposalContent {
@@ -84,9 +86,15 @@ export function renderDesignProposalHtml(
   clientName: string,
   clientCompany?: string,
   proposalId?: string,
+  brandConfig?: BrandConfig,
 ): string {
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
   const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
+  const primaryColor = brandConfig?.primaryColor || "#7C3AED";
+  const accentColor  = brandConfig?.secondaryColor || "#EC4899";
+  const senderName   = brandConfig?.senderName || "";
+  const termsText    = brandConfig?.termsConditions || "";
+  const logoUrl      = brandConfig?.logoUrl || "";
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -99,10 +107,10 @@ export function renderDesignProposalHtml(
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --primary: #7C3AED;
+    --primary: ${primaryColor};
     --primary-light: #EDE9FE;
     --primary-dark: #5B21B6;
-    --accent: #EC4899;
+    --accent: ${accentColor};
     --accent-light: #FCE7F3;
     --text-main: #1E1B4B;
     --text-muted: #6B7280;
@@ -654,9 +662,7 @@ export function renderDesignProposalHtml(
     <aside class="sidebar">
       <div class="sidebar-inner">
         <div class="nav-logo">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
+          ${logoUrl ? `<img src="${esc(logoUrl)}" style="max-height:40px;max-width:150px;object-fit:contain;display:block;margin-bottom:6px;" alt="${esc(agencyName)}" />` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`}
           ${esc(agencyName)}
         </div>
         <p class="nav-divider">Contenido</p>
@@ -800,9 +806,17 @@ export function renderDesignProposalHtml(
         </div>
       </section>
 
+      ${termsText ? `
+      <section style="padding:48px 60px;border-top:1px solid rgba(255,255,255,0.08);background:#0e0e0e;">
+        <div style="max-width:700px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--primary);margin-bottom:12px;">Términos y Condiciones</div>
+          <p style="font-size:13px;color:#9ca3af;line-height:1.7;white-space:pre-wrap;">${esc(termsText)}</p>
+        </div>
+      </section>` : ""}
       <footer class="footer">
         <div class="footer-logo">${esc(agencyName)}</div>
         <p>Propuesta preparada por <strong>${esc(agencyName)}</strong> para <strong>${clientLabel}</strong></p>
+        ${senderName ? `<p style="margin-top:6px;font-size:13px;font-weight:600;">Presentado por: ${esc(senderName)}</p>` : ""}
         <p style="margin-top:6px;font-size:12px;opacity:0.5;">Válida por 30 días naturales. Reservados todos los derechos.</p>
       </footer>
 

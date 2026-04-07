@@ -8,6 +8,12 @@ export interface BrandProfile {
   redesSociales?: string;
   diferenciadores?: string;
   updatedAt?: string;
+  // Proposal branding
+  logoUrl?: string;
+  brandPrimaryColor?: string;
+  brandSecondaryColor?: string;
+  proposalSenderName?: string;
+  termsConditions?: string;
 }
 
 export interface Message {

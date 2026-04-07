@@ -33,6 +33,12 @@ export async function GET() {
     modelSeo:       data.model_seo       || DEFAULT_MODEL_SEO,
     modelProposals: data.model_proposals || DEFAULT_MODEL_PROPOSALS,
     modelWorkflows: data.model_workflows || DEFAULT_MODEL_WORKFLOWS,
+    // Proposal branding
+    logoUrl:             data.logo_url             || "",
+    brandPrimaryColor:   data.brand_primary_color   || "#7C3AED",
+    brandSecondaryColor: data.brand_secondary_color  || "#EC4899",
+    proposalSenderName:  data.proposal_sender_name   || "",
+    termsConditions:     data.terms_conditions        || "",
   });
 }
 
@@ -65,6 +71,13 @@ export async function POST(request: Request) {
   if (body.modelSeo)       upsertData.model_seo       = body.modelSeo;
   if (body.modelProposals) upsertData.model_proposals = body.modelProposals;
   if (body.modelWorkflows) upsertData.model_workflows = body.modelWorkflows;
+
+  // Proposal branding fields
+  if (body.logoUrl             !== undefined) upsertData.logo_url              = body.logoUrl             ?? "";
+  if (body.brandPrimaryColor   !== undefined) upsertData.brand_primary_color   = body.brandPrimaryColor   ?? "#7C3AED";
+  if (body.brandSecondaryColor !== undefined) upsertData.brand_secondary_color = body.brandSecondaryColor ?? "#EC4899";
+  if (body.proposalSenderName  !== undefined) upsertData.proposal_sender_name  = body.proposalSenderName  ?? "";
+  if (body.termsConditions     !== undefined) upsertData.terms_conditions       = body.termsConditions     ?? "";
 
   const { error } = await supabase.from("brand_profiles").upsert(
     upsertData,

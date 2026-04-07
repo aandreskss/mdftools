@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { PRELOADED_QUESTIONS, BRIEF_CATEGORIES, type BriefQuestion } from "@/lib/client-brief-questions";
+import TemplateSelector from "@/components/TemplateSelector";
+import type { TemplateId } from "@/lib/proposal-templates/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -186,6 +188,10 @@ export default function DisenoPropuestasPage() {
   const [htmlIframeKey, setHtmlIframeKey] = useState(0);
   const [editMode,     setEditMode]      = useState(false);
   const [editHtmlMode, setEditHtmlMode]  = useState(false);
+
+  // ── Template selector state ────────────────────────────────────────────────
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [pendingMarkdown, setPendingMarkdown]            = useState<string | null>(null);
 
   // ── Client briefs state ────────────────────────────────────────────────────
   const [clientBriefs, setClientBriefs]         = useState<ClientBriefSummary[]>([]);
@@ -411,7 +417,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       .replace(/^```html\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```\s*$/, "").trim();
   }
 
-  async function generateHtml(markdownContent: string) {
+  async function generateHtml(markdownContent: string, templateId?: TemplateId) {
     setGeneratingHtml(true);
     setHtmlContent("");
     setResultTab("html");
@@ -427,6 +433,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           price: `${form.currency} ${form.price}`,
           structuredContent,
           proposalId: savedProposalId ?? viewingProposal?.id,
+          templateId,
         }),
       });
 
@@ -727,6 +734,19 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setResultTab(p.html_content ? "html" : "propuesta");
   }
 
+  // ─── Template selector modal (global, rendered outside view routing) ─────────
+  const templateSelectorEl = (
+    <TemplateSelector
+      isOpen={showTemplateSelector}
+      onClose={() => setShowTemplateSelector(false)}
+      onSelect={(tid) => {
+        setShowTemplateSelector(false);
+        if (pendingMarkdown) generateHtml(pendingMarkdown, tid);
+      }}
+      isGenerating={generatingHtml}
+    />
+  );
+
   // ─── Render: List view ─────────────────────────────────────────────────────
 
   if (view === "list") {
@@ -748,6 +768,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
     return (
       <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+        {templateSelectorEl}
 
         {/* Hero header */}
         <div
@@ -769,18 +790,18 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
               <button
-                onClick={() => { fetchClientBriefs(); setView("briefs"); }}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border border-white/[0.1] text-slate-300 hover:text-white hover:border-violet-500/40 transition-all"
-                style={{ background: "rgba(167,139,250,0.07)" }}
-              >
-                <ClipboardList className="w-4 h-4" style={{ color: "#a78bfa" }} /> Briefs de Exploración
-              </button>
-              <button
                 onClick={startNew}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
-                style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all border border-white/[0.08] text-white hover:border-violet-500/40 hover:bg-white/[0.04]"
+                style={{ background: "rgba(255,255,255,0.04)" }}
               >
                 <Plus className="w-4 h-4" /> Nueva Propuesta
+              </button>
+              <button
+                onClick={() => { fetchClientBriefs(); setView("briefs"); }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all flex-shrink-0"
+                style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff", boxShadow: "0 0 20px rgba(124,58,237,0.3)" }}
+              >
+                <ClipboardList className="w-4 h-4" /> Briefs de Exploración
               </button>
             </div>
           </div>
@@ -1602,6 +1623,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   return (
     <div className="min-h-full" style={{ background: "#131313" }}>
+      {templateSelectorEl}
       {/* Sticky sub-header */}
       <div className="sticky top-0 z-30 border-b border-white/[0.06] backdrop-blur-md" style={{ background: "rgba(19,19,19,0.97)" }}>
         <div className="px-8 py-3.5">
@@ -1693,7 +1715,15 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   Propuesta
                 </button>
                 <button
-                  onClick={() => { setResultTab("html"); setEditMode(false); setEditHtmlMode(false); if (!htmlContent && generatedContent) generateHtml(generatedContent); }}
+                  onClick={() => {
+                    setEditMode(false); setEditHtmlMode(false);
+                    if (!htmlContent && generatedContent) {
+                      setPendingMarkdown(generatedContent);
+                      setShowTemplateSelector(true);
+                    } else {
+                      setResultTab("html");
+                    }
+                  }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${resultTab === "html" ? "bg-white text-[#131313] shadow-md" : "text-slate-400 hover:text-white"}`}
                 >
                   <Eye className="w-3.5 h-3.5" /> Vista Web
@@ -1749,7 +1779,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                         <Save className="w-3.5 h-3.5" /> Guardar cambios
                       </button>
                       <button
-                        onClick={async () => { await saveEditedContent(); setResultTab("html"); generateHtml(generatedContent); }}
+                        onClick={async () => { await saveEditedContent(); setPendingMarkdown(generatedContent); setShowTemplateSelector(true); }}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all"
                         style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff" }}
                       >
@@ -1826,7 +1856,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                     </div>
                     <p className="text-slate-400 font-semibold mb-5">La versión web aún no ha sido generada</p>
                     <button
-                      onClick={() => generateHtml(markdownContent)}
+                      onClick={() => { setPendingMarkdown(markdownContent); setShowTemplateSelector(true); }}
                       className="px-5 py-2.5 text-white text-sm font-bold rounded-xl transition-all"
                       style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}
                     >

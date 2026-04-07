@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink, Cpu, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Save, CheckCircle, Loader2, Key, Eye, EyeOff, ExternalLink, Cpu, User, Palette, Upload } from "lucide-react";
 import type { BrandProfile } from "@/types";
 import { CLAUDE_MODELS, GEMINI_MODELS, DEFAULT_MODEL_AGENTS, DEFAULT_MODEL_SEO, DEFAULT_MODEL_PROPOSALS, DEFAULT_MODEL_WORKFLOWS } from "@/lib/user-settings";
 
@@ -88,6 +88,15 @@ export default function PerfilPage() {
   const [modelProposals, setModelProposals] = useState(DEFAULT_MODEL_PROPOSALS);
   const [modelWorkflows, setModelWorkflows] = useState(DEFAULT_MODEL_WORKFLOWS);
 
+  // Proposal branding fields
+  const [logoUrl,             setLogoUrl]             = useState("");
+  const [brandPrimaryColor,   setBrandPrimaryColor]   = useState("#7C3AED");
+  const [brandSecondaryColor, setBrandSecondaryColor] = useState("#EC4899");
+  const [proposalSenderName,  setProposalSenderName]  = useState("");
+  const [termsConditions,     setTermsConditions]     = useState("");
+  const [uploadingLogo,       setUploadingLogo]       = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const modelState: Record<string, { get: string; set: (v: string) => void }> = {
     modelAgents:    { get: modelAgents,    set: setModelAgents },
     modelSeo:       { get: modelSeo,       set: setModelSeo },
@@ -110,6 +119,11 @@ export default function PerfilPage() {
             if (data.modelSeo)       setModelSeo(data.modelSeo);
             if (data.modelProposals) setModelProposals(data.modelProposals);
             if (data.modelWorkflows) setModelWorkflows(data.modelWorkflows);
+            if (data.logoUrl)             setLogoUrl(data.logoUrl);
+            if (data.brandPrimaryColor)   setBrandPrimaryColor(data.brandPrimaryColor);
+            if (data.brandSecondaryColor) setBrandSecondaryColor(data.brandSecondaryColor);
+            if (data.proposalSenderName)  setProposalSenderName(data.proposalSenderName);
+            if (data.termsConditions)     setTermsConditions(data.termsConditions);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             setLoading(false);
             return;
@@ -130,6 +144,21 @@ export default function PerfilPage() {
     setProfile((prev) => ({ ...prev, [field]: value }));
   }
 
+  async function handleLogoUpload(file: File) {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/proposals/upload-logo", { method: "POST", body: fd });
+      if (res.ok) {
+        const { url } = await res.json();
+        if (url) setLogoUrl(url);
+      }
+    } catch { /* silent */ } finally {
+      setUploadingLogo(false);
+    }
+  }
+
   async function handleSave() {
     setSaving(true);
     const toSave = { ...profile, updatedAt: new Date().toISOString() };
@@ -140,6 +169,11 @@ export default function PerfilPage() {
       modelSeo,
       modelProposals,
       modelWorkflows,
+      logoUrl,
+      brandPrimaryColor,
+      brandSecondaryColor,
+      proposalSenderName,
+      termsConditions,
     };
     if (apiKeyInput.trim())    body.anthropicApiKey = apiKeyInput.trim();
     if (geminiKeyInput.trim()) body.geminiApiKey    = geminiKeyInput.trim();
@@ -628,6 +662,162 @@ export default function PerfilPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ── Card: Propuestas — Identidad Visual ─────────────────── */}
+          <div
+            className="p-5 rounded-2xl space-y-5"
+            style={{ background: "#1c1b1b" }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Palette size={14} style={{ color: "#cbbeff" }} />
+              <h3 className="text-sm font-medium" style={{ color: "#e5e2e1" }}>
+                Identidad Visual para Propuestas
+              </h3>
+            </div>
+            <p className="text-xs" style={{ color: "#938e9e" }}>
+              Personaliza el branding de tus propuestas HTML generadas por IA.
+            </p>
+
+            {/* Logo */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#e5e2e1" }}>
+                Logo de la agencia
+              </label>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => { if (e.target.files?.[0]) handleLogoUpload(e.target.files[0]); }}
+              />
+              <div className="flex items-center gap-3">
+                {logoUrl && (
+                  <img
+                    src={logoUrl}
+                    alt="Logo"
+                    style={{ maxHeight: 40, maxWidth: 120, objectFit: "contain", borderRadius: 6, background: "#2a2929", padding: "4px 8px" }}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition"
+                  style={{ background: "#201f1f", border: "1px solid rgba(255,255,255,0.08)", color: "#e5e2e1" }}
+                >
+                  {uploadingLogo ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                  {logoUrl ? "Cambiar logo" : "Subir logo"}
+                </button>
+                {logoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setLogoUrl("")}
+                    className="text-xs px-2 py-1 rounded text-red-400 hover:bg-red-400/10 transition"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              {logoUrl && (
+                <input
+                  type="text"
+                  value={logoUrl}
+                  onChange={e => setLogoUrl(e.target.value)}
+                  placeholder="O pega una URL de imagen..."
+                  className="mt-2 w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                  style={inputStyle}
+                />
+              )}
+              {!logoUrl && (
+                <input
+                  type="text"
+                  value={logoUrl}
+                  onChange={e => setLogoUrl(e.target.value)}
+                  placeholder="O pega una URL de imagen directamente..."
+                  className="mt-2 w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                  style={inputStyle}
+                />
+              )}
+            </div>
+
+            {/* Colors */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "#e5e2e1" }}>
+                  Color primario
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={brandPrimaryColor}
+                    onChange={e => setBrandPrimaryColor(e.target.value)}
+                    style={{ width: 40, height: 36, borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", background: "transparent" }}
+                  />
+                  <input
+                    type="text"
+                    value={brandPrimaryColor}
+                    onChange={e => setBrandPrimaryColor(e.target.value)}
+                    placeholder="#7C3AED"
+                    className="flex-1 px-3 py-2.5 rounded-xl text-white text-sm outline-none transition font-mono"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "#e5e2e1" }}>
+                  Color secundario
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={brandSecondaryColor}
+                    onChange={e => setBrandSecondaryColor(e.target.value)}
+                    style={{ width: 40, height: 36, borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", background: "transparent" }}
+                  />
+                  <input
+                    type="text"
+                    value={brandSecondaryColor}
+                    onChange={e => setBrandSecondaryColor(e.target.value)}
+                    placeholder="#EC4899"
+                    className="flex-1 px-3 py-2.5 rounded-xl text-white text-sm outline-none transition font-mono"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sender name */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#e5e2e1" }}>
+                Nombre del remitente
+              </label>
+              <p className="text-xs mb-1.5" style={{ color: "#938e9e" }}>Aparece en el footer de las propuestas como "Presentado por: …"</p>
+              <input
+                type="text"
+                value={proposalSenderName}
+                onChange={e => setProposalSenderName(e.target.value)}
+                placeholder="Ej: Andrés García, Director Creativo"
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Terms */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#e5e2e1" }}>
+                Términos y condiciones
+              </label>
+              <p className="text-xs mb-1.5" style={{ color: "#938e9e" }}>Se incluye al final de cada propuesta generada.</p>
+              <textarea
+                value={termsConditions}
+                onChange={e => setTermsConditions(e.target.value)}
+                placeholder="Ej: El precio incluye 3 rondas de revisión. El 50% se abona al inicio del proyecto..."
+                rows={4}
+                className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition resize-none"
+                style={inputStyle}
+              />
             </div>
           </div>
 

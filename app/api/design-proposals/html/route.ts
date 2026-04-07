@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 import { renderDesignProposalHtml, type DesignProposalContent } from "@/lib/design-proposal-template";
+import { renderDataTemplate } from "@/lib/proposal-templates/template-data";
+import { renderBoldTemplate } from "@/lib/proposal-templates/template-bold";
+import { renderElegantTemplate } from "@/lib/proposal-templates/template-elegant";
+import type { BrandConfig, TemplateId } from "@/lib/proposal-templates/types";
 
 const JSON_SCHEMA = `{
   "tipoProyecto": "string",
@@ -17,7 +21,7 @@ const JSON_SCHEMA = `{
 }`;
 
 export async function POST(request: Request) {
-  const { markdown, clientName, clientCompany, price, structuredContent, proposalId } = await request.json();
+  const { markdown, clientName, clientCompany, price, structuredContent, proposalId, templateId } = await request.json();
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -26,14 +30,34 @@ export async function POST(request: Request) {
   let agencyName = "Nuestra Agencia";
   const { data: profile } = await supabase
     .from("brand_profiles")
-    .select("brand_name")
+    .select("brand_name, logo_url, brand_primary_color, brand_secondary_color, proposal_sender_name, terms_conditions")
     .eq("user_id", user.id)
     .maybeSingle();
+
   if (profile?.brand_name) agencyName = profile.brand_name;
+
+  const brandConfig: BrandConfig = {
+    agencyName,
+    primaryColor:     profile?.brand_primary_color   || "#7C3AED",
+    secondaryColor:   profile?.brand_secondary_color  || "#EC4899",
+    logoUrl:          profile?.logo_url               || "",
+    senderName:       profile?.proposal_sender_name   || "",
+    termsConditions:  profile?.terms_conditions        || "",
+  };
+
+  function renderWithTemplate(content: DesignProposalContent): string {
+    const tid = (templateId as TemplateId) || "dark";
+    switch (tid) {
+      case "data":    return renderDataTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      case "bold":    return renderBoldTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      case "elegant": return renderElegantTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      default:        return renderDesignProposalHtml(content, agencyName, clientName, clientCompany, proposalId, brandConfig);
+    }
+  }
 
   // If structured content already available, render directly
   if (structuredContent) {
-    const html = renderDesignProposalHtml(structuredContent, agencyName, clientName, clientCompany, proposalId);
+    const html = renderWithTemplate(structuredContent);
     return new Response(html, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
@@ -69,7 +93,7 @@ IMPORTANTE: Responde ÚNICAMENTE con el JSON. Sin texto antes ni después.`;
     rawJson = rawJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const content: DesignProposalContent = JSON.parse(rawJson);
-    const html = renderDesignProposalHtml(content, agencyName, clientName, clientCompany, proposalId);
+    const html = renderWithTemplate(content);
 
     return new Response(html, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
