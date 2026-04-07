@@ -17,241 +17,386 @@ export function renderBoldTemplate(
   const clientLabel = clientCompany ? `${esc(clientName)} · ${esc(clientCompany)}` : esc(clientName);
   const p = brand.primaryColor || "#6e3ac9";
   const s = brand.secondaryColor || "#b00d6a";
+  const emojis = ["🚀","✨","📋","🔗","📊","🎯","💡","🎨"];
 
   const logoHtml = brand.logoUrl
-    ? `<img src="${esc(brand.logoUrl)}" style="max-height:36px;max-width:130px;object-fit:contain;margin-bottom:6px;" alt="logo" />`
-    : "";
+    ? `<img src="${esc(brand.logoUrl)}" class="sidebar-logo" alt="logo"/>` : "";
 
   const retosHtml = (c.retosDetectados || []).slice(0, 3).map(r => `
-    <div style="background:#f4f6ff;padding:28px;border-radius:24px;transition:all .2s;cursor:default;">
-      <div style="width:48px;height:48px;background:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <span style="font-size:22px;">⚡</span>
-      </div>
-      <h3 style="font-size:17px;font-weight:700;color:#252f3d;margin-bottom:10px;">${esc(r.titulo)}</h3>
-      <p style="font-size:13px;color:#525c6c;line-height:1.6;">${esc(r.descripcion)}</p>
+    <div class="reto-card">
+      <div class="reto-icon-wrap">⚡</div>
+      <h3 class="reto-title">${esc(r.titulo)}</h3>
+      <p class="reto-desc">${esc(r.descripcion)}</p>
     </div>`).join("");
 
   const pilaresHtml = (c.enfoqueCreativo?.pilares || []).map(p_ => `
-    <span style="display:inline-block;padding:10px 20px;border-radius:100px;font-weight:700;font-size:13px;background:#ede9fe;color:${p};">${esc(p_)}</span>`).join("");
+    <span class="pillar-tag" style="background:color-mix(in srgb,${p} 12%,transparent);color:${p};">${esc(p_)}</span>`).join("");
 
   const entregablesHtml = (c.entregables || []).slice(0, 6).map((e, i) => `
-    <div style="background:${i === 0 ? `linear-gradient(135deg,#1a1a2e,#2d2b55)` : i % 3 === 0 ? p : "#fff"};padding:28px;border-radius:20px;${i === 0 ? "color:#fff;" : ""}"
-      style="display:flex;flex-direction:column;justify-content:space-between;min-height:140px;">
-      <div style="font-size:28px;margin-bottom:12px;">${["🚀","✨","📋","🔗","📊","🎯"][i] || "✦"}</div>
-      <h3 style="font-size:15px;font-weight:700;${i === 0 || i % 3 === 0 ? "color:#fff;" : "color:#252f3d;"}">${esc(e)}</h3>
+    <div class="entregable-card" style="${i === 0 ? `background:linear-gradient(135deg,#14142b,#2a2660);color:#fff;` : `background:#fff;`}">
+      <span class="entregable-emoji">${emojis[i] || "✦"}</span>
+      <span class="entregable-name" style="${i === 0 ? "color:#fff;" : "color:#1e2235;"}">${esc(e)}</span>
     </div>`).join("");
 
   const fasesHtml = (c.fases || []).map((f, i) => `
-    <div style="position:relative;display:flex;flex-direction:${i % 2 === 0 ? "row" : "row-reverse"};align-items:center;gap:32px;margin-bottom:48px;">
-      <div style="flex:1;text-align:${i % 2 === 0 ? "right" : "left"};">
-        <h3 style="font-size:22px;font-weight:700;color:#252f3d;">${esc(f.titulo)}</h3>
-        <p style="color:#525c6c;margin-top:8px;font-size:14px;">${esc(f.descripcion)}</p>
-      </div>
-      <div style="width:48px;height:48px;background:${i % 2 === 0 ? p : s};border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0;z-index:1;box-shadow:0 4px 16px rgba(110,58,201,0.3);">${f.numero}</div>
-      <div style="flex:1;">
-        <div style="background:#fff;border-radius:20px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-          <div style="font-size:12px;font-weight:700;color:#a3aec0;font-style:italic;margin-bottom:4px;">${esc(f.duracion)}</div>
-          <p style="font-size:13px;color:#525c6c;">${esc(f.descripcion)}</p>
-        </div>
+    <div class="fase-item">
+      <div class="fase-bubble" style="background:${i % 2 === 0 ? p : s};">${f.numero}</div>
+      <div class="fase-body">
+        <div class="fase-dur">${esc(f.duracion)}</div>
+        <h3 class="fase-title">${esc(f.titulo)}</h3>
+        <p class="fase-desc">${esc(f.descripcion)}</p>
       </div>
     </div>`).join("");
 
   const incluyeHtml = (c.inversion?.incluye || []).map(item => `
-    <li style="display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500;color:#252f3d;">
-      <span style="color:${p};font-size:18px;">✓</span> ${esc(item)}
-    </li>`).join("");
+    <li class="incluye-item"><span style="color:${p};margin-right:10px;">✓</span>${esc(item)}</li>`).join("");
 
   const porQueHtml = (c.porQueNosotros || []).map(q => `
-    <div style="background:#fff;border-radius:20px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.04);">
-      <div style="font-size:26px;margin-bottom:12px;">✦</div>
-      <h4 style="font-size:15px;font-weight:700;color:#252f3d;margin-bottom:8px;">${esc(q.titulo)}</h4>
-      <p style="font-size:13px;color:#525c6c;line-height:1.5;">${esc(q.descripcion)}</p>
+    <div class="porq-card">
+      <div class="porq-num" style="color:${p};">✦</div>
+      <h4 class="porq-title">${esc(q.titulo)}</h4>
+      <p class="porq-desc">${esc(q.descripcion)}</p>
     </div>`).join("");
 
   const pasosHtml = (c.proximosPasos || []).map((p_, i) => `
-    <div style="display:flex;align-items:center;gap:16px;padding:16px 24px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-      <span style="width:28px;height:28px;border-radius:50%;background:${i === 0 ? p : "#f4f6ff"};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:${i === 0 ? "#fff" : "#525c6c"};flex-shrink:0;">${i + 1}</span>
-      <span style="font-size:14px;font-weight:500;color:#252f3d;">${esc(p_)}</span>
+    <div class="paso-row">
+      <span class="paso-num" style="${i === 0 ? `background:${p};color:#fff;` : `background:#f0f2fb;color:#5a6278;`}">${i + 1}</span>
+      <span class="paso-text">${esc(p_)}</span>
     </div>`).join("");
 
   const termsHtml = brand.termsConditions ? `
-    <section style="margin-bottom:40px;background:#f4f6ff;border-radius:24px;padding:40px;">
-      <h2 style="font-size:22px;font-weight:800;color:#252f3d;margin-bottom:16px;">Términos y Condiciones</h2>
-      <div style="font-size:13px;line-height:1.7;color:#525c6c;white-space:pre-wrap;">${esc(brand.termsConditions)}</div>
+    <section class="section">
+      <h2 class="section-title">Términos y Condiciones</h2>
+      <div class="card" style="padding:28px;font-size:13px;line-height:1.8;color:#5a6278;white-space:pre-wrap;">${esc(brand.termsConditions)}</div>
     </section>` : "";
 
   const senderHtml = brand.senderName
-    ? `<p style="font-size:13px;color:#a3aec0;margin-top:8px;">Presentado por: <strong style="color:#6d7788;">${esc(brand.senderName)}</strong></p>` : "";
+    ? `<p class="footer-sender">Presentado por <strong>${esc(brand.senderName)}</strong></p>` : "";
 
   const acceptBtn = proposalId
-    ? `<a href="/api/proposals/accept?id=${proposalId}" style="display:inline-block;padding:18px 40px;background:linear-gradient(90deg,${p},${s});color:#fff;font-weight:700;border-radius:20px;text-decoration:none;font-size:15px;box-shadow:0 8px 24px rgba(110,58,201,0.3);">Aceptar y Firmar</a>`
-    : "";
+    ? `<a href="/api/proposals/accept?id=${proposalId}" class="accept-btn" style="background:linear-gradient(135deg,${p},${s});">Aceptar Propuesta</a>` : "";
 
   return `<!DOCTYPE html>
-<html lang="es" style="scroll-behavior:smooth;">
+<html lang="es">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Propuesta — ${esc(clientName)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Inter',sans-serif;background:#f4f6ff;color:#252f3d;min-height:100vh;}
-  aside{position:fixed;left:0;top:0;height:100vh;width:256px;background:#fff;box-shadow:0 20px 40px -12px rgba(110,58,201,0.08);display:flex;flex-direction:column;gap:24px;padding:24px;z-index:50;}
-  main{margin-left:256px;min-height:100vh;padding:32px 40px 80px;}
-  nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:500;color:#525c6c;text-decoration:none;transition:all .2s;}
-  nav a:hover{background:#ede9fe;color:${p};}
-  section{margin-bottom:48px;}
-  @media(max-width:768px){aside{display:none;}main{margin-left:0;padding:24px 16px 60px;}}
+  :root {
+    --primary: ${p};
+    --secondary: ${s};
+    --bg: #f0f2fb;
+    --card: #ffffff;
+    --text: #1e2235;
+    --muted: #5a6278;
+    --border: #e4e8f4;
+    --sidebar-w: 240px;
+    --radius: 20px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; height: 100vh; width: var(--sidebar-w);
+    background: #fff; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 28px 20px; z-index: 100; overflow-y: auto;
+  }
+  .sidebar-logo { max-height: 32px; max-width: 120px; object-fit: contain; margin-bottom: 10px; }
+  .sidebar-name { font-size: 17px; font-weight: 800; background: linear-gradient(135deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .sidebar-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px; color: #aab0c4; margin-top: 3px; }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 28px; flex: 1; }
+  .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all .18s; }
+  .sidebar-nav a:hover { background: color-mix(in srgb,var(--primary) 10%,transparent); color: var(--primary); }
+  .sidebar-bottom { margin-top: 24px; }
+  .accept-btn { display: block; text-align: center; padding: 13px; border-radius: 14px; font-weight: 700; font-size: 14px; color: #fff; text-decoration: none; transition: opacity .2s; }
+  .accept-btn:hover { opacity: .88; }
+
+  /* ── Mobile top bar ── */
+  .mobile-bar { display: none; position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.93); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 14px 20px; align-items: center; justify-content: space-between; }
+  .mobile-bar-name { font-size: 15px; font-weight: 800; background: linear-gradient(135deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+  /* ── Main ── */
+  .main { margin-left: var(--sidebar-w); padding: 32px 36px 80px; max-width: 960px; }
+  .section { margin-bottom: 28px; }
+  .section-title { font-size: 20px; font-weight: 800; margin-bottom: 18px; letter-spacing: -.3px; }
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #aab0c4; text-align: center; margin-bottom: 24px; }
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: 0 2px 14px rgba(0,0,0,.05); }
+
+  /* ── Hero gradient ── */
+  .hero { background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 24px; padding: 52px 52px 48px; position: relative; overflow: hidden; margin-bottom: 28px; }
+  .hero-overlay { position: absolute; top: 0; right: -15%; width: 55%; height: 100%; background: radial-gradient(circle at center,rgba(255,255,255,.12),transparent 70%); pointer-events: none; }
+  .hero-pulse { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.15); backdrop-filter: blur(8px); padding: 6px 16px; border-radius: 100px; margin-bottom: 22px; }
+  .hero-pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,180,180,.9); }
+  .hero-pulse-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
+  .hero-title { font-size: clamp(26px, 4vw, 46px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.08; color: #fff; margin-bottom: 28px; }
+  .hero-meta { display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
+  .hero-divider { width: 1px; height: 32px; background: rgba(255,255,255,.2); }
+  .hero-meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.5); margin-bottom: 3px; }
+  .hero-meta-val { font-size: 14px; font-weight: 600; color: #fff; }
+
+  /* ── Vision / quote ── */
+  .vision-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 20px; align-items: center; }
+  .vision-card { padding: 36px; }
+  .vision-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); margin-bottom: 16px; }
+  .vision-quote { font-size: clamp(16px, 2vw, 20px); font-weight: 700; line-height: 1.45; color: var(--text); }
+  .vision-stat { padding: 28px; }
+  .vision-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+  .vision-stat-val { font-size: clamp(22px, 3vw, 34px); font-weight: 900; color: var(--primary); letter-spacing: -1px; }
+  .vision-stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+  /* ── Retos ── */
+  .retos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .reto-card { padding: 28px; border-radius: var(--radius); background: var(--bg); }
+  .reto-icon-wrap { width: 44px; height: 44px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .reto-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .reto-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  /* ── Enfoque ── */
+  .enfoque-card { padding: 36px; }
+  .pillar-tag { display: inline-block; padding: 8px 18px; border-radius: 100px; font-size: 13px; font-weight: 700; margin: 4px; }
+  .enfoque-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; }
+  .enfoque-col-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .enfoque-col-line { display: inline-block; width: 24px; height: 2px; }
+  .enfoque-col-text { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  /* ── Entregables ── */
+  .entregables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .entregable-card { padding: 22px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 110px; justify-content: space-between; }
+  .entregable-emoji { font-size: 24px; }
+  .entregable-name { font-size: 13px; font-weight: 700; line-height: 1.3; }
+
+  /* ── Timeline fases ── */
+  .fases-list { display: flex; flex-direction: column; gap: 24px; }
+  .fase-item { display: flex; gap: 20px; align-items: flex-start; }
+  .fase-bubble { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+  .fase-body { flex: 1; background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .fase-dur { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-style: italic; margin-bottom: 4px; }
+  .fase-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .fase-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── Inversión ── */
+  .inv-split { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .inv-left { padding: 36px; }
+  .inv-title { font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; }
+  .inv-intro { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 24px; }
+  .incluye-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .incluye-item { font-size: 14px; font-weight: 500; display: flex; align-items: center; }
+  .inv-right-card { padding: 32px; }
+  .inv-package { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+  .inv-price { font-size: clamp(28px, 4vw, 48px); font-weight: 900; letter-spacing: -2px; color: var(--text); margin-bottom: 20px; }
+  .inv-lines { border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .inv-line { display: flex; justify-content: space-between; font-size: 13px; }
+  .inv-line-label { color: var(--muted); }
+  .inv-line-val { font-weight: 700; }
+  .inv-confirm { display: block; text-align: center; padding: 14px; background: var(--primary); color: #fff; font-weight: 700; border-radius: 14px; text-decoration: none; font-size: 14px; transition: opacity .2s; }
+  .inv-confirm:hover { opacity: .88; }
+
+  /* ── Por qué / Why ── */
+  .porq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .porq-card { padding: 24px; border-radius: var(--radius); background: var(--card); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .porq-num { font-size: 28px; margin-bottom: 10px; }
+  .porq-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .porq-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── Pasos CTA ── */
+  .cta-section { text-align: center; padding: 52px 40px; background: var(--bg); border-radius: 24px; }
+  .cta-title { font-size: clamp(22px, 3vw, 34px); font-weight: 900; letter-spacing: -1px; margin-bottom: 12px; }
+  .cta-sub { font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto 32px; line-height: 1.55; }
+  .pasos-list { display: flex; flex-direction: column; gap: 10px; max-width: 440px; margin: 0 auto 36px; }
+  .paso-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--card); border-radius: 12px; text-align: left; }
+  .paso-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+  .paso-text { font-size: 14px; font-weight: 500; }
+  .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .cta-btn-primary { padding: 16px 36px; border-radius: 18px; font-weight: 700; font-size: 15px; color: #fff; text-decoration: none; transition: opacity .2s; }
+  .cta-btn-primary:hover { opacity: .88; }
+  .cta-btn-secondary { padding: 16px 36px; background: var(--card); color: var(--text); font-weight: 700; border-radius: 18px; font-size: 15px; border: 2px solid var(--border); text-decoration: none; transition: background .2s; }
+  .cta-btn-secondary:hover { background: var(--bg); }
+
+  /* ── Footer ── */
+  .footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 32px; border-top: 1px solid var(--border); }
+  .footer-left { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #aab0c4; }
+  .footer-sender { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .mobile-bar { display: flex; }
+    .main { margin-left: 0; padding: 20px 16px 60px; max-width: 100%; }
+    .hero { padding: 32px 24px 28px; border-radius: 18px; }
+    .hero-meta { gap: 16px; }
+    .hero-divider { display: none; }
+    .vision-grid { grid-template-columns: 1fr; }
+    .retos-grid { grid-template-columns: 1fr; }
+    .inv-split { grid-template-columns: 1fr; }
+    .enfoque-grid { grid-template-columns: 1fr; }
+    .cta-section { padding: 36px 20px; }
+    .footer { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 480px) {
+    .entregables-grid { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<aside>
-  <div>
-    ${logoHtml}
-    <div style="font-size:20px;font-weight:800;background:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${esc(brand.agencyName)}</div>
-    <div style="font-size:11px;color:#a3aec0;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;">Propuesta Creativa</div>
-  </div>
-  <nav style="display:flex;flex-direction:column;gap:4px;">
+<!-- Sidebar (desktop) -->
+<aside class="sidebar">
+  ${logoHtml}
+  <div class="sidebar-name">${esc(brand.agencyName)}</div>
+  <div class="sidebar-tag">Propuesta Creativa</div>
+  <nav class="sidebar-nav">
     <a href="#intro">Introducción</a>
     <a href="#retos">Retos</a>
     <a href="#enfoque">Enfoque</a>
     <a href="#cronograma">Cronograma</a>
     <a href="#inversion">Inversión</a>
   </nav>
-  <div style="margin-top:auto;">${acceptBtn}</div>
+  <div class="sidebar-bottom">${acceptBtn}</div>
 </aside>
 
-<main>
-  <!-- Hero Gradient -->
-  <section id="intro" style="position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(135deg,${p},${s});min-height:500px;display:flex;flex-direction:column;justify-content:center;padding:56px 64px;margin-bottom:32px;">
-    <div style="position:absolute;top:0;right:-10%;width:50%;height:100%;opacity:0.15;">
-      <div style="width:100%;height:100%;background:radial-gradient(circle,#fff,transparent);"></div>
-    </div>
-    <div style="position:relative;z-index:1;max-width:600px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);padding:6px 16px;border-radius:100px;margin-bottom:24px;">
-        <span style="width:8px;height:8px;border-radius:50%;background:rgba(255,200,200,0.8);animation:pulse 2s infinite;"></span>
-        <span style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#fff;">${esc(c.tipoProyecto)}</span>
+<!-- Mobile bar -->
+<div class="mobile-bar">
+  <span class="mobile-bar-name">${esc(brand.agencyName)}</span>
+  ${acceptBtn}
+</div>
+
+<div class="main">
+
+  <!-- Hero -->
+  <section class="section" id="intro">
+    <div class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-pulse">
+        <span class="hero-pulse-dot"></span>
+        <span class="hero-pulse-label">${esc(c.tipoProyecto)}</span>
       </div>
-      <h1 style="font-size:52px;font-weight:900;letter-spacing:-2px;line-height:1.05;color:#fff;margin-bottom:28px;">${esc(c.resumenCreativo)}</h1>
-      <div style="display:flex;gap:32px;color:rgba(255,255,255,0.8);">
+      <h1 class="hero-title">${esc(c.resumenCreativo)}</h1>
+      <div class="hero-meta">
         <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px;">Para</div>
-          <div style="font-weight:600;font-size:16px;color:#fff;">${clientLabel}</div>
+          <div class="hero-meta-label">Para</div>
+          <div class="hero-meta-val">${clientLabel}</div>
         </div>
-        <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
+        <div class="hero-divider"></div>
         <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:0.6;margin-bottom:4px;">Fecha</div>
-          <div style="font-weight:600;font-size:16px;color:#fff;">${fecha}</div>
+          <div class="hero-meta-label">Fecha</div>
+          <div class="hero-meta-val">${fecha}</div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Visión -->
-  <section id="estrategia" style="display:grid;grid-template-columns:7fr 5fr;gap:24px;margin-bottom:32px;align-items:center;">
-    <div style="background:#fff;border-radius:24px;padding:40px;box-shadow:0 2px 12px rgba(0,0,0,0.04);">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:${p};margin-bottom:20px;">La Visión</div>
-      <blockquote style="font-size:22px;font-weight:700;color:#252f3d;line-height:1.4;">"${esc(c.entendimientoDelCliente)}"</blockquote>
-    </div>
-    <div style="background:#f4f6ff;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:12px;">
-      <div style="font-size:36px;font-weight:900;color:${p};">${esc(c.inversion?.total || "")}</div>
-      <div style="font-size:13px;color:#525c6c;">${esc(c.inversion?.terminos || "")}</div>
+  <section class="section">
+    <div class="vision-grid">
+      <div class="card vision-card">
+        <div class="vision-label">La Visión</div>
+        <blockquote class="vision-quote">"${esc(c.entendimientoDelCliente)}"</blockquote>
+      </div>
+      <div class="card vision-stat">
+        <div class="vision-stat-label">Inversión Total</div>
+        <div class="vision-stat-val">${esc(c.inversion?.total || "")}</div>
+        <div class="vision-stat-sub">${esc(c.inversion?.terminos || "")}</div>
+      </div>
     </div>
   </section>
 
   <!-- Retos -->
-  <section id="retos" style="margin-bottom:32px;">
-    <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:3px;color:#a3aec0;text-align:center;margin-bottom:32px;">Retos Identificados</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;">${retosHtml}</div>
+  <section class="section" id="retos">
+    <div class="section-label">Retos Identificados</div>
+    <div class="retos-grid">${retosHtml}</div>
   </section>
 
-  <!-- Enfoque creativo -->
-  <section id="enfoque" style="background:#fff;border-radius:24px;padding:40px;margin-bottom:32px;box-shadow:0 2px 12px rgba(0,0,0,0.04);">
-    <h2 style="font-size:26px;font-weight:800;color:#252f3d;margin-bottom:20px;">Nuestro Enfoque</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:32px;">${pilaresHtml}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-      <div>
-        <h4 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <span style="display:inline-block;width:24px;height:2px;background:${p};"></span> Fase Uno: Inmersión
-        </h4>
-        <p style="font-size:14px;color:#525c6c;line-height:1.6;">${esc(c.entendimientoDelCliente)}</p>
-      </div>
-      <div>
-        <h4 style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <span style="display:inline-block;width:24px;height:2px;background:${s};"></span> Fase Dos: Ejecución
-        </h4>
-        <p style="font-size:14px;color:#525c6c;line-height:1.6;">${esc(c.enfoqueCreativo?.descripcion || "")}</p>
+  <!-- Enfoque -->
+  <section class="section" id="enfoque">
+    <div class="card enfoque-card">
+      <h2 class="section-title">Nuestro Enfoque</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;">${pilaresHtml}</div>
+      <div class="enfoque-grid">
+        <div>
+          <div class="enfoque-col-title">
+            <span class="enfoque-col-line" style="background:${p};"></span>Fase Uno: Inmersión
+          </div>
+          <p class="enfoque-col-text">${esc(c.entendimientoDelCliente)}</p>
+        </div>
+        <div>
+          <div class="enfoque-col-title">
+            <span class="enfoque-col-line" style="background:${s};"></span>Fase Dos: Ejecución
+          </div>
+          <p class="enfoque-col-text">${esc(c.enfoqueCreativo?.descripcion || "")}</p>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- Entregables -->
-  <section style="margin-bottom:32px;">
-    <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:3px;color:#a3aec0;margin-bottom:20px;">Entregables del Proyecto</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;">${entregablesHtml}</div>
+  <section class="section">
+    <div class="section-label">Entregables del Proyecto</div>
+    <div class="entregables-grid">${entregablesHtml}</div>
   </section>
 
   <!-- Cronograma -->
-  <section id="cronograma" style="margin-bottom:32px;">
-    <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:3px;color:#a3aec0;text-align:center;margin-bottom:40px;">Cronograma de Implementación</h2>
-    <div style="position:relative;">
-      <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#e8edf8;transform:translateX(-50%);"></div>
-      ${fasesHtml}
-    </div>
+  <section class="section" id="cronograma">
+    <div class="section-label">Cronograma de Implementación</div>
+    <div class="fases-list">${fasesHtml}</div>
   </section>
 
   <!-- Inversión -->
-  <section id="inversion" style="margin-bottom:32px;">
-    <div style="background:#f4f6ff;border-radius:28px;padding:48px 56px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,${p},${s},${p});"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;">
-        <div>
-          <h2 style="font-size:32px;font-weight:900;letter-spacing:-1px;margin-bottom:20px;">Inversión Financiera</h2>
-          <p style="color:#525c6c;line-height:1.7;margin-bottom:24px;">${esc(c.enfoqueCreativo?.descripcion || "Inversión estratégica en tu futuro digital.")}</p>
-          <ul style="display:flex;flex-direction:column;gap:12px;list-style:none;">${incluyeHtml}</ul>
+  <section class="section" id="inversion">
+    <div class="card">
+      <div class="inv-split">
+        <div class="inv-left">
+          <h2 class="inv-title">Inversión Financiera</h2>
+          <p class="inv-intro">${esc(c.enfoqueCreativo?.descripcion || "Inversión estratégica en tu futuro digital con retorno medible.")}</p>
+          <ul class="incluye-list">${incluyeHtml}</ul>
         </div>
-        <div style="background:#fff;border-radius:24px;padding:36px;box-shadow:0 4px 24px rgba(110,58,201,0.08);display:flex;flex-direction:column;justify-content:space-between;">
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#a3aec0;margin-bottom:8px;">Paquete Total</div>
-            <div style="font-size:52px;font-weight:900;letter-spacing:-2px;color:#252f3d;">${esc(c.inversion?.total || "")}</div>
-            <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f4f6ff;">
-              <div style="font-size:13px;color:#525c6c;">${esc(c.inversion?.terminos || "")}</div>
-            </div>
+        <div class="inv-right-card">
+          <div class="inv-package">Paquete Total</div>
+          <div class="inv-price">${esc(c.inversion?.total || "")}</div>
+          <div class="inv-lines">
+            ${(c.inversion?.incluye || []).slice(0, 3).map(item => `
+            <div class="inv-line">
+              <span class="inv-line-label">${esc(item)}</span>
+              <span class="inv-line-val">Incluido</span>
+            </div>`).join("")}
           </div>
-          <a href="#" style="display:block;text-align:center;margin-top:24px;padding:16px;background:${p};color:#fff;font-weight:700;border-radius:16px;text-decoration:none;font-size:14px;">Confirmar Inversión</a>
+          <a href="#" class="inv-confirm" style="background:${p};">Confirmar Inversión</a>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Por qué nosotros -->
-  <section style="margin-bottom:32px;">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">${porQueHtml}</div>
+  <section class="section">
+    <div class="section-label">Por qué elegirnos</div>
+    <div class="porq-grid">${porQueHtml}</div>
   </section>
 
-  <!-- Próximos pasos & CTA -->
-  <section style="text-align:center;padding:64px 40px;background:#f4f6ff;border-radius:24px;margin-bottom:32px;">
-    <h2 style="font-size:32px;font-weight:900;letter-spacing:-1px;margin-bottom:16px;">¿Listos para empezar?</h2>
-    <p style="color:#525c6c;font-size:16px;max-width:480px;margin:0 auto 40px;">Esta propuesta es válida por 15 días. Acepta para comenzar el proceso de onboarding.</p>
-    <div style="display:flex;flex-direction:column;gap:10px;max-width:480px;margin:0 auto 40px;">${pasosHtml}</div>
-    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-      ${acceptBtn}
-      <a href="#intro" style="display:inline-block;padding:18px 40px;background:#fff;color:#252f3d;font-weight:700;border-radius:20px;text-decoration:none;font-size:15px;border:2px solid #e8edf8;">Agendar Llamada</a>
+  <!-- CTA final -->
+  <section class="section cta-section">
+    <h2 class="cta-title">¿Listos para empezar?</h2>
+    <p class="cta-sub">Esta propuesta es válida por 15 días. Acepta para comenzar el proceso de onboarding.</p>
+    <div class="pasos-list">${pasosHtml}</div>
+    <div class="cta-btns">
+      ${proposalId ? `<a href="/api/proposals/accept?id=${proposalId}" class="cta-btn-primary" style="background:linear-gradient(135deg,${p},${s});">Aceptar &amp; Firmar</a>` : ""}
+      <a href="#intro" class="cta-btn-secondary">Agendar Llamada</a>
     </div>
   </section>
 
   ${termsHtml}
 
-  <!-- Footer -->
-  <footer style="display:flex;justify-content:space-between;align-items:center;padding-top:32px;border-top:1px solid #e8edf8;flex-wrap:wrap;gap:12px;">
+  <footer class="footer">
     <div>
-      <div style="font-size:13px;font-weight:800;color:#a3aec0;text-transform:uppercase;letter-spacing:1.5px;">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · Propuesta Confidencial</div>
+      <div class="footer-left">© ${new Date().getFullYear()} ${esc(brand.agencyName)} · Confidencial</div>
       ${senderHtml}
     </div>
+    <div style="font-size:12px;color:#aab0c4;">${fecha}</div>
   </footer>
-</main>
+
+</div><!-- /main -->
 </body>
 </html>`;
 }
