@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -8,41 +8,39 @@ import {
   Megaphone, Eye, FileSignature, Mail, Zap, RefreshCw,
   Calendar, BarChart2, ChevronDown, LogOut, Sparkles,
   PanelLeftClose, PanelLeft, Settings, Plus, Palette, Kanban, ShoppingBag,
-  GitBranch, Workflow,
+  GitBranch, Workflow, Menu, X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-// ─── Nav data ──────────────────────────────────────────────────────────────────
+// ─── Nav data ─────────────────────────────────────────────────────────────────
 
 const coreItems = [
-  { id: "dashboard",  label: "Dashboard",       href: "/dashboard",        icon: LayoutDashboard },
-  { id: "perfil",     label: "Perfil de Marca",  href: "/dashboard/perfil", icon: User },
+  { id: "dashboard", label: "Dashboard",      href: "/dashboard",        icon: LayoutDashboard },
+  { id: "perfil",    label: "Perfil de Marca", href: "/dashboard/perfil", icon: User },
 ];
 
 const toolItems = [
-  { id: "social",      label: "Social Media",     href: "/dashboard/social",      icon: Share2 },
-  { id: "guiones",     label: "Guiones",           href: "/dashboard/guiones",     icon: Video },
-  { id: "blog",        label: "Blog",              href: "/dashboard/blog",        icon: FileText },
-  { id: "seo",         label: "SEO Rápido",        href: "/dashboard/seo",         icon: Search },
-  { id: "anuncios",    label: "Anuncios",           href: "/dashboard/anuncios",    icon: Megaphone },
-  { id: "competencia", label: "Spy Competencia",   href: "/dashboard/competencia", icon: Eye },
-  { id: "emails",      label: "Email Marketing",   href: "/dashboard/emails",      icon: Mail },
-  { id: "hooks",       label: "Hooks",             href: "/dashboard/hooks",       icon: Zap },
-  { id: "repurposing", label: "Repurposing",        href: "/dashboard/repurposing", icon: RefreshCw },
-  { id: "calendario",  label: "Calendario",         href: "/dashboard/calendario",  icon: Calendar },
+  { id: "social",      label: "Social Media",   href: "/dashboard/social",      icon: Share2 },
+  { id: "guiones",     label: "Guiones",         href: "/dashboard/guiones",     icon: Video },
+  { id: "blog",        label: "Blog",            href: "/dashboard/blog",        icon: FileText },
+  { id: "seo",         label: "SEO Rápido",      href: "/dashboard/seo",         icon: Search },
+  { id: "anuncios",    label: "Anuncios",         href: "/dashboard/anuncios",    icon: Megaphone },
+  { id: "competencia", label: "Spy Competencia", href: "/dashboard/competencia", icon: Eye },
+  { id: "emails",      label: "Email Marketing", href: "/dashboard/emails",      icon: Mail },
+  { id: "hooks",       label: "Hooks",           href: "/dashboard/hooks",       icon: Zap },
+  { id: "repurposing", label: "Repurposing",      href: "/dashboard/repurposing", icon: RefreshCw },
+  { id: "calendario",  label: "Calendario",       href: "/dashboard/calendario",  icon: Calendar },
 ];
 
-
 const propuestasChildren = [
-  { label: "Marketing",     href: "/dashboard/propuestas",          icon: FileSignature },
-  { label: "Diseño",        href: "/dashboard/propuestas/diseno",   icon: Palette },
-  { label: "Ventas",        href: "/dashboard/propuestas/ventas",   icon: ShoppingBag },
+  { label: "Marketing", href: "/dashboard/propuestas",        icon: FileSignature },
+  { label: "Diseño",    href: "/dashboard/propuestas/diseno", icon: Palette },
+  { label: "Ventas",    href: "/dashboard/propuestas/ventas", icon: ShoppingBag },
 ];
 
 const crmWorkflowsChildren = [
-  { label: "CRM Pipeline",  href: "/dashboard/crm-propuestas",     icon: Kanban },
-  { label: "Workflows",     href: "/dashboard/workflows",           icon: GitBranch },
+  { label: "CRM Pipeline", href: "/dashboard/crm-propuestas", icon: Kanban },
+  { label: "Workflows",    href: "/dashboard/workflows",       icon: GitBranch },
 ];
 
 const seoSuiteChildren = [
@@ -63,19 +61,47 @@ export default function Sidebar() {
   const router   = useRouter();
   const supabase = createClient();
 
-  const [collapsed, setCollapsed]         = useState(false);
-  const [userEmail, setUserEmail]         = useState("");
-  const [toolsOpen, setToolsOpen]         = useState(false);
-  const [propuestasOpen, setPropuestasOpen] = useState(pathname.startsWith("/dashboard/propuestas"));
-  const [crmOpen, setCrmOpen]             = useState(pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows"));
-  const [seoOpen, setSeoOpen]             = useState(pathname.startsWith("/dashboard/seo-suite"));
+  const [collapsed,       setCollapsed]       = useState(false);
+  const [userEmail,       setUserEmail]       = useState("");
+  const [toolsOpen,       setToolsOpen]       = useState(false);
+  const [propuestasOpen,  setPropuestasOpen]  = useState(pathname.startsWith("/dashboard/propuestas"));
+  const [crmOpen,         setCrmOpen]         = useState(pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows"));
+  const [seoOpen,         setSeoOpen]         = useState(pathname.startsWith("/dashboard/seo-suite"));
 
+  // Mobile state
+  const [isMobile,    setIsMobile]    = useState(false);
+  const [mobileOpen,  setMobileOpen]  = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Sync CSS variable
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--sidebar-width",
-      collapsed ? "72px" : "256px"
+      isMobile ? "0px" : collapsed ? "72px" : "256px"
     );
-  }, [collapsed]);
+  }, [isMobile, collapsed]);
+
+  // Close drawer on navigation
+  useEffect(() => {
+    if (isMobile) setMobileOpen(false);
+  }, [pathname, isMobile]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobile && mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobile, mobileOpen]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -92,311 +118,358 @@ export default function Sidebar() {
   const initials = userEmail ? userEmail[0].toUpperCase() : "U";
   const username  = userEmail ? userEmail.split("@")[0] : "Usuario";
 
+  // Derived sidebar width / transform
+  const sidebarWidth     = isMobile ? "280px" : collapsed ? "72px" : "256px";
+  const sidebarTransform = isMobile ? (mobileOpen ? "translateX(0)" : "translateX(-100%)") : "none";
+
   return (
-    <aside
-      className="fixed left-0 top-0 h-screen flex flex-col z-40 overflow-hidden"
-      style={{
-        width: collapsed ? "72px" : "256px",
-        background: "rgba(19,19,19,0.97)",
-        borderRight: "1px solid rgba(202,196,213,0.12)",
-        backdropFilter: "blur(20px)",
-        transition: "width 0.3s cubic-bezier(0.23, 1, 0.32, 1)",
-      }}
-    >
-      {/* ── Brand + Toggle ── */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-5 flex-shrink-0">
+    <>
+      {/* ── Mobile topbar ───────────────────────────────────────────────────── */}
+      {isMobile && (
         <div
-          className="flex items-center gap-3 overflow-hidden"
+          className="fixed top-0 left-0 right-0 z-40 h-14 flex items-center px-4 gap-3"
           style={{
-            opacity: collapsed ? 0 : 1,
-            width: collapsed ? 0 : "auto",
-            transition: "opacity 0.2s, width 0.3s",
-            whiteSpace: "nowrap",
+            background: "rgba(12,11,11,0.97)",
+            borderBottom: "1px solid rgba(202,196,213,0.08)",
+            backdropFilter: "blur(20px)",
           }}
         >
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(132deg, #cbbeff 0%, #9d85ff 100%)" }}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all active:scale-95"
+            style={{ background: "rgba(203,190,255,0.08)", border: "1px solid rgba(203,190,255,0.15)" }}
           >
-            <Sparkles className="w-4 h-4 text-[#1e0061]" />
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="font-bold text-[#cbbeff] text-[15px] tracking-tight">MDF Tools</span>
-            <span className="text-[9px] uppercase tracking-[2px] text-[#938e9e]">Marketing Suite</span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setCollapsed(v => !v)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
-          style={{
-            color: "rgba(202,196,213,0.5)",
-            marginLeft: collapsed ? "auto" : undefined,
-            marginRight: collapsed ? "auto" : undefined,
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#cac4d5")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(202,196,213,0.5)")}
-        >
-          {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* ── Nav ── */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 custom-scrollbar space-y-5">
-
-        {/* Core */}
-        <div className="space-y-0.5">
-          {!collapsed && (
-            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Core</p>
-          )}
-          {coreItems.map(item => (
-            <NavItem key={item.id} item={item} isActive={pathname === item.href} collapsed={collapsed} />
-          ))}
-        </div>
-
-        {/* Herramientas IA */}
-        <div className="space-y-0.5">
-          {!collapsed && (
-            <button
-              onClick={() => setToolsOpen(v => !v)}
-              className="w-full px-3 mb-2 flex items-center justify-between"
+            <Menu className="w-4 h-4" style={{ color: "#cbbeff" }} />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(132deg, #cbbeff 0%, #9d85ff 100%)" }}
             >
-              <span className="text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Herramientas IA</span>
-              <ChevronDown
-                className="w-3 h-3 text-[#938e9e] transition-transform duration-200"
-                style={{ transform: toolsOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
-              />
-            </button>
-          )}
-          <div
-            className="space-y-0.5 overflow-hidden"
-            style={{
-              maxHeight: toolsOpen || collapsed ? "9999px" : "0",
-              transition: "max-height 0.25s ease",
-            }}
-          >
-            {toolItems.map(item => (
-              <NavItem key={item.id} item={item} isActive={pathname === item.href} collapsed={collapsed} />
-            ))}
+              <Sparkles className="w-3.5 h-3.5 text-[#1e0061]" />
+            </div>
+            <div>
+              <span className="font-bold text-[#cbbeff] text-sm">MDF Tools</span>
+              <span className="text-[9px] uppercase tracking-[2px] text-[#938e9e] ml-2">Marketing Suite</span>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Ecosystem */}
-        <div className="space-y-0.5">
-          {!collapsed && (
-            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Ecosystem</p>
-          )}
+      {/* ── Mobile backdrop ─────────────────────────────────────────────────── */}
+      {isMobile && mobileOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
-          {/* Propuestas expandable */}
-          <ExpandableSection
-            label="Propuestas"
-            icon={FileSignature}
-            isActive={pathname.startsWith("/dashboard/propuestas")}
-            open={propuestasOpen}
-            collapsed={collapsed}
-            onToggle={() => !collapsed && setPropuestasOpen(v => !v)}
-          >
-            {propuestasChildren.map(child => {
-              const Icon = child.icon;
-              return (
-                <Link
-                  key={child.href}
-                  href={child.href}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
-                  style={{
-                    color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
-                    background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
-                  }}
-                  onMouseEnter={e => {
-                    if (pathname !== child.href) {
-                      (e.currentTarget as HTMLElement).style.color = "#cac4d5";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (pathname !== child.href) {
-                      (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
-                      (e.currentTarget as HTMLElement).style.background = "transparent";
-                    }
-                  }}
-                >
-                  <Icon className="w-3 h-3 flex-shrink-0" />
-                  {child.label}
-                </Link>
-              );
-            })}
-          </ExpandableSection>
-
-          {/* CRM y Workflows expandable */}
-          <ExpandableSection
-            label="CRM y Workflows"
-            icon={Workflow}
-            isActive={pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows")}
-            open={crmOpen}
-            collapsed={collapsed}
-            onToggle={() => !collapsed && setCrmOpen(v => !v)}
-          >
-            {crmWorkflowsChildren.map(child => {
-              const Icon = child.icon;
-              return (
-                <Link
-                  key={child.href}
-                  href={child.href}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
-                  style={{
-                    color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
-                    background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
-                  }}
-                  onMouseEnter={e => {
-                    if (pathname !== child.href) {
-                      (e.currentTarget as HTMLElement).style.color = "#cac4d5";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (pathname !== child.href) {
-                      (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
-                      (e.currentTarget as HTMLElement).style.background = "transparent";
-                    }
-                  }}
-                >
-                  <Icon className="w-3 h-3 flex-shrink-0" />
-                  {child.label}
-                </Link>
-              );
-            })}
-          </ExpandableSection>
-
-          {/* SEO Suite expandable */}
-          <ExpandableSection
-            label="SEO Suite"
-            icon={BarChart2}
-            isActive={pathname.startsWith("/dashboard/seo-suite")}
-            open={seoOpen}
-            collapsed={collapsed}
-            onToggle={() => !collapsed && setSeoOpen(v => !v)}
-          >
-            {seoSuiteChildren.map(child => (
-              <Link
-                key={child.href}
-                href={child.href}
-                className="block px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
-                style={{
-                  color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
-                  background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
-                }}
-                onMouseEnter={e => {
-                  if (pathname !== child.href) {
-                    (e.currentTarget as HTMLElement).style.color = "#cac4d5";
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (pathname !== child.href) {
-                    (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
-                    (e.currentTarget as HTMLElement).style.background = "transparent";
-                  }
-                }}
-              >
-                {child.label}
-              </Link>
-            ))}
-          </ExpandableSection>
-        </div>
-      </nav>
-
-      {/* ── Footer ── */}
-      <div className="flex-shrink-0 px-3 pb-5 pt-2 space-y-3" style={{ borderTop: "1px solid rgba(202,196,213,0.08)" }}>
-        {/* Nueva Campaña CTA */}
-        {!collapsed && (
-          <button
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-[13px] text-[#1e0061] transition-all"
-            style={{
-              background: "linear-gradient(90deg, #cbbeff 0%, #9d85ff 100%)",
-              boxShadow: "0 0 20px rgba(157,133,255,0.2)",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "0.9")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Nueva Campaña
-          </button>
-        )}
-
-        {/* Settings + Logout */}
-        <div className="space-y-0.5">
-          <Link
-            href="/dashboard/perfil"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all"
-            style={{ color: "rgba(202,196,213,0.7)" }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.color = "#cac4d5";
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.7)";
-              (e.currentTarget as HTMLElement).style.background = "transparent";
-            }}
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && <span>Configuración</span>}
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all"
-            style={{ color: "#ffb4ab" }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = "rgba(255,180,171,0.08)";
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && <span>Cerrar sesión</span>}
-          </button>
-        </div>
-
-        {/* User profile */}
-        {!collapsed && (
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
+      <aside
+        className="fixed left-0 top-0 h-screen flex flex-col z-50 overflow-hidden"
+        style={{
+          width: sidebarWidth,
+          transform: sidebarTransform,
+          background: "rgba(19,19,19,0.97)",
+          borderRight: "1px solid rgba(202,196,213,0.12)",
+          backdropFilter: "blur(20px)",
+          transition: "width 0.3s cubic-bezier(0.23,1,0.32,1), transform 0.3s cubic-bezier(0.23,1,0.32,1)",
+        }}
+      >
+        {/* ── Brand + Toggle ── */}
+        <div className="flex items-center justify-between px-5 pt-6 pb-5 flex-shrink-0">
           <div
-            className="flex items-center gap-3 p-3 rounded-xl"
-            style={{ background: "#1c1b1b" }}
+            className="flex items-center gap-3 overflow-hidden"
+            style={{
+              opacity: collapsed && !isMobile ? 0 : 1,
+              width: collapsed && !isMobile ? 0 : "auto",
+              transition: "opacity 0.2s, width 0.3s",
+              whiteSpace: "nowrap",
+            }}
           >
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0"
-              style={{
-                background: "linear-gradient(132deg, #cbbeff 0%, #9d85ff 100%)",
-                color: "#1e0061",
-                border: "1px solid rgba(72,69,83,0.6)",
-              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(132deg, #cbbeff 0%, #9d85ff 100%)" }}
             >
-              {initials}
+              <Sparkles className="w-4 h-4 text-[#1e0061]" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold text-[#e5e2e1] truncate">{username}</p>
-              <p className="text-[10px] text-[#938e9e] truncate">{userEmail || "Cargando..."}</p>
+            <div className="flex flex-col leading-tight">
+              <span className="font-bold text-[#cbbeff] text-[15px] tracking-tight">MDF Tools</span>
+              <span className="text-[9px] uppercase tracking-[2px] text-[#938e9e]">Marketing Suite</span>
             </div>
           </div>
-        )}
-      </div>
-    </aside>
+
+          {/* Desktop: collapse toggle | Mobile: close button */}
+          {isMobile ? (
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0 active:scale-95"
+              style={{ color: "rgba(202,196,213,0.5)", marginLeft: "auto" }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setCollapsed(v => !v)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
+              style={{
+                color: "rgba(202,196,213,0.5)",
+                marginLeft: collapsed ? "auto" : undefined,
+                marginRight: collapsed ? "auto" : undefined,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#cac4d5")}
+              onMouseLeave={e => (e.currentTarget.style.color = "rgba(202,196,213,0.5)")}
+            >
+              {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
+
+        {/* ── Nav ── */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 custom-scrollbar space-y-5">
+
+          {/* Core */}
+          <div className="space-y-0.5">
+            {(!collapsed || isMobile) && (
+              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Core</p>
+            )}
+            {coreItems.map(item => (
+              <NavItem key={item.id} item={item} isActive={pathname === item.href} collapsed={collapsed && !isMobile} />
+            ))}
+          </div>
+
+          {/* Herramientas IA */}
+          <div className="space-y-0.5">
+            {(!collapsed || isMobile) && (
+              <button
+                onClick={() => setToolsOpen(v => !v)}
+                className="w-full px-3 mb-2 flex items-center justify-between"
+              >
+                <span className="text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Herramientas IA</span>
+                <ChevronDown
+                  className="w-3 h-3 text-[#938e9e] transition-transform duration-200"
+                  style={{ transform: toolsOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
+                />
+              </button>
+            )}
+            <div
+              className="space-y-0.5 overflow-hidden"
+              style={{
+                maxHeight: toolsOpen || (collapsed && !isMobile) ? "9999px" : "0",
+                transition: "max-height 0.25s ease",
+              }}
+            >
+              {toolItems.map(item => (
+                <NavItem key={item.id} item={item} isActive={pathname === item.href} collapsed={collapsed && !isMobile} />
+              ))}
+            </div>
+          </div>
+
+          {/* Ecosystem */}
+          <div className="space-y-0.5">
+            {(!collapsed || isMobile) && (
+              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[1px] text-[#938e9e]">Ecosystem</p>
+            )}
+
+            <ExpandableSection
+              label="Propuestas"
+              icon={FileSignature}
+              isActive={pathname.startsWith("/dashboard/propuestas")}
+              open={propuestasOpen}
+              collapsed={collapsed && !isMobile}
+              onToggle={() => !(collapsed && !isMobile) && setPropuestasOpen(v => !v)}
+            >
+              {propuestasChildren.map(child => {
+                const Icon = child.icon;
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
+                    style={{
+                      color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
+                      background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
+                    }}
+                    onMouseEnter={e => {
+                      if (pathname !== child.href) {
+                        (e.currentTarget as HTMLElement).style.color = "#cac4d5";
+                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (pathname !== child.href) {
+                        (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <Icon className="w-3 h-3 flex-shrink-0" />
+                    {child.label}
+                  </Link>
+                );
+              })}
+            </ExpandableSection>
+
+            <ExpandableSection
+              label="CRM y Workflows"
+              icon={Workflow}
+              isActive={pathname.startsWith("/dashboard/crm-propuestas") || pathname.startsWith("/dashboard/workflows")}
+              open={crmOpen}
+              collapsed={collapsed && !isMobile}
+              onToggle={() => !(collapsed && !isMobile) && setCrmOpen(v => !v)}
+            >
+              {crmWorkflowsChildren.map(child => {
+                const Icon = child.icon;
+                return (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
+                    style={{
+                      color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
+                      background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
+                    }}
+                    onMouseEnter={e => {
+                      if (pathname !== child.href) {
+                        (e.currentTarget as HTMLElement).style.color = "#cac4d5";
+                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (pathname !== child.href) {
+                        (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <Icon className="w-3 h-3 flex-shrink-0" />
+                    {child.label}
+                  </Link>
+                );
+              })}
+            </ExpandableSection>
+
+            <ExpandableSection
+              label="SEO Suite"
+              icon={BarChart2}
+              isActive={pathname.startsWith("/dashboard/seo-suite")}
+              open={seoOpen}
+              collapsed={collapsed && !isMobile}
+              onToggle={() => !(collapsed && !isMobile) && setSeoOpen(v => !v)}
+            >
+              {seoSuiteChildren.map(child => (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  className="block px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-all"
+                  style={{
+                    color: pathname === child.href ? "#cbbeff" : "rgba(202,196,213,0.5)",
+                    background: pathname === child.href ? "rgba(203,190,255,0.08)" : "transparent",
+                  }}
+                  onMouseEnter={e => {
+                    if (pathname !== child.href) {
+                      (e.currentTarget as HTMLElement).style.color = "#cac4d5";
+                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (pathname !== child.href) {
+                      (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.5)";
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }
+                  }}
+                >
+                  {child.label}
+                </Link>
+              ))}
+            </ExpandableSection>
+          </div>
+        </nav>
+
+        {/* ── Footer ── */}
+        <div className="flex-shrink-0 px-3 pb-5 pt-2 space-y-3" style={{ borderTop: "1px solid rgba(202,196,213,0.08)" }}>
+          {(!collapsed || isMobile) && (
+            <button
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-[13px] text-[#1e0061] transition-all"
+              style={{
+                background: "linear-gradient(90deg, #cbbeff 0%, #9d85ff 100%)",
+                boxShadow: "0 0 20px rgba(157,133,255,0.2)",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nueva Campaña
+            </button>
+          )}
+
+          <div className="space-y-0.5">
+            <Link
+              href="/dashboard/perfil"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all"
+              style={{ color: "rgba(202,196,213,0.7)" }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.color = "#cac4d5";
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.color = "rgba(202,196,213,0.7)";
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+              }}
+            >
+              <Settings className="w-4 h-4 flex-shrink-0" />
+              {(!collapsed || isMobile) && <span>Configuración</span>}
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13.5px] font-medium transition-all"
+              style={{ color: "#ffb4ab" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,180,171,0.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              {(!collapsed || isMobile) && <span>Cerrar sesión</span>}
+            </button>
+          </div>
+
+          {(!collapsed || isMobile) && (
+            <div
+              className="flex items-center gap-3 p-3 rounded-xl"
+              style={{ background: "#1c1b1b" }}
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold flex-shrink-0"
+                style={{
+                  background: "linear-gradient(132deg, #cbbeff 0%, #9d85ff 100%)",
+                  color: "#1e0061",
+                  border: "1px solid rgba(72,69,83,0.6)",
+                }}
+              >
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-bold text-[#e5e2e1] truncate">{username}</p>
+                <p className="text-[10px] text-[#938e9e] truncate">{userEmail || "Cargando..."}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }
 
 // ─── NavItem ──────────────────────────────────────────────────────────────────
 
 function NavItem({
-  item,
-  isActive,
-  collapsed,
+  item, isActive, collapsed,
 }: {
   item: { id: string; label: string; href: string; icon: React.ComponentType<{ className?: string }> };
   isActive: boolean;
   collapsed: boolean;
 }) {
   const Icon = item.icon;
-
   return (
     <Link
       href={item.href}
@@ -425,10 +498,7 @@ function NavItem({
       }}
     >
       {isActive && (
-        <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full"
-          style={{ background: "#cbbeff" }}
-        />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full" style={{ background: "#cbbeff" }} />
       )}
       <Icon className="w-[15px] h-[15px] flex-shrink-0" />
       {!collapsed && (
