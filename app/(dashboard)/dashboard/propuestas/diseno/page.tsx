@@ -8,7 +8,7 @@ import {
   Download, RefreshCw, Mail, MessageCircle,
   FileDown, Link2, FileText, Pencil,
   ClipboardList, X, Send, ExternalLink, Clock, CheckCircle2,
-  Archive, ArchiveRestore,
+  Archive, ArchiveRestore, Paperclip,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { PRELOADED_QUESTIONS, BRIEF_CATEGORIES, type BriefQuestion } from "@/lib/client-brief-questions";
@@ -210,6 +210,8 @@ export default function DisenoPropuestasPage() {
   const [copiedBriefLink, setCopiedBriefLink]    = useState(false);
   const [showArchived, setShowArchived]           = useState(false);
   const [showArchivedBriefs, setShowArchivedBriefs] = useState(false);
+  const [viewingBriefDetails, setViewingBriefDetails] = useState<null | { brief: ClientBriefSummary; full: any }>(null);
+  const [loadingBriefDetails, setLoadingBriefDetails] = useState(false);
 
   useEffect(() => { fetchProposals(); }, []);
 
@@ -638,6 +640,17 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setClientBriefs(prev => prev.filter(b => b.id !== id));
   }
 
+  async function openBriefDetails(brief: ClientBriefSummary) {
+    setLoadingBriefDetails(true);
+    setViewingBriefDetails({ brief, full: null });
+    const res = await fetch(`/api/client-briefs/${brief.id}`);
+    if (res.ok) {
+      const full = await res.json();
+      setViewingBriefDetails({ brief, full });
+    }
+    setLoadingBriefDetails(false);
+  }
+
   function openBriefModal() {
     setBriefModalStep("config");
     setBriefClientName("");
@@ -768,6 +781,91 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
       }}
       isGenerating={generatingHtml}
     />
+
+    {/* Brief responses modal */}
+    {viewingBriefDetails && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}>
+        <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-white/[0.08]" style={{ background: "#161616" }}>
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4 p-6 border-b border-white/[0.06]">
+            <div>
+              <h2 className="text-white font-bold text-lg">{viewingBriefDetails.brief.client_name}</h2>
+              {viewingBriefDetails.brief.project_name && (
+                <p className="text-slate-400 text-sm mt-0.5">{viewingBriefDetails.brief.project_name}</p>
+              )}
+              {viewingBriefDetails.brief.submitted_at && (
+                <p className="text-slate-500 text-xs mt-1">
+                  Enviado el {new Date(viewingBriefDetails.brief.submitted_at).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}
+                </p>
+              )}
+            </div>
+            <button onClick={() => setViewingBriefDetails(null)} className="p-2 text-slate-500 hover:text-white rounded-lg hover:bg-white/[0.06] transition-all flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="overflow-y-auto flex-1 p-6 space-y-6">
+            {loadingBriefDetails || !viewingBriefDetails.full ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a78bfa" }} />
+              </div>
+            ) : (
+              <>
+                {/* Responses */}
+                {viewingBriefDetails.full.questions?.map((q: any) => {
+                  const answer = viewingBriefDetails.full.responses?.[q.id];
+                  const files = (viewingBriefDetails.full.files ?? []).filter((f: any) => f.questionId === q.id);
+                  if (!answer && files.length === 0) return null;
+                  return (
+                    <div key={q.id} className="space-y-2">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{q.question}</p>
+                      {answer && (
+                        <p className="text-sm text-white leading-relaxed px-4 py-3 rounded-xl" style={{ background: "#1e1e1e" }}>{answer}</p>
+                      )}
+                      {files.map((f: any) => (
+                        <a
+                          key={f.url}
+                          href={f.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/[0.08] text-xs text-violet-400 hover:text-violet-300 hover:border-violet-500/30 transition-all"
+                          style={{ background: "rgba(167,139,250,0.05)" }}
+                        >
+                          <Paperclip className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate flex-1">{f.name}</span>
+                          <ExternalLink className="w-3 h-3 flex-shrink-0 opacity-50" />
+                        </a>
+                      ))}
+                    </div>
+                  );
+                })}
+                {/* Questions with no answers */}
+                {viewingBriefDetails.full.questions?.every((q: any) => !viewingBriefDetails.full.responses?.[q.id] && !(viewingBriefDetails.full.files ?? []).some((f: any) => f.questionId === q.id)) && (
+                  <p className="text-slate-500 text-sm text-center py-8">No hay respuestas registradas.</p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Footer */}
+          {viewingBriefDetails.full && !viewingBriefDetails.brief.proposal_id && (
+            <div className="p-4 border-t border-white/[0.06]">
+              <button
+                onClick={async () => {
+                  startNewFromBrief({ ...viewingBriefDetails.brief, responses: viewingBriefDetails.full.responses ?? {} });
+                  setViewingBriefDetails(null);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+                style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", color: "#fff" }}
+              >
+                <Sparkles className="w-4 h-4" /> Crear propuesta desde este brief
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
   );
 
   // ─── Render: List view ─────────────────────────────────────────────────────
@@ -1156,6 +1254,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-500 hover:text-amber-400 hover:border-amber-400/30 transition-all"
                     >
                       <Archive className="w-3 h-3" /> Archivar
+                    </button>
+                  )}
+                  {brief.status === "submitted" && (
+                    <button
+                      onClick={() => openBriefDetails(brief)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-emerald-400 hover:border-emerald-500/30 transition-all"
+                    >
+                      <Eye className="w-3 h-3" /> Ver respuestas
                     </button>
                   )}
                   {brief.status === "submitted" && !brief.proposal_id && (

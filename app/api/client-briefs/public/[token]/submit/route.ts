@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 // POST público — cliente envía sus respuestas
@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Verificar que el brief existe y aún está pendiente
   const { data: brief, error: fetchErr } = await supabase
