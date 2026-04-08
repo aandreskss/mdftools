@@ -241,12 +241,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   }
 
   async function archiveProposal(id: string) {
-    await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    const res = await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al archivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
 
   async function unarchiveProposal(id: string) {
-    await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    const res = await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al desarchivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
 

@@ -289,12 +289,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   }
 
   async function archiveProposal(id: string) {
-    await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    const res = await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al archivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
 
   async function unarchiveProposal(id: string) {
-    await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    const res = await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al desarchivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
 
@@ -631,12 +633,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   }
 
   async function archiveBrief(id: string) {
-    await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "archived" }) });
+    const res = await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "archived" }) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al archivar: " + (d.error ?? res.status)); return; }
     setClientBriefs(prev => prev.filter(b => b.id !== id));
   }
 
   async function unarchiveBrief(id: string) {
-    await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "pending" }) });
+    const res = await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "pending" }) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al desarchivar: " + (d.error ?? res.status)); return; }
     setClientBriefs(prev => prev.filter(b => b.id !== id));
   }
 
@@ -1106,6 +1110,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   if (view === "briefs") {
     return (
       <div className="p-6 xl:p-8 min-h-screen" style={{ background: "#131313" }}>
+        {templateSelectorEl}
 
         {/* Header */}
         <div className="relative flex flex-col p-8 rounded-2xl overflow-hidden mb-6" style={{ background: "#1c1b1b" }}>
