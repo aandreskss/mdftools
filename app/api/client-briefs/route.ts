@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
   let briefQuery = supabase
     .from("client_briefs")
-    .select("id, client_name, client_email, project_name, token, status, submitted_at, proposal_id, created_at")
+    .select("id, client_name, client_email, project_name, token, status, previous_status, submitted_at, proposal_id, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

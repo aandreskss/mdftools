@@ -34,7 +34,7 @@ interface ProposalForm {
 
 interface Proposal {
   id: string; client_name: string; industry: string;
-  status: string; created_at: string; generated_content: string;
+  status: string; previous_status?: string; created_at: string; generated_content: string;
   html_content?: string; slides_content?: string;
   html_expires_at?: string;
   form_data?: ProposalForm;
@@ -240,14 +240,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setLoadingList(false);
   }
 
-  async function archiveProposal(id: string) {
-    const res = await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+  async function archiveProposal(id: string, currentStatus: string) {
+    const res = await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived", previous_status: currentStatus }) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al archivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
 
-  async function unarchiveProposal(id: string) {
-    const res = await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+  async function unarchiveProposal(id: string, previousStatus: string) {
+    const res = await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: previousStatus || "draft" }) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al desarchivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
@@ -797,7 +797,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                           )}
                           {showArchived ? (
                             <button
-                              onClick={e => { e.stopPropagation(); unarchiveProposal(p.id); }}
+                              onClick={e => { e.stopPropagation(); unarchiveProposal(p.id, p.previous_status ?? ""); }}
                               title="Desarchivar"
                               className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                             >
@@ -805,7 +805,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                             </button>
                           ) : (
                             <button
-                              onClick={e => { e.stopPropagation(); archiveProposal(p.id); }}
+                              onClick={e => { e.stopPropagation(); archiveProposal(p.id, p.status); }}
                               title="Archivar"
                               className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                             >

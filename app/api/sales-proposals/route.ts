@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from("proposals")
-    .select("id, client_name, industry, status, created_at, generated_content, html_content, form_data, html_expires_at")
+    .select("id, client_name, industry, status, previous_status, created_at, generated_content, html_content, form_data, html_expires_at")
     .eq("user_id", user.id)
     .filter("form_data->>proposalType", "eq", "sales")
     .order("created_at", { ascending: false });
@@ -58,6 +58,7 @@ export async function PATCH(request: Request) {
   if ("industry"          in fields) allowed.industry          = fields.industry;
   if ("form_data"         in fields) allowed.form_data         = { ...fields.form_data, proposalType: "sales" };
   if ("html_expires_at"   in fields) allowed.html_expires_at   = fields.html_expires_at;
+  if ("previous_status"  in fields) allowed.previous_status   = fields.previous_status;
   if (!Object.keys(allowed).length) return NextResponse.json({ error: "Nada" }, { status: 400 });
   const { error } = await supabase.from("proposals").update({ ...allowed, updated_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
