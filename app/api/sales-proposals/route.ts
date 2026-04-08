@@ -1,16 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json([]);
-  const { data } = await supabase
+
+  const archived = new URL(request.url).searchParams.get("archived") === "true";
+
+  let query = supabase
     .from("proposals")
     .select("id, client_name, industry, status, created_at, generated_content, html_content, form_data, html_expires_at")
     .eq("user_id", user.id)
     .filter("form_data->>proposalType", "eq", "sales")
     .order("created_at", { ascending: false });
+
+  query = archived
+    ? query.eq("status", "archived")
+    : query.neq("status", "archived");
+
+  const { data } = await query;
   return NextResponse.json(data ?? []);
 }
 

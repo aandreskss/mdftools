@@ -35,6 +35,7 @@ export async function PATCH(
   const body = await request.json();
   const allowed: Record<string, unknown> = {};
   if (body.proposal_id !== undefined) allowed.proposal_id = body.proposal_id;
+  if (body.status      !== undefined) allowed.status      = body.status;
 
   const { error } = await supabase
     .from("client_briefs")

@@ -8,6 +8,7 @@ import {
   Download, RefreshCw, Mail, MessageCircle,
   FileDown, Link2, FileText, Pencil,
   ClipboardList, X, Send, ExternalLink, Clock, CheckCircle2,
+  Archive, ArchiveRestore,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { PRELOADED_QUESTIONS, BRIEF_CATEGORIES, type BriefQuestion } from "@/lib/client-brief-questions";
@@ -207,6 +208,8 @@ export default function DisenoPropuestasPage() {
   const [creatingBrief, setCreatingBrief]        = useState(false);
   const [createdBriefToken, setCreatedBriefToken] = useState<string | null>(null);
   const [copiedBriefLink, setCopiedBriefLink]    = useState(false);
+  const [showArchived, setShowArchived]           = useState(false);
+  const [showArchivedBriefs, setShowArchivedBriefs] = useState(false);
 
   useEffect(() => { fetchProposals(); }, []);
 
@@ -276,11 +279,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     `.trim();
   }
 
-  async function fetchProposals() {
+  async function fetchProposals(archived = showArchived) {
     setLoadingList(true);
-    const res = await fetch("/api/design-proposals");
+    const res = await fetch(`/api/design-proposals${archived ? "?archived=true" : ""}`);
     if (res.ok) setProposals(await res.json());
     setLoadingList(false);
+  }
+
+  async function archiveProposal(id: string) {
+    await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    setProposals(prev => prev.filter(p => p.id !== id));
+  }
+
+  async function unarchiveProposal(id: string) {
+    await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    setProposals(prev => prev.filter(p => p.id !== id));
   }
 
   async function updateProposalStatus(id: string, status: string) {
@@ -608,11 +621,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   // ── Client briefs functions ────────────────────────────────────────────────
 
-  async function fetchClientBriefs() {
+  async function fetchClientBriefs(archived = showArchivedBriefs) {
     setLoadingBriefs(true);
-    const res = await fetch("/api/client-briefs");
+    const res = await fetch(`/api/client-briefs${archived ? "?archived=true" : ""}`);
     if (res.ok) setClientBriefs(await res.json());
     setLoadingBriefs(false);
+  }
+
+  async function archiveBrief(id: string) {
+    await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "archived" }) });
+    setClientBriefs(prev => prev.filter(b => b.id !== id));
+  }
+
+  async function unarchiveBrief(id: string) {
+    await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "pending" }) });
+    setClientBriefs(prev => prev.filter(b => b.id !== id));
   }
 
   function openBriefModal() {
@@ -824,6 +847,24 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         </div>
 
         {/* List */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "#1c1b1b" }}>
+            <button
+              onClick={() => { if (showArchived) { setShowArchived(false); fetchProposals(false); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!showArchived ? "text-violet-300" : "text-slate-500 hover:text-slate-300"}`}
+              style={!showArchived ? { background: "rgba(167,139,250,0.15)" } : {}}
+            >
+              <FileText size={12} /> Activas
+            </button>
+            <button
+              onClick={() => { if (!showArchived) { setShowArchived(true); fetchProposals(true); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showArchived ? "text-amber-300" : "text-slate-500 hover:text-slate-300"}`}
+              style={showArchived ? { background: "rgba(251,191,36,0.1)" } : {}}
+            >
+              <Archive size={12} /> Archivadas
+            </button>
+          </div>
+        </div>
         {loadingList ? (
           <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
             <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a78bfa" }} /> Cargando propuestas...
@@ -831,19 +872,25 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         ) : proposals.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/[0.05] py-20" style={{ background: "rgba(167,139,250,0.03)" }}>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ background: "rgba(167,139,250,0.1)" }}>
-              <Palette className="w-7 h-7" style={{ color: "#a78bfa" }} />
+              {showArchived ? <Archive className="w-7 h-7 text-amber-400" /> : <Palette className="w-7 h-7" style={{ color: "#a78bfa" }} />}
             </div>
-            <p className="text-white font-bold text-lg mb-2">Sin propuestas de diseño</p>
-            <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
-              Crea tu primera propuesta de diseño profesional asistida por IA.
-            </p>
-            <button
-              onClick={startNew}
-              className="px-6 py-3 text-white text-sm font-bold rounded-xl transition-all"
-              style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}
-            >
-              Crear Primera Propuesta
-            </button>
+            {showArchived ? (
+              <p className="text-slate-500 text-sm">No hay propuestas archivadas.</p>
+            ) : (
+              <>
+                <p className="text-white font-bold text-lg mb-2">Sin propuestas de diseño</p>
+                <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
+                  Crea tu primera propuesta de diseño profesional asistida por IA.
+                </p>
+                <button
+                  onClick={startNew}
+                  className="px-6 py-3 text-white text-sm font-bold rounded-xl transition-all"
+                  style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}
+                >
+                  Crear Primera Propuesta
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -881,9 +928,28 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
-                        {status.label}
-                      </span>
+                      {!showArchived && (
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
+                          {status.label}
+                        </span>
+                      )}
+                      {showArchived ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id); }}
+                          title="Desarchivar"
+                          className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <ArchiveRestore className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={e => { e.stopPropagation(); archiveProposal(p.id); }}
+                          title="Archivar"
+                          className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Archive className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={e => { e.stopPropagation(); if (confirm(`¿Eliminar propuesta de ${p.client_name}?`)) deleteProposal(p.id); }}
                         className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
@@ -980,6 +1046,24 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         </div>
 
         {/* List */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "#1c1b1b" }}>
+            <button
+              onClick={() => { if (showArchivedBriefs) { setShowArchivedBriefs(false); fetchClientBriefs(false); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!showArchivedBriefs ? "text-violet-300" : "text-slate-500 hover:text-slate-300"}`}
+              style={!showArchivedBriefs ? { background: "rgba(167,139,250,0.15)" } : {}}
+            >
+              <ClipboardList size={12} /> Activos
+            </button>
+            <button
+              onClick={() => { if (!showArchivedBriefs) { setShowArchivedBriefs(true); fetchClientBriefs(true); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showArchivedBriefs ? "text-amber-300" : "text-slate-500 hover:text-slate-300"}`}
+              style={showArchivedBriefs ? { background: "rgba(251,191,36,0.1)" } : {}}
+            >
+              <Archive size={12} /> Archivados
+            </button>
+          </div>
+        </div>
         {loadingBriefs ? (
           <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
             <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a78bfa" }} /> Cargando briefs...
@@ -987,15 +1071,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         ) : clientBriefs.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/[0.05] py-20" style={{ background: "rgba(167,139,250,0.03)" }}>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ background: "rgba(167,139,250,0.1)" }}>
-              <ClipboardList className="w-7 h-7" style={{ color: "#a78bfa" }} />
+              {showArchivedBriefs ? <Archive className="w-7 h-7 text-amber-400" /> : <ClipboardList className="w-7 h-7" style={{ color: "#a78bfa" }} />}
             </div>
-            <p className="text-white font-bold text-lg mb-2">Sin briefs enviados</p>
-            <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
-              Crea un brief de exploración para enviarle al cliente antes de preparar la propuesta.
-            </p>
-            <button onClick={openBriefModal} className="px-6 py-3 text-white text-sm font-bold rounded-xl transition-all" style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}>
-              Crear Primer Brief
-            </button>
+            {showArchivedBriefs ? (
+              <p className="text-slate-500 text-sm">No hay briefs archivados.</p>
+            ) : (
+              <>
+                <p className="text-white font-bold text-lg mb-2">Sin briefs enviados</p>
+                <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
+                  Crea un brief de exploración para enviarle al cliente antes de preparar la propuesta.
+                </p>
+                <button onClick={openBriefModal} className="px-6 py-3 text-white text-sm font-bold rounded-xl transition-all" style={{ background: "linear-gradient(90deg,#a78bfa,#7c3aed)", boxShadow: "0 0 20px rgba(124,58,237,0.25)" }}>
+                  Crear Primer Brief
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1033,21 +1123,41 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => copyBriefLink(brief.token)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-400 hover:text-white hover:border-violet-500/30 transition-all"
-                  >
-                    {copiedBriefLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Link2 className="w-3 h-3" />}
-                    Copiar enlace
-                  </button>
-                  <a
-                    href={getBriefLink(brief.token)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-400 hover:text-white transition-all"
-                  >
-                    <ExternalLink className="w-3 h-3" /> Ver
-                  </a>
+                  {!showArchivedBriefs && (
+                    <>
+                      <button
+                        onClick={() => copyBriefLink(brief.token)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-400 hover:text-white hover:border-violet-500/30 transition-all"
+                      >
+                        {copiedBriefLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Link2 className="w-3 h-3" />}
+                        Copiar enlace
+                      </button>
+                      <a
+                        href={getBriefLink(brief.token)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-400 hover:text-white transition-all"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Ver
+                      </a>
+                    </>
+                  )}
+                  {showArchivedBriefs ? (
+                    <button
+                      onClick={() => unarchiveBrief(brief.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+                      style={{ borderColor: "rgba(251,191,36,0.3)", color: "#fbbf24", background: "rgba(251,191,36,0.08)" }}
+                    >
+                      <ArchiveRestore className="w-3 h-3" /> Desarchivar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => archiveBrief(brief.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-500 hover:text-amber-400 hover:border-amber-400/30 transition-all"
+                    >
+                      <Archive className="w-3 h-3" /> Archivar
+                    </button>
+                  )}
                   {brief.status === "submitted" && !brief.proposal_id && (
                     <button
                       onClick={async () => {
