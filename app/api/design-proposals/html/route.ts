@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 import { renderDesignProposalHtml, type DesignProposalContent } from "@/lib/design-proposal-template";
-import { renderDataTemplate } from "@/lib/proposal-templates/template-data";
-import { renderBoldTemplate } from "@/lib/proposal-templates/template-bold";
-import { renderElegantTemplate } from "@/lib/proposal-templates/template-elegant";
+import { renderModernTemplate } from "@/lib/proposal-templates/template-modern";
+import { renderMinimalTemplate } from "@/lib/proposal-templates/template-minimal";
+import { renderCorporateTemplate } from "@/lib/proposal-templates/template-corporate";
 import type { BrandConfig, TemplateId } from "@/lib/proposal-templates/types";
 
 const JSON_SCHEMA = `{
@@ -48,10 +48,10 @@ export async function POST(request: Request) {
   function renderWithTemplate(content: DesignProposalContent): string {
     const tid = (templateId as TemplateId) || "dark";
     switch (tid) {
-      case "data":    return renderDataTemplate(content, brandConfig, clientName, clientCompany, proposalId);
-      case "bold":    return renderBoldTemplate(content, brandConfig, clientName, clientCompany, proposalId);
-      case "elegant": return renderElegantTemplate(content, brandConfig, clientName, clientCompany, proposalId);
-      default:        return renderDesignProposalHtml(content, agencyName, clientName, clientCompany, proposalId, brandConfig);
+      case "modern":    return renderModernTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      case "minimal":   return renderMinimalTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      case "corporate": return renderCorporateTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      default:          return renderDesignProposalHtml(content, agencyName, clientName, clientCompany, proposalId, brandConfig);
     }
   }
 
