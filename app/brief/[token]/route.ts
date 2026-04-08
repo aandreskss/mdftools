@@ -10,7 +10,7 @@ export async function GET(
 
   const { data } = await supabase
     .from("proposals")
-    .select("id, client_name, industry, brief_data, calendar_data, brief_status, brief_token, form_data")
+    .select("id, user_id, client_name, industry, brief_data, calendar_data, brief_status, brief_token, form_data")
     .eq("brief_token", token)
     .single();
 
@@ -21,7 +21,25 @@ export async function GET(
     });
   }
 
-  const html = renderBriefHtml(data, token);
+  // Fetch brand profile for logo and colors
+  let brand = { agencyName: "", logoUrl: "", primaryColor: "#a78bfa", secondaryColor: "#7c3aed" };
+  if (data.user_id) {
+    const { data: profile } = await supabase
+      .from("brand_profiles")
+      .select("brand_name, logo_url, brand_primary_color, brand_secondary_color")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
+    if (profile) {
+      brand = {
+        agencyName:    profile.brand_name          || "",
+        logoUrl:       profile.logo_url             || "",
+        primaryColor:  profile.brand_primary_color  || "#a78bfa",
+        secondaryColor: profile.brand_secondary_color || "#7c3aed",
+      };
+    }
+  }
+
+  const html = renderBriefHtml(data, token, brand);
   return new NextResponse(html, {
     status: 200,
     headers: {
@@ -45,12 +63,18 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-function renderBriefHtml(data: any, token: string) {
+function renderBriefHtml(data: any, token: string, brand: { agencyName: string; logoUrl: string; primaryColor: string; secondaryColor: string }) {
   const brief    = data.brief_data    ?? {};
   const calendar = data.calendar_data ?? null;
   const approved = data.brief_status === "approved";
   const client   = data.client_name ?? "";
   const company  = data.form_data?.clientCompany ?? "";
+  const p = brand.primaryColor;
+  const s = brand.secondaryColor;
+
+  const logoHtml = brand.logoUrl
+    ? `<img src="${brand.logoUrl}" alt="${brand.agencyName}" style="max-height:32px;max-width:120px;object-fit:contain;display:block;"/>`
+    : "";
 
   const milestones = (calendar?.milestones ?? []).map((m: any, i: number) => `
     <div class="milestone">
@@ -98,8 +122,8 @@ function renderBriefHtml(data: any, token: string) {
       --surface: #161616;
       --card: #1e1e1e;
       --border: rgba(255,255,255,0.07);
-      --violet: #a78bfa;
-      --violet-dim: rgba(167,139,250,0.12);
+      --violet: ${p};
+      --violet-dim: ${p}20;
       --green: #34d399;
       --text: #e2e8f0;
       --muted: #94a3b8;
@@ -181,8 +205,8 @@ function renderBriefHtml(data: any, token: string) {
     .cta-section { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
     .cta-text { font-size: 13px; color: var(--muted); }
     .cta-btn { padding: 12px 28px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; }
-    .cta-btn-approve { background: linear-gradient(135deg, #a78bfa, #7c3aed); color: #fff; box-shadow: 0 4px 20px rgba(124,58,237,0.35); }
-    .cta-btn-approve:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(124,58,237,0.45); }
+    .cta-btn-approve { background: linear-gradient(135deg, ${p}, ${s}); color: #fff; box-shadow: 0 4px 20px ${p}50; }
+    .cta-btn-approve:hover { transform: translateY(-1px); box-shadow: 0 8px 28px ${p}60; }
     .cta-btn-approved { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); cursor: default; }
 
     /* Divider */
@@ -193,7 +217,10 @@ function renderBriefHtml(data: any, token: string) {
 
   <!-- Header -->
   <div class="header">
-    <div class="header-brand">Brief de Proyecto</div>
+    <div class="header-brand" style="display:flex;align-items:center;gap:12px;">
+      ${logoHtml}
+      ${brand.agencyName ? `<span>${brand.agencyName}</span>` : `<span>Brief de Proyecto</span>`}
+    </div>
     <div class="header-status">
       <div class="status-badge ${approved ? "approved" : "pending"}" id="status-badge">
         ${approved ? "✓ Aprobado" : "Pendiente de aprobación"}
