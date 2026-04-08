@@ -268,6 +268,7 @@ ${termsHtml ? `<div class="wrap">${termsHtml}</div>` : ""}
 <footer class="site-footer">
   <div class="wrap footer-inner">
     <div class="footer-left">
+      ${brand.logoUrl ? `<img src="${esc(brand.logoUrl)}" alt="${esc(brand.agencyName)}" style="max-height:32px;max-width:130px;object-fit:contain;margin-bottom:8px;display:block;"/>` : ""}
       <strong>${esc(brand.agencyName)}</strong><br/>
       Propuesta para ${clientLabel}<br/>
       ${brand.senderName ? `Presentado por ${esc(brand.senderName)}<br/>` : ""}

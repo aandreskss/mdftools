@@ -814,7 +814,7 @@ export function renderDesignProposalHtml(
         </div>
       </section>` : ""}
       <footer class="footer">
-        <div class="footer-logo">${esc(agencyName)}</div>
+        ${logoUrl ? `<img src="${esc(logoUrl)}" alt="${esc(agencyName)}" style="max-height:40px;max-width:150px;object-fit:contain;margin:0 auto 12px;display:block;"/>` : `<div class="footer-logo">${esc(agencyName)}</div>`}
         <p>Propuesta preparada por <strong>${esc(agencyName)}</strong> para <strong>${clientLabel}</strong></p>
         ${senderName ? `<p style="margin-top:6px;font-size:13px;font-weight:600;">Presentado por: ${esc(senderName)}</p>` : ""}
         <p style="margin-top:6px;font-size:12px;opacity:0.5;">Válida por 30 días naturales. Reservados todos los derechos.</p>
