@@ -6,7 +6,7 @@ import {
   Copy, Check, Save, Loader2, Trash2, FileText, Calendar,
   Code, Download, RefreshCw, Pencil, Upload, Mail,
   MessageCircle, Building2, LayoutGrid, X, FileDown, Link2,
-  DollarSign, TrendingUp, Award,
+  DollarSign, TrendingUp, Award, Archive, ArchiveRestore,
 } from "lucide-react";
 import AgentBrain from "@/components/AgentBrain";
 import ReactMarkdown from "react-markdown";
@@ -186,6 +186,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [pendingMarkdown, setPendingMarkdown]            = useState<string | null>(null);
 
+  const [showArchived, setShowArchived] = useState(false);
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
   const [savedProposalId, setSavedProposalId] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
@@ -232,11 +233,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   // srcDoc on the iframe handles HTML rendering natively — no need for doc.write()
 
-  async function fetchProposals() {
+  async function fetchProposals(archived = showArchived) {
     setLoadingList(true);
-    const res = await fetch("/api/proposals");
+    const res = await fetch(`/api/proposals${archived ? "?archived=true" : ""}`);
     if (res.ok) setProposals(await res.json());
     setLoadingList(false);
+  }
+
+  async function archiveProposal(id: string) {
+    await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    setProposals(prev => prev.filter(p => p.id !== id));
+  }
+
+  async function unarchiveProposal(id: string) {
+    await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    setProposals(prev => prev.filter(p => p.id !== id));
   }
 
   async function uploadLogo(file: File) {
@@ -700,6 +711,22 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         </div>
 
         {/* List view */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "#1c1b1b" }}>
+            <button
+              onClick={() => { if (showArchived) { setShowArchived(false); fetchProposals(false); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!showArchived ? "bg-brand-500/20 text-brand-300" : "text-slate-500 hover:text-slate-300"}`}
+            >
+              <FileText size={12} /> Activas
+            </button>
+            <button
+              onClick={() => { if (!showArchived) { setShowArchived(true); fetchProposals(true); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showArchived ? "bg-amber-500/20 text-amber-300" : "text-slate-500 hover:text-slate-300"}`}
+            >
+              <Archive size={12} /> Archivadas
+            </button>
+          </div>
+        </div>
         {loadingList ? (
             <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
               <Loader2 size={18} className="animate-spin text-brand-400" /> Cargando propuestas...
@@ -707,18 +734,24 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
           ) : proposals.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/[0.05] bg-navy-900/20 py-20">
               <div className="w-16 h-16 rounded-2xl bg-navy-900/60 border border-white/[0.05] flex items-center justify-center mb-6 text-slate-600">
-                <FileText size={28} />
+                {showArchived ? <Archive size={28} /> : <FileText size={28} />}
               </div>
-              <p className="text-white font-bold text-lg mb-2">No hay propuestas todavía</p>
-              <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
-                Comienza creando tu primera propuesta comercial asistida por IA.
-              </p>
-              <button
-                onClick={() => { resetForm(); setView("form"); }}
-                className="px-6 py-3 brand-gradient text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 transition-all"
-              >
-                Crear Primera Propuesta
-              </button>
+              {showArchived ? (
+                <p className="text-slate-500 text-sm">No hay propuestas archivadas.</p>
+              ) : (
+                <>
+                  <p className="text-white font-bold text-lg mb-2">No hay propuestas todavía</p>
+                  <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
+                    Comienza creando tu primera propuesta comercial asistida por IA.
+                  </p>
+                  <button
+                    onClick={() => { resetForm(); setView("form"); }}
+                    className="px-6 py-3 brand-gradient text-white text-sm font-bold rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 transition-all"
+                  >
+                    Crear Primera Propuesta
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -755,9 +788,28 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
-                            {status.label}
-                          </span>
+                          {!showArchived && (
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
+                              {status.label}
+                            </span>
+                          )}
+                          {showArchived ? (
+                            <button
+                              onClick={e => { e.stopPropagation(); unarchiveProposal(p.id); }}
+                              title="Desarchivar"
+                              className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <ArchiveRestore size={14} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={e => { e.stopPropagation(); archiveProposal(p.id); }}
+                              title="Archivar"
+                              className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <Archive size={14} />
+                            </button>
+                          )}
                           <button
                             onClick={e => { e.stopPropagation(); deleteProposal(p.id); }}
                             className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"

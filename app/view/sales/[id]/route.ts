@@ -40,25 +40,24 @@ export async function GET(
     });
   }
 
-  // Inject accept script at serve time — intercepts floating-cta click
+  // Inject accept script — intercepts ALL accept buttons across all templates
   const acceptScript = `
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    var cta = document.querySelector('.floating-cta');
-    if (!cta) return;
-    cta.removeAttribute('href');
-    cta.style.cursor = 'pointer';
-    cta.addEventListener('click', function(e) {
-      e.preventDefault();
-      acceptProposal('${id}');
+    document.querySelectorAll('a[href*="proposals/accept"]').forEach(function(el) {
+      el.setAttribute('data-accept-btn', '1');
+      el.removeAttribute('href');
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        acceptProposal('${id}');
+      });
     });
   });
   async function acceptProposal(id) {
-    var btn = document.querySelector('.floating-cta');
-    if (!btn || btn.dataset.accepted) return;
-    btn.dataset.accepted = '1';
-    btn.style.opacity = '0.7';
-    btn.textContent = 'Procesando...';
+    var btns = document.querySelectorAll('[data-accept-btn]');
+    if (!btns.length || btns[0].dataset.accepted) return;
+    btns.forEach(function(b) { b.dataset.accepted = '1'; b.style.opacity = '0.7'; b.textContent = 'Procesando...'; });
     try {
       var res = await fetch('/api/proposals/accept', {
         method: 'POST',
@@ -66,24 +65,22 @@ export async function GET(
         body: JSON.stringify({ id: id })
       });
       if (res.ok) {
-        btn.textContent = '\\u2713 \\u00A1Propuesta Aceptada!';
-        btn.style.background = '#059669';
-        btn.style.opacity = '1';
-        btn.style.boxShadow = '0 10px 15px -3px rgba(5,150,105,0.4)';
-        btn.style.cursor = 'default';
+        btns.forEach(function(b) {
+          b.textContent = '\\u2713 \\u00A1Propuesta Aceptada!';
+          b.style.background = '#059669';
+          b.style.opacity = '1';
+          b.style.boxShadow = '0 10px 15px -3px rgba(5,150,105,0.4)';
+          b.style.cursor = 'default';
+        });
         var toast = document.createElement('div');
         toast.style.cssText = 'position:fixed;bottom:100px;right:32px;background:#065F46;color:white;padding:16px 24px;border-radius:12px;font-weight:600;font-size:14px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.25);';
         toast.textContent = '\\uD83C\\uDF89 \\u00A1Gracias! Nos pondremos en contacto pronto.';
         document.body.appendChild(toast);
       } else {
-        delete btn.dataset.accepted;
-        btn.textContent = '\\u2746 Aceptar Propuesta';
-        btn.style.opacity = '1';
+        btns.forEach(function(b) { delete b.dataset.accepted; b.textContent = 'Aceptar Propuesta'; b.style.opacity = '1'; });
       }
     } catch(e) {
-      delete btn.dataset.accepted;
-      btn.textContent = '\\u2746 Aceptar Propuesta';
-      btn.style.opacity = '1';
+      btns.forEach(function(b) { delete b.dataset.accepted; b.textContent = 'Aceptar Propuesta'; b.style.opacity = '1'; });
     }
   }
 </script>`;

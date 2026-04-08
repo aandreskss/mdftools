@@ -6,7 +6,7 @@ import {
   Copy, Check, Save, Loader2, Trash2, FileText, Calendar,
   Code, Download, RefreshCw, Pencil,
   MessageCircle, Building2, FileDown, Link2,
-  DollarSign, Award, Mail,
+  DollarSign, Award, Mail, Archive, ArchiveRestore,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -154,6 +154,7 @@ export default function PropuestasVentasPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [htmlExpiresAt, setHtmlExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft]   = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchProposals(); }, []);
@@ -227,11 +228,21 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     `.trim();
   }
 
-  async function fetchProposals() {
+  async function fetchProposals(archived = showArchived) {
     setLoadingList(true);
-    const res = await fetch("/api/sales-proposals");
+    const res = await fetch(`/api/sales-proposals${archived ? "?archived=true" : ""}`);
     if (res.ok) setProposals(await res.json());
     setLoadingList(false);
+  }
+
+  async function archiveProposal(id: string) {
+    await fetch("/api/sales-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+    setProposals(prev => prev.filter(p => p.id !== id));
+  }
+
+  async function unarchiveProposal(id: string) {
+    await fetch("/api/sales-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+    setProposals(prev => prev.filter(p => p.id !== id));
   }
 
   async function updateProposalStatus(id: string, status: string) {
@@ -662,6 +673,24 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         </div>
 
         {/* List */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "#1c1b1b" }}>
+            <button
+              onClick={() => { if (showArchived) { setShowArchived(false); fetchProposals(false); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${!showArchived ? "text-amber-300" : "text-slate-500 hover:text-slate-300"}`}
+              style={!showArchived ? { background: "rgba(245,158,11,0.15)" } : {}}
+            >
+              <FileText size={12} /> Activas
+            </button>
+            <button
+              onClick={() => { if (!showArchived) { setShowArchived(true); fetchProposals(true); } }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showArchived ? "text-amber-300" : "text-slate-500 hover:text-slate-300"}`}
+              style={showArchived ? { background: "rgba(251,191,36,0.1)" } : {}}
+            >
+              <Archive size={12} /> Archivadas
+            </button>
+          </div>
+        </div>
         {loadingList ? (
           <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
             <Loader2 size={18} className="animate-spin" style={{ color: "#f59e0b" }} /> Cargando propuestas...
@@ -675,19 +704,25 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
               className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 text-slate-600"
               style={{ background: "rgba(28,27,27,0.6)", border: "1px solid rgba(255,255,255,0.05)" }}
             >
-              <FileText size={28} />
+              {showArchived ? <Archive size={28} className="text-amber-400" /> : <FileText size={28} />}
             </div>
-            <p className="text-white font-bold text-lg mb-2">No hay propuestas de ventas todavía</p>
-            <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
-              Comienza creando tu primera propuesta comercial de ventas con IA.
-            </p>
-            <button
-              onClick={() => { resetForm(); setView("form"); }}
-              className="px-6 py-3 text-sm font-bold rounded-xl shadow-lg transition-all"
-              style={{ background: "linear-gradient(90deg,#fbbf24,#f59e0b)", color: "#1a0a00", boxShadow: "0 0 20px rgba(245,158,11,0.2)" }}
-            >
-              Crear Primera Propuesta
-            </button>
+            {showArchived ? (
+              <p className="text-slate-500 text-sm">No hay propuestas archivadas.</p>
+            ) : (
+              <>
+                <p className="text-white font-bold text-lg mb-2">No hay propuestas de ventas todavía</p>
+                <p className="text-slate-500 text-sm max-w-xs text-center mb-8">
+                  Comienza creando tu primera propuesta comercial de ventas con IA.
+                </p>
+                <button
+                  onClick={() => { resetForm(); setView("form"); }}
+                  className="px-6 py-3 text-sm font-bold rounded-xl shadow-lg transition-all"
+                  style={{ background: "linear-gradient(90deg,#fbbf24,#f59e0b)", color: "#1a0a00", boxShadow: "0 0 20px rgba(245,158,11,0.2)" }}
+                >
+                  Crear Primera Propuesta
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -722,9 +757,28 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
-                        {status.label}
-                      </span>
+                      {!showArchived && (
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${status.color}`}>
+                          {status.label}
+                        </span>
+                      )}
+                      {showArchived ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id); }}
+                          title="Desarchivar"
+                          className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <ArchiveRestore size={14} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={e => { e.stopPropagation(); archiveProposal(p.id); }}
+                          title="Archivar"
+                          className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Archive size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={e => { e.stopPropagation(); deleteProposal(p.id); }}
                         className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
