@@ -288,14 +288,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setLoadingList(false);
   }
 
-  async function archiveProposal(id: string) {
-    const res = await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived" }) });
+  async function archiveProposal(id: string, currentStatus: string) {
+    const res = await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "archived", previous_status: currentStatus }) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al archivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
 
-  async function unarchiveProposal(id: string) {
-    const res = await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "draft" }) });
+  async function unarchiveProposal(id: string, previousStatus: string) {
+    const res = await fetch("/api/design-proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: previousStatus || "draft" }) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al desarchivar: " + (d.error ?? res.status)); return; }
     setProposals(prev => prev.filter(p => p.id !== id));
   }
@@ -632,14 +632,14 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
     setLoadingBriefs(false);
   }
 
-  async function archiveBrief(id: string) {
-    const res = await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "archived" }) });
+  async function archiveBrief(id: string, currentStatus: string) {
+    const res = await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "archived", previous_status: currentStatus }) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al archivar: " + (d.error ?? res.status)); return; }
     setClientBriefs(prev => prev.filter(b => b.id !== id));
   }
 
-  async function unarchiveBrief(id: string) {
-    const res = await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "pending" }) });
+  async function unarchiveBrief(id: string, previousStatus: string) {
+    const res = await fetch(`/api/client-briefs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: previousStatus || "pending" }) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); alert("Error al desarchivar: " + (d.error ?? res.status)); return; }
     setClientBriefs(prev => prev.filter(b => b.id !== id));
   }
@@ -1039,7 +1039,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       )}
                       {showArchived ? (
                         <button
-                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id); }}
+                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id, p.previous_status); }}
                           title="Desarchivar"
                           className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >
@@ -1047,7 +1047,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                         </button>
                       ) : (
                         <button
-                          onClick={e => { e.stopPropagation(); archiveProposal(p.id); }}
+                          onClick={e => { e.stopPropagation(); archiveProposal(p.id, p.status); }}
                           title="Archivar"
                           className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >
@@ -1249,7 +1249,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   )}
                   {showArchivedBriefs ? (
                     <button
-                      onClick={() => unarchiveBrief(brief.id)}
+                      onClick={() => unarchiveBrief(brief.id, brief.previous_status)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
                       style={{ borderColor: "rgba(251,191,36,0.3)", color: "#fbbf24", background: "rgba(251,191,36,0.08)" }}
                     >
@@ -1257,7 +1257,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                     </button>
                   ) : (
                     <button
-                      onClick={() => archiveBrief(brief.id)}
+                      onClick={() => archiveBrief(brief.id, brief.status)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/[0.08] text-slate-500 hover:text-amber-400 hover:border-amber-400/30 transition-all"
                     >
                       <Archive className="w-3 h-3" /> Archivar
