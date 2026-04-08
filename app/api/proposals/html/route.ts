@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserSettings, noApiKeyResponse, callAIJson } from "@/lib/user-settings";
 import { renderProposalHtml, type ProposalContent } from "@/lib/proposal-template";
-import { renderDataTemplate } from "@/lib/proposal-templates/template-data";
-import { renderBoldTemplate } from "@/lib/proposal-templates/template-bold";
-import { renderElegantTemplate } from "@/lib/proposal-templates/template-elegant";
+import { renderModernTemplate } from "@/lib/proposal-templates/template-modern";
+import { renderMinimalTemplate } from "@/lib/proposal-templates/template-minimal";
+import { renderCorporateTemplate } from "@/lib/proposal-templates/template-corporate";
 import type { BrandConfig, TemplateId } from "@/lib/proposal-templates/types";
 import type { DesignProposalContent } from "@/lib/design-proposal-template";
 
@@ -98,14 +98,14 @@ export async function POST(request: Request) {
   };
 
   const tid = (templateId as TemplateId) || "dark";
-  const isNewTemplate = tid !== "dark";
+  const isNewTemplate = tid !== "dark"; // dark uses legacy renderProposalHtml
 
   function renderNewTemplate(content: DesignProposalContent): string {
     switch (tid) {
-      case "data":    return renderDataTemplate(content, brandConfig, clientName, clientCompany, proposalId);
-      case "bold":    return renderBoldTemplate(content, brandConfig, clientName, clientCompany, proposalId);
-      case "elegant": return renderElegantTemplate(content, brandConfig, clientName, clientCompany, proposalId);
-      default:        return renderProposalHtml(content as unknown as ProposalContent, agencyName, clientName, clientCompany, proposalId, brandConfig);
+      case "modern":    return renderModernTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      case "minimal":   return renderMinimalTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      case "corporate": return renderCorporateTemplate(content, brandConfig, clientName, clientCompany, proposalId);
+      default:          return renderProposalHtml(content as unknown as ProposalContent, agencyName, clientName, clientCompany, proposalId, brandConfig);
     }
   }
 
