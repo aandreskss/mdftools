@@ -351,6 +351,7 @@ ${(c.proximosPasos || []).length > 0 ? `
 <footer class="footer">
   <div class="container footer-inner">
     <div>
+      ${brand.logoUrl ? `<img src="${esc(brand.logoUrl)}" alt="${esc(brand.agencyName)}" style="max-height:36px;max-width:140px;object-fit:contain;margin-bottom:10px;display:block;"/>` : ""}
       <div class="footer-brand">${esc(brand.agencyName)}</div>
       <div class="footer-copy" style="margin-top:4px;">Propuesta para ${clientLabel} · ${fecha}</div>
       ${brand.senderName ? `<div class="footer-copy" style="margin-top:4px;">Presentado por <strong style="color:#cbd5e1;">${esc(brand.senderName)}</strong></div>` : ""}

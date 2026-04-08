@@ -351,6 +351,7 @@ export function renderCorporateTemplate(
   <!-- FOOTER -->
   <footer class="page-footer">
     <div class="page-footer-text">
+      ${brand.logoUrl ? `<img src="${esc(brand.logoUrl)}" alt="${esc(brand.agencyName)}" style="max-height:32px;max-width:130px;object-fit:contain;margin-bottom:8px;display:block;"/>` : ""}
       © ${new Date().getFullYear()} <strong>${esc(brand.agencyName)}</strong> · Para ${clientLabel}
       ${brand.senderName ? ` · Presentado por <strong>${esc(brand.senderName)}</strong>` : ""} · ${fecha}
       <br/>Vigencia: 15 días hábiles

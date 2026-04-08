@@ -1967,7 +1967,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                           {copiedLink ? <><Check className="w-3.5 h-3.5" /> Copiado</> : <><Link2 className="w-3.5 h-3.5" /> Copiar enlace</>}
                         </button>
                         <button
-                          onClick={() => generateHtml(markdownContent)}
+                          onClick={() => { setPendingMarkdown(markdownContent); setShowTemplateSelector(true); }}
                           disabled={generatingHtml}
                           title="Regenerar enlace con el contenido actualizado"
                           className="flex items-center justify-center p-2.5 rounded-lg text-xs font-bold border bg-white/[0.04] text-slate-400 border-white/[0.05] hover:bg-white/10 disabled:opacity-40 transition-all"
