@@ -62,7 +62,7 @@ export function renderMinimalTemplate(
     const desc = parts && parts[2] ? parts[2] : r;
     return `
     <div style="padding:40px 0;border-right:1px solid #f0f0f0;padding-right:40px;padding-left:0;">
-      <div style="font-size:52px;font-weight:900;color:#111;letter-spacing:-0.03em;margin-bottom:8px;">${esc(val)}</div>
+      <div style="font-size:36px;font-weight:900;color:#111;letter-spacing:-0.02em;margin-bottom:8px;">${esc(val)}</div>
       <div style="font-size:14px;color:#888;line-height:1.5;">${esc(desc)}</div>
     </div>`;
   }).join("");
@@ -89,7 +89,7 @@ export function renderMinimalTemplate(
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=1200"/>
 <title>Propuesta — ${esc(clientName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -97,7 +97,7 @@ export function renderMinimalTemplate(
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
-  body{font-family:'Inter',sans-serif;background:#ffffff;color:#111;line-height:1.6;}
+  body{font-family:'Inter',sans-serif;background:#ffffff;color:#111;line-height:1.6;min-width:760px;}
   a{text-decoration:none;color:inherit;}
   ul,ol{list-style:none;}
   img{max-width:100%;}
@@ -115,8 +115,8 @@ export function renderMinimalTemplate(
   /* Hero */
   .hero{padding:80px 0 60px;}
   .hero-type{font-size:12px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${s};margin-bottom:24px;}
-  .hero-title{font-family:'Playfair Display',serif;font-size:clamp(34px,5vw,60px);font-weight:900;color:#0a0a0a;line-height:1.1;letter-spacing:-0.02em;margin-bottom:32px;}
-  .hero-desc{font-size:18px;color:#555;line-height:1.8;max-width:600px;margin-bottom:40px;}
+  .hero-title{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:#0a0a0a;line-height:1.2;letter-spacing:-0.01em;margin-bottom:24px;}
+  .hero-desc{font-size:15px;color:#555;line-height:1.8;max-width:600px;margin-bottom:40px;}
   .hero-divider{width:64px;height:3px;background:${p};margin-bottom:40px;}
   .hero-cta{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:#0a0a0a;color:#fff;border-radius:6px;font-size:15px;font-weight:600;letter-spacing:0.01em;transition:transform 0.2s;}
   .hero-cta:hover{transform:translateX(4px);}
@@ -125,7 +125,7 @@ export function renderMinimalTemplate(
   /* Sections */
   .sec{padding:64px 0;border-top:1px solid #e8e8e8;}
   .sec-tag{font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#bbb;margin-bottom:16px;}
-  .sec-title{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,42px);font-weight:800;color:#0a0a0a;line-height:1.15;letter-spacing:-0.02em;margin-bottom:32px;}
+  .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:800;color:#0a0a0a;line-height:1.2;letter-spacing:-0.01em;margin-bottom:24px;}
   .sec-lead{font-size:16px;color:#666;line-height:1.7;max-width:540px;margin-bottom:40px;}
 
   /* KPIs strip */
@@ -135,7 +135,7 @@ export function renderMinimalTemplate(
 
   /* Investment */
   .invest-box{border:2px solid #0a0a0a;border-radius:12px;padding:48px;margin-top:40px;}
-  .invest-price{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:#0a0a0a;margin:16px 0 8px;letter-spacing:-0.03em;}
+  .invest-price{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:#0a0a0a;margin:12px 0 8px;letter-spacing:-0.02em;}
   .invest-cta{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:#0a0a0a;color:#fff;border-radius:6px;font-size:15px;font-weight:600;margin-top:32px;transition:background 0.2s;}
   .invest-cta:hover{background:${p};}
 
@@ -173,9 +173,9 @@ export function renderMinimalTemplate(
 <div class="wrap">
   <section class="hero">
     <div class="hero-type">${esc(c.tipoProyecto || "Propuesta Comercial")}</div>
-    <h1 class="hero-title">${esc(c.resumenCreativo)}</h1>
+    <h1 class="hero-title">${esc(c.tipoProyecto || "Propuesta Comercial")} para ${clientLabel}</h1>
     <div class="hero-divider"></div>
-    <p class="hero-desc">${esc(c.entendimientoDelCliente)}</p>
+    <p class="hero-desc">${esc(c.resumenCreativo)}</p>
     <a href="${acceptUrl}" class="hero-cta">Aceptar esta propuesta <span class="hero-cta-arrow">→</span></a>
     <div style="margin-top:48px;padding-top:40px;border-top:1px solid #f0f0f0;font-size:13px;color:#aaa;">
       Para <strong style="color:#555;">${clientLabel}</strong> · Presentado por <strong style="color:#555;">${esc(brand.agencyName)}</strong>

@@ -77,7 +77,7 @@ export function renderModernTemplate(
     const desc = parts && parts[2] ? parts[2] : r;
     return `
     <div style="text-align:center;padding:32px 24px;background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,0.07);">
-      <div style="font-size:42px;font-weight:800;background:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">${esc(val)}</div>
+      <div style="font-size:30px;font-weight:800;background:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">${esc(val)}</div>
       <p style="font-size:13px;color:#64748b;line-height:1.5;margin:0;">${esc(desc)}</p>
     </div>`;
   }).join("");
@@ -104,7 +104,7 @@ export function renderModernTemplate(
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=1200"/>
 <title>Propuesta — ${esc(clientName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -112,7 +112,7 @@ export function renderModernTemplate(
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
-  body{font-family:'Plus Jakarta Sans',sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6;min-width:960px;}
   a{text-decoration:none;color:inherit;}
   ul,ol{list-style:none;}
   img{max-width:100%;}
@@ -137,8 +137,8 @@ export function renderModernTemplate(
   .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:100px;background:${p}12;color:${p};font-size:13px;font-weight:600;margin-bottom:28px;}
   .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:${p};animation:pulse 2s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-  .hero-title{font-size:clamp(32px,5vw,58px);font-weight:800;line-height:1.15;color:#0f172a;margin-bottom:24px;letter-spacing:-0.02em;}
-  .hero-subtitle{font-size:18px;color:#64748b;line-height:1.7;max-width:600px;margin-bottom:40px;}
+  .hero-title{font-size:28px;font-weight:800;line-height:1.2;color:#0f172a;margin-bottom:16px;letter-spacing:-0.01em;}
+  .hero-subtitle{font-size:15px;color:#64748b;line-height:1.7;max-width:600px;margin-bottom:40px;}
   .hero-actions{display:flex;gap:16px;flex-wrap:wrap;}
   .hero-meta{display:flex;align-items:center;gap:20px;margin-top:48px;padding-top:40px;border-top:1px solid #e2e8f0;flex-wrap:wrap;}
   .hero-meta-item{font-size:13px;color:#94a3b8;}
@@ -149,7 +149,7 @@ export function renderModernTemplate(
   /* Section base */
   section{padding:80px 0;}
   .section-label{font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${p};margin-bottom:12px;}
-  .section-title{font-size:clamp(26px,3.5vw,38px);font-weight:800;color:#0f172a;line-height:1.2;letter-spacing:-0.02em;margin-bottom:16px;}
+  .section-title{font-size:22px;font-weight:800;color:#0f172a;line-height:1.2;letter-spacing:-0.01em;margin-bottom:16px;}
   .section-desc{font-size:16px;color:#64748b;max-width:560px;line-height:1.7;}
   .section-divider{width:48px;height:4px;border-radius:4px;background:linear-gradient(90deg,${p},${s});margin-bottom:48px;}
 
@@ -214,8 +214,8 @@ export function renderModernTemplate(
         <span class="hero-badge-dot"></span>
         ${esc(c.tipoProyecto || "Propuesta Comercial")}
       </div>
-      <h1 class="hero-title">${esc(c.resumenCreativo)}</h1>
-      <p class="hero-subtitle">${esc(c.entendimientoDelCliente)}</p>
+      <h1 class="hero-title">${esc(c.tipoProyecto || "Propuesta Comercial")} para ${clientLabel}</h1>
+      <p class="hero-subtitle">${esc(c.resumenCreativo)}</p>
       <div class="hero-actions">
         <a href="#estrategia" class="btn-primary">Ver estrategia completa</a>
         <a href="${acceptUrl}" class="btn-secondary">Aceptar propuesta</a>

@@ -101,7 +101,7 @@ export function renderCorporateTemplate(
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=1200"/>
 <title>Propuesta — ${esc(clientName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -109,7 +109,7 @@ export function renderCorporateTemplate(
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
-  body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6;}
+  body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6;min-width:1000px;}
   a{text-decoration:none;color:inherit;}
   ul,ol{list-style:none;}
   img{max-width:100%;}
@@ -242,8 +242,9 @@ export function renderCorporateTemplate(
         <div class="block-title">Resumen Ejecutivo</div>
         <div class="block-tag">${esc(c.tipoProyecto || "Propuesta")}</div>
       </div>
-      <h1 style="font-size:clamp(22px,3vw,32px);font-weight:800;color:#0f172a;line-height:1.25;letter-spacing:-0.02em;margin-bottom:20px;">${esc(c.resumenCreativo)}</h1>
-      <p style="font-size:15px;color:#64748b;line-height:1.8;max-width:640px;">${esc(c.entendimientoDelCliente)}</p>
+      <h1 style="font-size:22px;font-weight:800;color:#0f172a;line-height:1.3;letter-spacing:-0.01em;margin-bottom:12px;">${esc(c.tipoProyecto || "Propuesta Comercial")} — ${clientLabel}</h1>
+      <p style="font-size:15px;color:#334155;line-height:1.7;max-width:640px;margin-bottom:12px;">${esc(c.resumenCreativo)}</p>
+      <p style="font-size:14px;color:#64748b;line-height:1.7;max-width:640px;">${esc(c.entendimientoDelCliente)}</p>
     </div>
 
     <!-- RETOS -->
