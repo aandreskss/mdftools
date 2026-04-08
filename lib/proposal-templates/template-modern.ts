@@ -72,13 +72,13 @@ export function renderModernTemplate(
     </div>`).join("");
 
   const kpisHtml = (c.resultadosEsperados || []).slice(0, 3).map((r, _i) => {
-    const parts = r.match(/^([+\-~]?\d[\d,.%xk]*(?:\/\w+)?|[+\-~]?\d+pp)\s*(.*)?$/i);
-    const val = parts ? parts[1] : (r.slice(0, 10) + (r.length > 10 ? "+" : ""));
-    const desc = parts && parts[2] ? parts[2] : r;
+    const numMatch = r.match(/([+\-~]?\d[\d,.]*\s*%|[+\-~]?\d[\d,.]*\s*x|[+\-~]?\d[\d,.]*\s*k|[+\-~]?\d+\s*pp|[+\-~]?\d[\d,.]+)/i);
+    const val = numMatch ? numMatch[0].replace(/\s+/g, "") : "✓";
+    const hasNum = !!numMatch;
     return `
     <div style="text-align:center;padding:32px 24px;background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,0.07);">
-      <div style="font-size:30px;font-weight:800;background:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">${esc(val)}</div>
-      <p style="font-size:13px;color:#64748b;line-height:1.5;margin:0;">${esc(desc)}</p>
+      <div style="font-size:${hasNum ? "36px" : "28px"};font-weight:800;background:linear-gradient(135deg,${p},${s});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;line-height:1;">${esc(val)}</div>
+      <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0;">${esc(r)}</p>
     </div>`;
   }).join("");
 
