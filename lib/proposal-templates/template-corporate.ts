@@ -20,7 +20,7 @@ export function renderCorporateTemplate(
   const acceptUrl = proposalId ? `/api/proposals/accept?id=${proposalId}` : "#";
 
   const logoHtml = brand.logoUrl
-    ? `<img src="${esc(brand.logoUrl)}" alt="logo" style="max-height:36px;max-width:130px;object-fit:contain;filter:brightness(0) invert(1);"/>`
+    ? `<img src="${esc(brand.logoUrl)}" alt="logo" style="max-height:36px;max-width:130px;object-fit:contain;"/>`
     : `<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:18px;">${esc(brand.agencyName?.[0] || "A")}</div>`;
 
   const retosHtml = (c.retosDetectados || []).map((r, i) => `
