@@ -32,7 +32,7 @@ export function renderMinimalTemplate(
       </div>
     </div>`).join("");
 
-  const fasesHtml = (c.fases || []).map((f, i) => `
+  const fasesHtml = (c.fases || []).map((f, _i) => `
     <div style="padding:36px 0;border-bottom:1px solid #f0f0f0;display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:start;">
       <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:${p};padding-top:4px;">Fase ${esc(String(f.numero))}</div>
       <div>
@@ -50,7 +50,7 @@ export function renderMinimalTemplate(
       <p style="font-size:16px;font-weight:600;color:#111;margin:0;">${esc(pl)}</p>
     </div>`).join("");
 
-  const entregablesHtml = (c.entregables || []).map((e, i) => `
+  const entregablesHtml = (c.entregables || []).map((e, _i) => `
     <div style="display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid #f8f8f8;">
       <span style="width:6px;height:6px;border-radius:50%;background:${p};flex-shrink:0;"></span>
       <span style="font-size:15px;color:#333;">${esc(e)}</span>

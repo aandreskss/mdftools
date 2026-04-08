@@ -69,7 +69,6 @@ export function renderCorporateTemplate(
     const parts = r.match(/^([+\-~]?\d[\d,.%xk]*(?:\/\w+)?|[+\-~]?\d+pp)\s*(.*)?$/i);
     const val = parts ? parts[1] : r.slice(0, 10);
     const desc = parts && parts[2] ? parts[2] : r;
-    const colors = [p, s, "#10b981"];
     return `
     <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:32px;">
       <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:12px;">Métrica ${i + 1}</div>

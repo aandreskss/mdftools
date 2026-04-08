@@ -71,7 +71,7 @@ export function renderModernTemplate(
       </div>
     </div>`).join("");
 
-  const kpisHtml = (c.resultadosEsperados || []).slice(0, 3).map((r, i) => {
+  const kpisHtml = (c.resultadosEsperados || []).slice(0, 3).map((r, _i) => {
     const parts = r.match(/^([+\-~]?\d[\d,.%xk]*(?:\/\w+)?|[+\-~]?\d+pp)\s*(.*)?$/i);
     const val = parts ? parts[1] : (r.slice(0, 10) + (r.length > 10 ? "+" : ""));
     const desc = parts && parts[2] ? parts[2] : r;
