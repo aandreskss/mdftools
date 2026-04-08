@@ -767,7 +767,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       )}
                       {showArchived ? (
                         <button
-                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id, p.previous_status); }}
+                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id, p.previous_status ?? ""); }}
                           title="Desarchivar"
                           className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >

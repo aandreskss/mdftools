@@ -1041,7 +1041,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                       )}
                       {showArchived ? (
                         <button
-                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id, p.previous_status); }}
+                          onClick={e => { e.stopPropagation(); unarchiveProposal(p.id, p.previous_status ?? ""); }}
                           title="Desarchivar"
                           className="p-1.5 text-slate-600 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >
@@ -1251,7 +1251,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
                   )}
                   {showArchivedBriefs ? (
                     <button
-                      onClick={() => unarchiveBrief(brief.id, brief.previous_status)}
+                      onClick={() => unarchiveBrief(brief.id, brief.previous_status ?? "")}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
                       style={{ borderColor: "rgba(251,191,36,0.3)", color: "#fbbf24", background: "rgba(251,191,36,0.08)" }}
                     >
