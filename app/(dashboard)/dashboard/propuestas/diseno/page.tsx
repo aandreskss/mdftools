@@ -772,6 +772,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
 
   // ─── Template selector modal (global, rendered outside view routing) ─────────
   const templateSelectorEl = (
+    <>
     <TemplateSelector
       isOpen={showTemplateSelector}
       onClose={() => setShowTemplateSelector(false)}
@@ -866,6 +867,7 @@ ${data.proximosPasos?.map((s: any) => `- ${s}`).join("\n")}
         </div>
       </div>
     )}
+    </>
   );
 
   // ─── Render: List view ─────────────────────────────────────────────────────
