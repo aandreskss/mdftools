@@ -52,6 +52,7 @@ interface DesignProposal {
   client_name: string;
   industry: string;
   status: string;
+  previous_status?: string;
   created_at: string;
   generated_content: string;
   html_content?: string;
@@ -124,7 +125,8 @@ interface ClientBriefSummary {
   client_email: string;
   project_name: string;
   token: string;
-  status: "pending" | "submitted";
+  status: "pending" | "submitted" | "archived";
+  previous_status?: string;
   submitted_at: string | null;
   proposal_id: string | null;
   created_at: string;

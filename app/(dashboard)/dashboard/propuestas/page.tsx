@@ -34,7 +34,7 @@ interface ProposalForm {
 
 interface Proposal {
   id: string; client_name: string; industry: string;
-  status: string; created_at: string; generated_content: string;
+  status: string; previous_status?: string; created_at: string; generated_content: string;
   html_content?: string; slides_content?: string;
   html_expires_at?: string;
   form_data?: ProposalForm;

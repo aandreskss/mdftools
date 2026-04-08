@@ -42,6 +42,7 @@ interface SalesProposal {
   client_name: string;
   industry: string;
   status: string;
+  previous_status?: string;
   created_at: string;
   generated_content: string;
   html_content?: string;
