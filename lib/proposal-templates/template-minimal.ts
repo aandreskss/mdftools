@@ -57,13 +57,13 @@ export function renderMinimalTemplate(
     </div>`).join("");
 
   const kpisHtml = (c.resultadosEsperados || []).slice(0, 3).map((r) => {
-    const parts = r.match(/^([+\-~]?\d[\d,.%xk]*(?:\/\w+)?|[+\-~]?\d+pp)\s*(.*)?$/i);
-    const val = parts ? parts[1] : r.slice(0, 8);
-    const desc = parts && parts[2] ? parts[2] : r;
+    const numMatch = r.match(/([+\-~]?\d[\d,.]*\s*%|[+\-~]?\d[\d,.]*\s*x|[+\-~]?\d[\d,.]*\s*k|[+\-~]?\d+\s*pp|[+\-~]?\d[\d,.]+)/i);
+    const val = numMatch ? numMatch[0].replace(/\s+/g, "") : "✓";
+    const hasNum = !!numMatch;
     return `
-    <div style="padding:40px 0;border-right:1px solid #f0f0f0;padding-right:40px;padding-left:0;">
-      <div style="font-size:36px;font-weight:900;color:#111;letter-spacing:-0.02em;margin-bottom:8px;">${esc(val)}</div>
-      <div style="font-size:14px;color:#888;line-height:1.5;">${esc(desc)}</div>
+    <div style="padding:32px 0;border-right:1px solid #222;padding-right:40px;padding-left:0;">
+      <div style="font-size:${hasNum ? "40px" : "24px"};font-weight:900;color:#fff;letter-spacing:-0.02em;margin-bottom:10px;line-height:1;">${esc(val)}</div>
+      <div style="font-size:13px;color:#999;line-height:1.6;">${esc(r)}</div>
     </div>`;
   }).join("");
 

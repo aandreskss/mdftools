@@ -66,14 +66,14 @@ export function renderCorporateTemplate(
   }).join("");
 
   const kpisHtml = (c.resultadosEsperados || []).slice(0, 3).map((r, i) => {
-    const parts = r.match(/^([+\-~]?\d[\d,.%xk]*(?:\/\w+)?|[+\-~]?\d+pp)\s*(.*)?$/i);
-    const val = parts ? parts[1] : r.slice(0, 10);
-    const desc = parts && parts[2] ? parts[2] : r;
+    const numMatch = r.match(/([+\-~]?\d[\d,.]*\s*%|[+\-~]?\d[\d,.]*\s*x|[+\-~]?\d[\d,.]*\s*k|[+\-~]?\d+\s*pp|[+\-~]?\d[\d,.]+)/i);
+    const val = numMatch ? numMatch[0].replace(/\s+/g, "") : "✓";
+    const hasNum = !!numMatch;
     return `
-    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:32px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:12px;">Métrica ${i + 1}</div>
-      <div style="font-size:44px;font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1;margin-bottom:10px;">${esc(val)}</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.5;">${esc(desc)}</div>
+    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:10px;">Resultado ${i + 1}</div>
+      <div style="font-size:${hasNum ? "42px" : "22px"};font-weight:800;color:#fff;letter-spacing:-0.02em;line-height:1;margin-bottom:10px;">${esc(val)}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;">${esc(r)}</div>
     </div>`;
   }).join("");
 
