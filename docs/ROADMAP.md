@@ -69,11 +69,13 @@ La auditoría real de Supabase (marcada como pendiente en Etapa 2.4) encontró 3
 | **CRÍTICO** | `proposal_views` sin RLS — cualquier usuario autenticado podía leer views de propuestas ajenas | `ALTER TABLE proposal_views ENABLE ROW LEVEL SECURITY` + política SELECT por ownership |
 | **CRÍTICO** | `/api/proposals/[id]/track` sin validar existencia de propuesta — permitía inyectar views falsas en IDs arbitrarios | Verificación de propuesta antes de insertar el view (404 si no existe) |
 | **MEDIO** | Bucket `client-brief-files` sin política `FOR DELETE` — cualquiera podía borrar archivos de clientes ajenos | Política DELETE restringida al owner de la carpeta |
-| **MEDIO** | Leaked password protection desactivada en Auth — usuarios podían registrarse con contraseñas filtradas | Activado en Supabase Auth Settings (QA y prod) |
+| **MEDIO** | Leaked password protection desactivada en Auth — usuarios podían registrarse con contraseñas filtradas | Verificación contra HaveIBeenPwned en registro + activado en Supabase Auth Settings (plan Pro+) |
 
 ### Archivos modificados
 - `supabase/migrations/20260409000008_rls_security.sql` — RLS en `proposal_views` + política DELETE en storage
 - `app/api/proposals/[id]/track/route.ts` — validación de existencia de propuesta
+- `lib/hibp.ts` — verificación HIBP con k-anonymity (SHA-1, solo prefijo de 5 chars)
+- `app/(auth)/register/page.tsx` — llama a `isPasswordPwned` antes de `supabase.auth.signUp`
 
 ---
 
