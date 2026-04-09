@@ -79,6 +79,32 @@ La auditoría real de Supabase (marcada como pendiente en Etapa 2.4) encontró 3
 
 ---
 
+## Etapa 2.6 — Hardening de seguridad
+
+### 2.6.1 Auditoría RLS completa
+La Etapa 2.5 auditó las tablas del schema base. Quedan por verificar:
+- [ ] `design_proposals` — ¿tiene RLS? ¿política correcta?
+- [ ] `sales_proposals` — ¿tiene RLS? ¿política correcta?
+- [ ] `ad_library` — ¿tiene RLS? ¿política correcta?
+- [ ] Verificar que todas las tablas tienen política explícita para INSERT (no solo FOR ALL)
+
+### 2.6.2 CORS
+Las rutas de API no tienen headers CORS configurados. Definir:
+- [ ] Rutas públicas (`/api/proposals/accept`, `/api/client-briefs/public/*`) — permitir cualquier origen
+- [ ] Rutas privadas (dashboard) — restringir a dominio propio
+- [ ] Agregar middleware o helper `withCors()` reutilizable para route handlers
+
+### 2.6.3 Security headers — mejoras pendientes
+Los headers base están en `next.config.js` (X-Frame-Options, HSTS, CSP, etc.). Quedan:
+- [ ] CSP: reemplazar `unsafe-inline` / `unsafe-eval` con nonces (requiere cambios en Next.js config)
+- [ ] CSP: auditar `connect-src` al agregar nuevas integraciones externas
+- [ ] `Permissions-Policy`: revisar si faltan features a restringir
+- [ ] Agregar test automatizado que verifique que los headers están presentes en producción
+
+**Estado**: [ ] Pendiente
+
+---
+
 ## Etapa 3 — Tests unitarios e integración ✅ COMPLETADA
 
 ### 3.1 Stack de testing

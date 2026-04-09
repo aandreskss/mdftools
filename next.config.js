@@ -25,7 +25,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.supabase.co",
               "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com",
+              "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com https://api.pwnedpasswords.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
