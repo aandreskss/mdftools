@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { isPasswordPwned } from "@/lib/hibp";
 import { Loader2, CheckCircle } from "lucide-react";
 
 export default function RegisterPage() {
@@ -30,6 +31,13 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+
+    const pwned = await isPasswordPwned(password);
+    if (pwned) {
+      setError("Esta contraseña está comprometida en filtraciones de datos conocidas. Elige una diferente.");
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({ email, password });
 

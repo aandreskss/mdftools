@@ -69,10 +69,39 @@ La auditoría real de Supabase (marcada como pendiente en Etapa 2.4) encontró 3
 | **CRÍTICO** | `proposal_views` sin RLS — cualquier usuario autenticado podía leer views de propuestas ajenas | `ALTER TABLE proposal_views ENABLE ROW LEVEL SECURITY` + política SELECT por ownership |
 | **CRÍTICO** | `/api/proposals/[id]/track` sin validar existencia de propuesta — permitía inyectar views falsas en IDs arbitrarios | Verificación de propuesta antes de insertar el view (404 si no existe) |
 | **MEDIO** | Bucket `client-brief-files` sin política `FOR DELETE` — cualquiera podía borrar archivos de clientes ajenos | Política DELETE restringida al owner de la carpeta |
+| **MEDIO** | Leaked password protection desactivada en Auth — usuarios podían registrarse con contraseñas filtradas | Verificación contra HaveIBeenPwned en registro + activado en Supabase Auth Settings (plan Pro+) |
 
 ### Archivos modificados
-- `supabase/migrations/007_rls_security.sql` — RLS en `proposal_views` + política DELETE en storage
+- `supabase/migrations/20260409000008_rls_security.sql` — RLS en `proposal_views` + política DELETE en storage
 - `app/api/proposals/[id]/track/route.ts` — validación de existencia de propuesta
+- `lib/hibp.ts` — verificación HIBP con k-anonymity (SHA-1, solo prefijo de 5 chars)
+- `app/(auth)/register/page.tsx` — llama a `isPasswordPwned` antes de `supabase.auth.signUp`
+
+---
+
+## Etapa 2.6 — Hardening de seguridad
+
+### 2.6.1 Auditoría RLS completa
+La Etapa 2.5 auditó las tablas del schema base. Quedan por verificar:
+- [ ] `design_proposals` — ¿tiene RLS? ¿política correcta?
+- [ ] `sales_proposals` — ¿tiene RLS? ¿política correcta?
+- [ ] `ad_library` — ¿tiene RLS? ¿política correcta?
+- [ ] Verificar que todas las tablas tienen política explícita para INSERT (no solo FOR ALL)
+
+### 2.6.2 CORS
+Las rutas de API no tienen headers CORS configurados. Definir:
+- [ ] Rutas públicas (`/api/proposals/accept`, `/api/client-briefs/public/*`) — permitir cualquier origen
+- [ ] Rutas privadas (dashboard) — restringir a dominio propio
+- [ ] Agregar middleware o helper `withCors()` reutilizable para route handlers
+
+### 2.6.3 Security headers — mejoras pendientes
+Los headers base están en `next.config.js` (X-Frame-Options, HSTS, CSP, etc.). Quedan:
+- [ ] CSP: reemplazar `unsafe-inline` / `unsafe-eval` con nonces (requiere cambios en Next.js config)
+- [ ] CSP: auditar `connect-src` al agregar nuevas integraciones externas
+- [ ] `Permissions-Policy`: revisar si faltan features a restringir
+- [ ] Agregar test automatizado que verifique que los headers están presentes en producción
+
+**Estado**: [ ] Pendiente
 
 ---
 
