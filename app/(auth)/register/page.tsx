@@ -16,6 +16,27 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  async function isPasswordPwned(pwd: string): Promise<boolean> {
+    const msgBuffer = new TextEncoder().encode(pwd);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", msgBuffer);
+    const hashHex = Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase();
+    const prefix = hashHex.slice(0, 5);
+    const suffix = hashHex.slice(5);
+    try {
+      const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+        headers: { "Add-Padding": "true" },
+      });
+      if (!res.ok) return false;
+      const text = await res.text();
+      return text.split("\n").some((line) => line.split(":")[0] === suffix);
+    } catch {
+      return false;
+    }
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -30,6 +51,13 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+
+    const pwned = await isPasswordPwned(password);
+    if (pwned) {
+      setError("Esta contraseña está comprometida en filtraciones de datos conocidas. Elige una diferente.");
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({ email, password });
 
