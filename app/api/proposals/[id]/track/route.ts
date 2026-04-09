@@ -8,6 +8,15 @@ export async function POST(
   const { id } = await params;
   const supabase = createServiceClient();
 
+  // Verificar que la propuesta existe antes de registrar la view
+  const { data: proposal } = await supabase
+    .from("proposals")
+    .select("id")
+    .eq("id", id)
+    .single();
+
+  if (!proposal) return NextResponse.json({ ok: false }, { status: 404 });
+
   const userAgent = request.headers.get("user-agent") ?? "";
   const forwarded = request.headers.get("x-forwarded-for") ?? "";
   const ip = forwarded.split(",")[0].trim();

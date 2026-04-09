@@ -35,7 +35,7 @@ Estrategia por etapas para convertir mdftools en una aplicación production-read
 
 ---
 
-## Etapa 2 — Seguridad y dependencias ✅ COMPLETADA
+## Etapa 2 — Seguridad y dependencias ✅ COMPLETADA (revisada en Etapa 2.5)
 
 ### 2.1 Vulnerabilidades
 - `npm audit` en CI — falla si hay vulnerabilidades críticas
@@ -55,6 +55,24 @@ En `next.config.js`:
 ### 2.4 Auditoría Supabase
 - Verificar que todas las tablas tienen RLS activado
 - Revisar políticas de RLS
+
+---
+
+## Etapa 2.5 — Auditoría RLS ✅ COMPLETADA
+
+La auditoría real de Supabase (marcada como pendiente en Etapa 2.4) encontró 3 gaps de seguridad:
+
+### Hallazgos y fixes
+
+| Severidad | Gap | Fix |
+|-----------|-----|-----|
+| **CRÍTICO** | `proposal_views` sin RLS — cualquier usuario autenticado podía leer views de propuestas ajenas | `ALTER TABLE proposal_views ENABLE ROW LEVEL SECURITY` + política SELECT por ownership |
+| **CRÍTICO** | `/api/proposals/[id]/track` sin validar existencia de propuesta — permitía inyectar views falsas en IDs arbitrarios | Verificación de propuesta antes de insertar el view (404 si no existe) |
+| **MEDIO** | Bucket `client-brief-files` sin política `FOR DELETE` — cualquiera podía borrar archivos de clientes ajenos | Política DELETE restringida al owner de la carpeta |
+
+### Archivos modificados
+- `supabase/migrations/007_rls_security.sql` — RLS en `proposal_views` + política DELETE en storage
+- `app/api/proposals/[id]/track/route.ts` — validación de existencia de propuesta
 
 ---
 

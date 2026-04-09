@@ -100,6 +100,21 @@ Four configurable slots per user in `brand_profiles`: `model_agents`, `model_seo
 
 Full schema in `supabase/schema.sql`. Migrations in `supabase/migrations/`.
 
+### Crear migraciones
+
+Siempre usar el CLI para crear nuevas migraciones — genera el timestamp automáticamente:
+
+```bash
+supabase migration new nombre_descriptivo
+# crea: supabase/migrations/20260409123456_nombre_descriptivo.sql
+```
+
+**No crear archivos manualmente** con prefijos secuenciales (`001_`, `002_`). El CLI de Supabase requiere el formato `YYYYMMDDHHMMSS_nombre.sql` para el tracking de versiones y el comando `migration repair`.
+
+Las migraciones se aplican automáticamente en CI:
+- **QA** (`etfhciydwrtuaakvhtky`) — en cada push a `develop` o `main`, antes de los E2E
+- **Prod** (`xwacgbkaknlhgwhjroug`) — solo en push a `main`, después de que pasen todos los tests
+
 ### Dashboard layout
 
 `app/(dashboard)/layout.tsx` wraps all pages with `<Sidebar>` and `<ApiKeyBanner>`. Exports `dynamic = "force-dynamic"`. The sidebar is collapsible; its width is passed as a CSS variable `--sidebar-width` to offset `<main>`.
