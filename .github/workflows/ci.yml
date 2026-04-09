@@ -61,10 +61,35 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
+  migrate-qa:
+    name: Migrate QA DB
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link QA project
+        run: supabase link --project-ref etfhciydwrtuaakvhtky
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Run migrations on QA
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_QA }}
+
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: lint-and-build
+    needs: migrate-qa
 
     steps:
       - name: Checkout
@@ -99,3 +124,29 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  migrate-prod:
+    name: Migrate Prod DB
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link prod project
+        run: supabase link --project-ref xwacgbkaknlhgwhjroug
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Run migrations on prod
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}

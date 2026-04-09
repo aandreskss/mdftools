@@ -1,0 +1,3 @@
+# Supabase project configuration
+# El project-ref se inyecta via secret SUPABASE_PROJECT_ID en CI
+# Para desarrollo local: supabase link --project-ref <ref>
