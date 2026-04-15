@@ -8,7 +8,7 @@ import {
   Megaphone, Eye, FileSignature, Mail, Zap, RefreshCw,
   Calendar, BarChart2, ChevronDown, LogOut, Sparkles,
   PanelLeftClose, PanelLeft, Settings, Plus, Palette, Kanban, ShoppingBag,
-  GitBranch, Workflow, Menu, X,
+  GitBranch, Workflow, Menu, X, Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -384,6 +384,13 @@ export default function Sidebar() {
                 </Link>
               ))}
             </ExpandableSection>
+
+            {/* ── MetaFix ── */}
+            <NavItem
+              item={{ id: "metafix", label: "MetaFix", href: "/dashboard/metafix", icon: Wrench }}
+              isActive={pathname.startsWith("/dashboard/metafix")}
+              collapsed={collapsed && !isMobile}
+            />
           </div>
         </nav>
 
