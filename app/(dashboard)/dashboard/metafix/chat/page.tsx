@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Wrench, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { createCase } from "@/lib/metafix/actions";
@@ -18,7 +18,6 @@ const AREAS: { value: MetafixArea; label: string }[] = [
 ];
 
 export default function NewCasePage() {
-  const router       = useRouter();
   const searchParams = useSearchParams();
   const defaultArea  = (searchParams.get("area") as MetafixArea) || "";
 
