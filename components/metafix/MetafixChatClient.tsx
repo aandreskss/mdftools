@@ -351,7 +351,7 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
                           className="max-h-52 rounded-xl object-contain mb-2 w-full"
                           style={{ border: "1px solid rgba(255,255,255,0.15)" }} />
                       )}
-                      {msg.content && <span className="whitespace-pre-wrap">{msg.content}</span>}
+                      {msg.content && <span className="whitespace-pre-wrap" style={{ overflowWrap: "anywhere" }}>{msg.content}</span>}
                     </div>
 
                   ) : msg.content === "" && loading ? (
