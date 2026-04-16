@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   if (!apiKey) return new Response("API key no configurada", { status: 500 });
 
   // ── Fetch global context in parallel ────────────────────────────────────────
-  const [kbRes, docsRes, tutorialsRes, resolvedRes] = await Promise.all([
+  const [kbRes, docsRes, tutorialsRes, resolvedRes, personalDocsRes] = await Promise.all([
     // Global KB articles
     supabase
       .from("knowledge_base")
@@ -52,12 +52,22 @@ export async function POST(request: Request) {
       .not("summary", "is", null)
       .order("updated_at", { ascending: false })
       .limit(10),
+
+    // User's personal KB docs (from resolved cases they saved)
+    supabase
+      .from("metafix_docs")
+      .select("title, content, area")
+      .eq("user_id", user.id)
+      .eq("is_global", false)
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
-  const kbArticles  = kbRes.data ?? [];
-  const globalDocs  = docsRes.data ?? [];
-  const tutorials   = tutorialsRes.data ?? [];
+  const kbArticles    = kbRes.data ?? [];
+  const globalDocs    = docsRes.data ?? [];
+  const tutorials     = tutorialsRes.data ?? [];
   const resolvedCases = resolvedRes.data ?? [];
+  const personalDocs  = personalDocsRes.data ?? [];
 
   // ── Build enriched system prompt ────────────────────────────────────────────
   let systemPrompt = METAFIX_SYSTEM_PROMPT;
@@ -86,6 +96,12 @@ export async function POST(request: Request) {
       `- **${t.title}** → slug: \`${t.slug}\`${t.description ? ` — ${t.description}` : ""}`
     ).join("\n");
     systemPrompt += `\n\n## TUTORIALES VISUALES DISPONIBLES\nCuando necesites mostrar un paso a paso visual, incluí en tu respuesta exactamente este tag en su propia línea:\n\`[[TUTORIAL:slug-del-tutorial]]\`\n\nTutoriales disponibles:\n${tutorialList}`;
+  }
+
+  // User's personal KB docs (casos guardados)
+  if (personalDocs.length > 0) {
+    const personalContext = personalDocs.map((d) => `### ${d.title}\n${d.content}`).join("\n\n---\n\n");
+    systemPrompt += `\n\n## BASE DE CONOCIMIENTO PERSONAL DEL USUARIO\nEstos son casos que este usuario resolvió y guardó como referencia propia:\n\n${personalContext}`;
   }
 
   // User's resolved cases
