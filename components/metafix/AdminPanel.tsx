@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Wrench, BookOpen, FileText, Image as ImageIcon, Plus, Trash2, Eye, EyeOff, Loader2, Upload, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Wrench, BookOpen, FileText, Image as ImageIcon, Plus, Trash2, Eye, EyeOff, Loader2, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   createKBArticle, toggleKBPublished, deleteKBArticle,
