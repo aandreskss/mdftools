@@ -83,3 +83,44 @@ export interface KnowledgeArticle {
   view_count: number;
   created_at: string;
 }
+
+export interface MetafixDoc {
+  id: string;
+  user_id: string | null;
+  title: string;
+  content: string;
+  source: string | null;
+  area: MetafixArea | "general" | null;
+  is_global: boolean;
+  created_at: string;
+}
+
+export interface TutorialFolder {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  area: MetafixArea | "general" | null;
+  is_published: boolean;
+  created_at: string;
+}
+
+export interface TutorialImage {
+  id: string;
+  folder_id: string;
+  file_path: string;
+  public_url: string;
+  caption: string | null;
+  step_number: number;
+  created_at: string;
+}
+
+export type MetafixContentBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; url: string };
+
+export interface MetafixClientMessage {
+  role: "user" | "assistant";
+  content: string | MetafixContentBlock[];
+  imageUrl?: string;
+}
