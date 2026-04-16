@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Loader2, Copy, Check, CheckCircle2, Paperclip, X, Image as ImageIcon, Wrench, Zap } from "lucide-react";
+import { Send, Loader2, Copy, Check, CheckCircle2, Paperclip, X, Image as ImageIcon, Wrench, Zap, BookmarkPlus } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { saveMessage, updateCaseStatus } from "@/lib/metafix/actions";
+import { saveMessage, updateCaseStatus, sendCaseToKB } from "@/lib/metafix/actions";
 import { createClient } from "@/lib/supabase/client";
 import type { MetafixMessage, MetafixStatus, TutorialImage } from "@/types";
 
@@ -196,6 +196,8 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
   const [loading,      setLoading]      = useState(false);
   const [status,       setStatus]       = useState<MetafixStatus>(currentStatus);
   const [markingDone,  setMarkingDone]  = useState(false);
+  const [savedToKB,    setSavedToKB]    = useState(false);
+  const [savingToKB,   setSavingToKB]   = useState(false);
   const [pendingImage, setPendingImage] = useState<{ file: File; previewUrl: string } | null>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
 
@@ -351,7 +353,7 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
                           className="max-h-52 rounded-xl object-contain mb-2 w-full"
                           style={{ border: "1px solid rgba(255,255,255,0.15)" }} />
                       )}
-                      {msg.content && <span className="whitespace-pre-wrap">{msg.content}</span>}
+                      {msg.content && <span className="whitespace-pre-wrap" style={{ overflowWrap: "anywhere" }}>{msg.content}</span>}
                     </div>
 
                   ) : msg.content === "" && loading ? (
@@ -405,10 +407,36 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
         )}
 
         {status === "resolved" && (
-          <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl"
+          <div className="flex items-center justify-between gap-3 py-2.5 px-4 rounded-xl"
             style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-            <CheckCircle2 size={14} className="text-green-400" />
-            <span className="text-sm text-green-400 font-medium">Caso resuelto</span>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={14} className="text-green-400" />
+              <span className="text-sm text-green-400 font-medium">Caso resuelto</span>
+            </div>
+            <button
+              onClick={async () => {
+                setSavingToKB(true);
+                try {
+                  const res = await sendCaseToKB(caseId);
+                  setSavedToKB(true);
+                  if (res.alreadySaved) setSavedToKB(true);
+                } finally { setSavingToKB(false); }
+              }}
+              disabled={savingToKB || savedToKB}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-60"
+              style={{
+                background: savedToKB ? "rgba(34,197,94,0.15)" : "rgba(59,130,246,0.15)",
+                border: savedToKB ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(59,130,246,0.3)",
+                color: savedToKB ? "#4ade80" : "#93c5fd",
+              }}
+            >
+              {savingToKB
+                ? <><Loader2 size={11} className="animate-spin" />Guardando...</>
+                : savedToKB
+                ? <><Check size={11} />Guardado en mi KB</>
+                : <><BookmarkPlus size={11} />Guardar en mi KB</>
+              }
+            </button>
           </div>
         )}
 
