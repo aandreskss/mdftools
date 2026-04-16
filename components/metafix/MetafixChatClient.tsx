@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Loader2, Bot, User, Copy, Check, CheckCircle2, Paperclip, X, Image as ImageIcon } from "lucide-react";
+import { Send, Loader2, Copy, Check, CheckCircle2, Paperclip, X, Image as ImageIcon, Wrench, Zap } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { saveMessage, updateCaseStatus } from "@/lib/metafix/actions";
@@ -14,12 +14,12 @@ interface Props {
   currentStatus: MetafixStatus;
 }
 
-// ── Tutorial block ────────────────────────────────────────────────────────────
+// ── Tutorial block ─────────────────────────────────────────────────────────────
 
 function TutorialBlock({ slug }: { slug: string }) {
-  const [images, setImages]   = useState<TutorialImage[]>([]);
-  const [title,  setTitle]    = useState("");
-  const [loaded, setLoaded]   = useState(false);
+  const [images, setImages] = useState<TutorialImage[]>([]);
+  const [title,  setTitle]  = useState("");
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -39,30 +39,35 @@ function TutorialBlock({ slug }: { slug: string }) {
       });
   }, [slug]);
 
-  if (!loaded) return <div className="text-xs text-gray-500 animate-pulse py-2">Cargando tutorial...</div>;
+  if (!loaded) return (
+    <div className="flex items-center gap-2 py-3 text-xs text-blue-400/60">
+      <Loader2 size={12} className="animate-spin" /> Cargando tutorial...
+    </div>
+  );
   if (!images.length) return null;
 
   return (
-    <div className="my-3 rounded-xl overflow-hidden border border-blue-500/20" style={{ background: "#111827" }}>
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-500/20" style={{ background: "rgba(37,99,235,0.1)" }}>
-        <ImageIcon size={13} className="text-blue-400" />
-        <span className="text-xs font-bold text-blue-300">{title}</span>
-        <span className="text-[10px] text-blue-400/60 ml-auto">{images.length} pasos</span>
+    <div className="my-4 rounded-2xl overflow-hidden" style={{ background: "rgba(15,23,42,0.8)", border: "1px solid rgba(59,130,246,0.2)" }}>
+      <div className="flex items-center gap-2.5 px-5 py-3" style={{ borderBottom: "1px solid rgba(59,130,246,0.15)", background: "rgba(37,99,235,0.08)" }}>
+        <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(59,130,246,0.2)" }}>
+          <ImageIcon size={12} className="text-blue-400" />
+        </div>
+        <span className="text-sm font-semibold text-blue-300">{title}</span>
+        <span className="ml-auto text-[11px] text-blue-400/50 font-medium">{images.length} pasos</span>
       </div>
-      <div className="p-3 space-y-3">
+      <div className="p-4 space-y-4">
         {images.map((img) => (
-          <div key={img.id} className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+          <div key={img.id}>
+            <div className="flex items-center gap-2.5 mb-2">
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+                style={{ background: "linear-gradient(135deg, #3b82f6, #1d4ed8)" }}>
                 {img.step_number}
               </span>
-              {img.caption && <span className="text-xs text-gray-300">{img.caption}</span>}
+              {img.caption && <span className="text-sm text-gray-300 font-medium">{img.caption}</span>}
             </div>
-            <img
-              src={img.public_url}
-              alt={img.caption ?? `Paso ${img.step_number}`}
-              className="w-full rounded-lg border border-gray-700 object-contain max-h-96"
-            />
+            <img src={img.public_url} alt={img.caption ?? `Paso ${img.step_number}`}
+              className="w-full rounded-xl object-contain max-h-[400px]"
+              style={{ border: "1px solid rgba(255,255,255,0.08)" }} />
           </div>
         ))}
       </div>
@@ -70,118 +75,129 @@ function TutorialBlock({ slug }: { slug: string }) {
   );
 }
 
-// ── Markdown components ───────────────────────────────────────────────────────
+// ── Markdown ───────────────────────────────────────────────────────────────────
 
 const mdComponents = {
-  h1: ({ children }: any) => <h1 className="text-base font-bold text-white mb-2 mt-3 first:mt-0">{children}</h1>,
-  h2: ({ children }: any) => <h2 className="text-sm font-bold text-white mb-1.5 mt-3 first:mt-0">{children}</h2>,
-  h3: ({ children }: any) => <h3 className="text-sm font-semibold text-white mb-1 mt-2 first:mt-0">{children}</h3>,
-  p:  ({ children }: any) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
-  ul: ({ children }: any) => <ul className="list-disc pl-4 mb-2 space-y-0.5">{children}</ul>,
-  ol: ({ children }: any) => <ol className="list-decimal pl-4 mb-2 space-y-0.5">{children}</ol>,
-  li: ({ children }: any) => <li className="text-gray-100">{children}</li>,
+  h1: ({ children }: any) => <h1 className="text-lg font-bold text-white mb-3 mt-4 first:mt-0 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{children}</h1>,
+  h2: ({ children }: any) => <h2 className="text-base font-bold text-white mb-2 mt-4 first:mt-0">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="text-sm font-semibold text-white/90 mb-1.5 mt-3 first:mt-0">{children}</h3>,
+  p:  ({ children }: any) => <p className="mb-3 last:mb-0 leading-7 text-gray-200">{children}</p>,
+  ul: ({ children }: any) => <ul className="mb-3 space-y-1.5 pl-1">{children}</ul>,
+  ol: ({ children }: any) => <ol className="mb-3 space-y-1.5 pl-1 list-none counter-reset-[item]">{children}</ol>,
+  li: ({ children }: any) => (
+    <li className="flex gap-2.5 text-gray-200 leading-relaxed">
+      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0 mt-2.5" />
+      <span>{children}</span>
+    </li>
+  ),
   strong: ({ children }: any) => <strong className="font-semibold text-white">{children}</strong>,
-  em: ({ children }: any) => <em className="italic text-gray-200">{children}</em>,
+  em: ({ children }: any) => <em className="italic text-gray-300">{children}</em>,
   code: ({ children, className }: any) => {
     const isBlock = className?.includes("language-");
     return isBlock ? (
-      <pre className="bg-gray-950 border border-gray-700 rounded-lg p-3 overflow-x-auto mb-2 mt-1">
-        <code className="text-green-400 text-xs font-mono">{children}</code>
-      </pre>
+      <div className="my-3 rounded-xl overflow-hidden" style={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="flex items-center px-4 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)" }}>
+          <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">código</span>
+        </div>
+        <pre className="p-4 overflow-x-auto">
+          <code className="text-green-400 text-xs font-mono leading-relaxed">{children}</code>
+        </pre>
+      </div>
     ) : (
-      <code className="bg-gray-950 text-green-400 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
+      <code className="text-blue-300 text-[13px] font-mono px-1.5 py-0.5 rounded-md" style={{ background: "rgba(59,130,246,0.12)" }}>{children}</code>
     );
   },
   blockquote: ({ children }: any) => (
-    <blockquote className="border-l-2 border-blue-500 pl-3 italic text-gray-300 mb-2">{children}</blockquote>
-  ),
-  hr: () => <hr className="border-gray-700 my-3" />,
-  // ── Tables ──
-  table: ({ children }: any) => (
-    <div className="overflow-x-auto my-3 rounded-xl border border-gray-700">
-      <table className="w-full text-xs">{children}</table>
+    <div className="my-3 pl-4 py-0.5 rounded-r-xl" style={{ borderLeft: "3px solid #3b82f6", background: "rgba(59,130,246,0.06)" }}>
+      <div className="text-gray-300 italic">{children}</div>
     </div>
   ),
-  thead: ({ children }: any) => (
-    <thead style={{ background: "rgba(37,99,235,0.15)" }}>{children}</thead>
+  hr: () => <div className="my-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }} />,
+  table: ({ children }: any) => (
+    <div className="overflow-x-auto my-4 rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+      <table className="w-full text-sm border-collapse">{children}</table>
+    </div>
   ),
+  thead: ({ children }: any) => <thead style={{ background: "rgba(37,99,235,0.12)" }}>{children}</thead>,
   tbody: ({ children }: any) => <tbody>{children}</tbody>,
-  tr: ({ children }: any) => (
-    <tr className="border-t border-gray-700 hover:bg-white/[0.02] transition-colors">{children}</tr>
-  ),
-  th: ({ children }: any) => (
-    <th className="px-3 py-2 text-left text-[11px] font-bold text-blue-300 uppercase tracking-wide">{children}</th>
-  ),
-  td: ({ children }: any) => (
-    <td className="px-3 py-2 text-gray-200">{children}</td>
-  ),
+  tr:   ({ children }: any) => <tr style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} className="hover:bg-white/[0.02] transition-colors">{children}</tr>,
+  th:   ({ children }: any) => <th className="px-4 py-2.5 text-left text-xs font-bold text-blue-300 uppercase tracking-wider">{children}</th>,
+  td:   ({ children }: any) => <td className="px-4 py-2.5 text-gray-300">{children}</td>,
 };
 
-// ── Parse assistant content with tutorial tags ────────────────────────────────
+// ── Assistant content parser ───────────────────────────────────────────────────
 
 function AssistantContent({ content }: { content: string }) {
-  const TUTORIAL_RE = /\[\[TUTORIAL:([^\]]+)\]\]/g;
   const parts: Array<{ type: "text"; text: string } | { type: "tutorial"; slug: string }> = [];
-  let last = 0;
-  let match;
-  while ((match = TUTORIAL_RE.exec(content)) !== null) {
+  const re = /\[\[TUTORIAL:([^\]]+)\]\]/g;
+  let last = 0, match;
+  while ((match = re.exec(content)) !== null) {
     if (match.index > last) parts.push({ type: "text", text: content.slice(last, match.index) });
     parts.push({ type: "tutorial", slug: match[1].trim() });
     last = match.index + match[0].length;
   }
   if (last < content.length) parts.push({ type: "text", text: content.slice(last) });
-
   return (
     <>
       {parts.map((p, i) =>
-        p.type === "tutorial" ? (
-          <TutorialBlock key={i} slug={p.slug} />
-        ) : (
-          <ReactMarkdown key={i} components={mdComponents} remarkPlugins={[remarkGfm]}>
-            {p.text}
-          </ReactMarkdown>
-        )
+        p.type === "tutorial"
+          ? <TutorialBlock key={i} slug={p.slug} />
+          : <ReactMarkdown key={i} components={mdComponents} remarkPlugins={[remarkGfm]}>{p.text}</ReactMarkdown>
       )}
     </>
   );
 }
 
-// ── Copy button ───────────────────────────────────────────────────────────────
+// ── Copy button ────────────────────────────────────────────────────────────────
 
-function CopyButton({ text }: { text: string }) {
+function CopyBtn({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      onClick={() => navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); })}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-gray-700 text-gray-500 hover:text-gray-300"
-      title="Copiar"
-    >
-      {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+    <button onClick={() => navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); })}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all opacity-0 group-hover:opacity-100"
+      style={{ color: copied ? "#4ade80" : "#6b7280", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      {copied ? <><Check size={11} />Copiado</> : <><Copy size={11} />Copiar</>}
     </button>
   );
 }
 
+// ── Typing indicator ───────────────────────────────────────────────────────────
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1 py-1 px-1">
+      {[0, 150, 300].map((delay) => (
+        <span key={delay} className="w-2 h-2 rounded-full bg-blue-400/60"
+          style={{ animation: `bounce 1.2s ${delay}ms infinite`, display: "inline-block" }} />
+      ))}
+      <style>{`@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }`}</style>
+    </div>
+  );
+}
+
+// ── Suggestions ────────────────────────────────────────────────────────────────
+
 const SUGGESTIONS = [
-  "Mi cuenta publicitaria está bloqueada",
-  "Error 131031 en WhatsApp Business API",
-  "Error 131026 — mensaje fuera de ventana de 24h",
-  "Mis anuncios están siendo rechazados",
-  "Problema con verificación de negocio en BM",
-  "El Píxel de Meta no registra eventos",
+  { icon: "🔒", text: "Cuenta publicitaria bloqueada" },
+  { icon: "📱", text: "Error 131031 — número no válido" },
+  { icon: "⏰", text: "Error 131026 — ventana de 24h expirada" },
+  { icon: "🚫", text: "Anuncio rechazado por políticas" },
+  { icon: "✅", text: "Verificación de negocio en BM" },
+  { icon: "📊", text: "Píxel de Meta no registra eventos" },
 ];
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main ───────────────────────────────────────────────────────────────────────
 
 export default function MetafixChatClient({ caseId, initialMessages, currentStatus }: Props) {
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string; imageUrl?: string }>>(
     initialMessages.map((m) => ({ role: m.role, content: m.content }))
   );
-  const [input,          setInput]          = useState("");
-  const [loading,        setLoading]        = useState(false);
-  const [status,         setStatus]         = useState<MetafixStatus>(currentStatus);
-  const [markingDone,    setMarkingDone]    = useState(false);
-  const [pendingImage,   setPendingImage]   = useState<{ file: File; previewUrl: string } | null>(null);
-  const [uploadingImg,   setUploadingImg]   = useState(false);
+  const [input,        setInput]        = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [status,       setStatus]       = useState<MetafixStatus>(currentStatus);
+  const [markingDone,  setMarkingDone]  = useState(false);
+  const [pendingImage, setPendingImage] = useState<{ file: File; previewUrl: string } | null>(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
 
   const bottomRef    = useRef<HTMLDivElement>(null);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
@@ -193,15 +209,7 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 160) + "px";
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const previewUrl = URL.createObjectURL(file);
-    setPendingImage({ file, previewUrl });
-    e.target.value = "";
+    el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
@@ -212,11 +220,8 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
       const path = `${caseId}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("metafix-chat").upload(path, file, { upsert: true });
       if (error) return null;
-      const { data } = supabase.storage.from("metafix-chat").getPublicUrl(path);
-      return data.publicUrl;
-    } finally {
-      setUploadingImg(false);
-    }
+      return supabase.storage.from("metafix-chat").getPublicUrl(path).data.publicUrl;
+    } finally { setUploadingImg(false); }
   }, [caseId]);
 
   async function sendMessage(text: string) {
@@ -236,26 +241,15 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
     setLoading(true);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
-    // Persist user message
-    const persistContent = imageUrl ? `${text.trim()}\n[imagen: ${imageUrl}]` : text.trim();
-    await saveMessage(caseId, "user", persistContent);
+    await saveMessage(caseId, "user", imageUrl ? `${text.trim()}\n[imagen: ${imageUrl}]` : text.trim());
     if (status === "open") setStatus("in_progress");
-
     setMessages([...newMessages, { role: "assistant", content: "" }]);
 
-    // Build API messages with optional vision
-    const apiMessages = newMessages.map((m) => {
-      if (m.imageUrl) {
-        return {
-          role: m.role,
-          content: [
-            { type: "image_url", url: m.imageUrl },
-            { type: "text",      text: m.content || "Analizá esta imagen y ayudame a diagnosticar el problema." },
-          ],
-        };
-      }
-      return { role: m.role, content: m.content };
-    });
+    const apiMessages = newMessages.map((m) =>
+      m.imageUrl
+        ? { role: m.role, content: [{ type: "image_url", url: m.imageUrl }, { type: "text", text: m.content || "Analizá esta imagen." }] }
+        : { role: m.role, content: m.content }
+    );
 
     try {
       const res = await fetch("/api/metafix/chat", {
@@ -263,32 +257,20 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: apiMessages, caseId }),
       });
+      if (!res.ok || !res.body) throw new Error();
 
-      if (!res.ok || !res.body) throw new Error("Error en la respuesta");
-
-      const reader  = res.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulated = "";
-
+      const reader = res.body.getReader();
+      const dec    = new TextDecoder();
+      let acc = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: accumulated };
-          return updated;
-        });
+        acc += dec.decode(value, { stream: true });
+        setMessages((prev) => { const u = [...prev]; u[u.length - 1] = { role: "assistant", content: acc }; return u; });
       }
     } catch {
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: "Error al conectar con MetaFix. Verificá tu conexión e intentá de nuevo." };
-        return updated;
-      });
-    } finally {
-      setLoading(false);
-    }
+      setMessages((prev) => { const u = [...prev]; u[u.length - 1] = { role: "assistant", content: "Error al conectar. Verificá tu conexión e intentá de nuevo." }; return u; });
+    } finally { setLoading(false); }
   }
 
   async function markResolved() {
@@ -298,144 +280,193 @@ export default function MetafixChatClient({ caseId, initialMessages, currentStat
     setMarkingDone(false);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
-  }
-
   return (
-    <div className="flex flex-col h-full">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+    <div className="flex flex-col h-full" style={{ background: "#0f0f0f" }}>
+
+      {/* ── Messages ── */}
+      <div className="flex-1 overflow-y-auto">
+
+        {/* Empty state */}
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 pb-8">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(59,130,246,0.15)" }}>
-              <Bot size={24} className="text-blue-400" />
+          <div className="flex flex-col items-center justify-center min-h-full px-6 py-12 gap-8">
+            <div className="text-center space-y-4">
+              <div className="relative mx-auto w-16 h-16">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.3), rgba(29,78,216,0.1))", border: "1px solid rgba(59,130,246,0.3)" }}>
+                  <Wrench size={28} className="text-blue-400" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                  <Zap size={10} className="text-white" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">MetaFix listo para ayudarte</h2>
+                <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
+                  Soy tu experto en problemas del ecosistema Meta. Describí tu problema y te guío paso a paso.
+                </p>
+              </div>
             </div>
-            <div className="text-center space-y-1">
-              <p className="text-white font-semibold text-sm">MetaFix está listo</p>
-              <p className="text-gray-500 text-sm max-w-xs">Describí tu problema con Meta y te guío paso a paso para resolverlo.</p>
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center mt-2 max-w-lg">
+
+            <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
               {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => sendMessage(s)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-gray-300 hover:border-blue-500 hover:text-white transition text-left border"
-                  style={{ background: "#1c1b1b", borderColor: "rgba(255,255,255,0.07)" }}>
-                  {s}
+                <button key={s.text} onClick={() => sendMessage(s.text)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all hover:scale-[1.02] group"
+                  style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.07)", color: "#d1d5db" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(59,130,246,0.4)"; (e.currentTarget as HTMLElement).style.background = "rgba(37,99,235,0.08)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.07)"; (e.currentTarget as HTMLElement).style.background = "#1a1a1a"; }}
+                >
+                  <span className="text-lg flex-shrink-0">{s.icon}</span>
+                  <span className="text-[13px] font-medium leading-snug">{s.text}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            {msg.role === "assistant" && (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(59,130,246,0.2)" }}>
-                <Bot size={14} className="text-blue-400" />
-              </div>
-            )}
+        {/* Messages list */}
+        {messages.length > 0 && (
+          <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
 
-            <div className="group relative max-w-[80%]">
-              <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                msg.role === "user"
-                  ? "bg-blue-600 text-white rounded-tr-sm"
-                  : "bg-gray-800 text-gray-100 rounded-tl-sm"
-              }`}>
-                {msg.role === "user" ? (
-                  <div className="space-y-2">
-                    {msg.imageUrl && (
-                      <img src={msg.imageUrl} alt="adjunto" className="max-h-48 rounded-lg object-contain border border-white/20" />
-                    )}
-                    {msg.content && <span className="whitespace-pre-wrap">{msg.content}</span>}
+                {/* AI avatar */}
+                {msg.role === "assistant" && (
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.4), rgba(29,78,216,0.2))", border: "1px solid rgba(59,130,246,0.3)" }}>
+                      <Wrench size={14} className="text-blue-400" />
+                    </div>
                   </div>
-                ) : msg.content === "" && loading ? (
-                  <span className="inline-flex gap-1 items-center py-0.5">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                  </span>
-                ) : (
-                  <AssistantContent content={msg.content} />
+                )}
+
+                {/* Bubble / content */}
+                <div className={`group ${msg.role === "user" ? "max-w-[75%]" : "flex-1 min-w-0"}`}>
+
+                  {msg.role === "user" ? (
+                    /* User bubble */
+                    <div className="rounded-2xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed text-white"
+                      style={{ background: "linear-gradient(135deg, #2563eb, #1d4ed8)", boxShadow: "0 2px 12px rgba(37,99,235,0.25)" }}>
+                      {msg.imageUrl && (
+                        <img src={msg.imageUrl} alt="adjunto"
+                          className="max-h-52 rounded-xl object-contain mb-2 w-full"
+                          style={{ border: "1px solid rgba(255,255,255,0.15)" }} />
+                      )}
+                      {msg.content && <span className="whitespace-pre-wrap">{msg.content}</span>}
+                    </div>
+
+                  ) : msg.content === "" && loading ? (
+                    /* Typing */
+                    <div className="rounded-2xl rounded-tl-sm px-4 py-3" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <TypingDots />
+                    </div>
+
+                  ) : (
+                    /* AI content — open layout like Claude.ai */
+                    <div>
+                      <div className="text-sm leading-relaxed text-gray-200">
+                        <AssistantContent content={msg.content} />
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <CopyBtn text={msg.content} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* User avatar */}
+                {msg.role === "user" && (
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: "linear-gradient(135deg, #374151, #1f2937)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      Tú
+                    </div>
+                  </div>
                 )}
               </div>
-              {msg.role === "assistant" && msg.content && (
-                <div className="flex justify-end mt-1">
-                  <CopyButton text={msg.content} />
-                </div>
-              )}
-            </div>
-
-            {msg.role === "user" && (
-              <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <User size={14} className="text-gray-300" />
-              </div>
-            )}
+            ))}
+            <div ref={bottomRef} />
           </div>
-        ))}
-        <div ref={bottomRef} />
+        )}
       </div>
 
-      {/* Footer */}
-      <div className="px-6 pb-6 pt-2 border-t border-gray-800 space-y-3">
+      {/* ── Footer ── */}
+      <div className="px-6 pb-6 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
 
         {/* Mark resolved */}
         {messages.length > 0 && status !== "resolved" && (
           <div className="flex justify-end">
             <button onClick={markResolved} disabled={markingDone || loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-green-400 hover:text-green-300 border border-green-500/20 hover:border-green-500/40 transition disabled:opacity-50"
-              style={{ background: "rgba(34,197,94,0.05)" }}>
-              <CheckCircle2 size={13} />
-              {markingDone ? "Marcando..." : "Marcar como resuelto"}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+              style={{ color: "#4ade80", background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+              <CheckCircle2 size={12} />
+              {markingDone ? "Guardando..." : "Marcar como resuelto"}
             </button>
           </div>
         )}
 
         {status === "resolved" && (
-          <div className="flex items-center justify-center gap-2 py-2 rounded-lg" style={{ background: "rgba(34,197,94,0.08)" }}>
+          <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl"
+            style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
             <CheckCircle2 size={14} className="text-green-400" />
-            <span className="text-xs text-green-400 font-medium">Caso resuelto</span>
+            <span className="text-sm text-green-400 font-medium">Caso resuelto</span>
           </div>
         )}
 
         {/* Image preview */}
         {pendingImage && (
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl border border-blue-500/30" style={{ background: "rgba(37,99,235,0.08)" }}>
-            <img src={pendingImage.previewUrl} alt="preview" className="w-12 h-12 rounded-lg object-cover border border-gray-600" />
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+            style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(59,130,246,0.2)" }}>
+            <img src={pendingImage.previewUrl} alt="preview" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-300 truncate">{pendingImage.file.name}</p>
-              <p className="text-[11px] text-gray-500">{(pendingImage.file.size / 1024).toFixed(0)} KB</p>
+              <p className="text-xs font-medium text-gray-300 truncate">{pendingImage.file.name}</p>
+              <p className="text-[11px] text-gray-500">{(pendingImage.file.size / 1024).toFixed(0)} KB · Lista para enviar</p>
             </div>
             <button onClick={() => { URL.revokeObjectURL(pendingImage.previewUrl); setPendingImage(null); }}
-              className="text-gray-500 hover:text-gray-300 transition">
-              <X size={14} />
+              className="p-1 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-700 transition flex-shrink-0">
+              <X size={13} />
             </button>
           </div>
         )}
 
         {/* Input */}
-        <div className="flex gap-2 items-end rounded-xl px-4 py-3 focus-within:border-blue-500 transition border"
-          style={{ background: "#1a1a1a", borderColor: "rgba(255,255,255,0.1)" }}>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-          <button onClick={() => fileInputRef.current?.click()} disabled={loading}
-            className="text-gray-500 hover:text-blue-400 transition disabled:opacity-40 flex-shrink-0 mb-0.5"
-            title="Adjuntar imagen">
-            {uploadingImg ? <Loader2 size={16} className="animate-spin" /> : <Paperclip size={16} />}
-          </button>
+        <div className="relative rounded-2xl transition-all"
+          style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) setPendingImage({ file: f, previewUrl: URL.createObjectURL(f) }); e.target.value = ""; }} />
+
           <textarea ref={textareaRef} value={input}
             onChange={(e) => { setInput(e.target.value); autoResize(); }}
-            onKeyDown={handleKeyDown}
-            placeholder={status === "resolved" ? "Caso resuelto — podés seguir agregando mensajes" : "Describí tu problema con Meta... (Enter para enviar)"}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
+            placeholder={status === "resolved" ? "Podés seguir haciendo preguntas..." : "Describí tu problema con Meta..."}
             rows={1}
-            className="flex-1 bg-transparent text-white text-sm resize-none outline-none placeholder-gray-500 leading-relaxed"
+            className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-gray-600 leading-relaxed px-4 pt-4 pb-14"
           />
-          <button onClick={() => sendMessage(input)}
-            disabled={(!input.trim() && !pendingImage) || loading || uploadingImg}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "#2563eb" }}>
-            {loading ? <Loader2 size={14} className="text-white animate-spin" /> : <Send size={14} className="text-white" />}
-          </button>
+
+          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <button onClick={() => fileInputRef.current?.click()} disabled={loading}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+                style={{ color: "#6b7280", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                title="Adjuntar imagen">
+                {uploadingImg ? <Loader2 size={12} className="animate-spin" /> : <Paperclip size={12} />}
+                <span>Imagen</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-600 hidden sm:block">Enter para enviar · Shift+Enter para nueva línea</span>
+              <button onClick={() => sendMessage(input)}
+                disabled={(!input.trim() && !pendingImage) || loading || uploadingImg}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: loading ? "#1e3a8a" : "linear-gradient(135deg, #2563eb, #1d4ed8)", color: "white", boxShadow: loading ? "none" : "0 2px 8px rgba(37,99,235,0.4)" }}>
+                {loading
+                  ? <><Loader2 size={13} className="animate-spin" />Pensando</>
+                  : <><Send size={13} />Enviar</>
+                }
+              </button>
+            </div>
+          </div>
         </div>
-        <p className="text-[11px] text-gray-600 text-center">Shift+Enter para nueva línea · Enter para enviar · Clip para adjuntar imagen</p>
       </div>
     </div>
   );
