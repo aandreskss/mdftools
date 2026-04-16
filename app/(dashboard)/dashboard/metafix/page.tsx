@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Wrench, Plus, MessageSquare, BookOpen, Clock, ArrowRight } from "lucide-react";
+import { Wrench, Plus, MessageSquare, BookOpen, Clock, ArrowRight, Settings } from "lucide-react";
 import CaseStatusBadge from "@/components/metafix/CaseStatusBadge";
 import AreaBadge from "@/components/metafix/AreaBadge";
+import { isAdminEmail } from "@/lib/metafix/admin";
 import type { MetafixCase } from "@/types";
 
 function timeAgo(dateStr: string): string {
@@ -28,6 +29,7 @@ export default async function MetafixPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  const isAdmin = isAdminEmail(user.email);
 
   const [casesRes, kbRes] = await Promise.all([
     supabase
@@ -65,14 +67,24 @@ export default async function MetafixPage() {
             <p className="text-xs text-gray-500">Solucionador de problemas del ecosistema Meta</p>
           </div>
         </div>
-        <Link
-          href="/dashboard/metafix/chat"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ background: "#2563eb" }}
-        >
-          <Plus size={15} />
-          Nuevo caso
-        </Link>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link href="/dashboard/metafix/admin"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 transition"
+              style={{ background: "#1c1b1b" }}>
+              <Settings size={14} />
+              Admin
+            </Link>
+          )}
+          <Link
+            href="/dashboard/metafix/chat"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
+            style={{ background: "#2563eb" }}
+          >
+            <Plus size={15} />
+            Nuevo caso
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
